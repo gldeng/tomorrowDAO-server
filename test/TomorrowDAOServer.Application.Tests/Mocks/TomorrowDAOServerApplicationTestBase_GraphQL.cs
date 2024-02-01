@@ -5,7 +5,7 @@ using GraphQL.Client.Abstractions;
 using Moq;
 using TomorrowDAOServer.Common;
 
-namespace TomorrowDAOServer;
+namespace TomorrowDAOServer.Mocks;
 
 public partial class TomorrowDAOServerApplicationTestBase
 {

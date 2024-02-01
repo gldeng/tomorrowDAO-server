@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Moq;
 using Volo.Abp.DistributedLocking;
 
-namespace TomorrowDAOServer;
+namespace TomorrowDAOServer.Mocks;
 
 public partial class TomorrowDAOServerApplicationTestBase
 {
