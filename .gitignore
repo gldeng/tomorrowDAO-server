@@ -272,7 +272,6 @@ scripts/contract_csharp_plugin
 **/contract_csharp_plugin*
 scripts/patcher/*
 
-appsettings.json
 *.Development.json
 
 .git/
