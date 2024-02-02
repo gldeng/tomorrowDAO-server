@@ -271,8 +271,6 @@ src/TomorrowDAOServer.Blazor.Server.Tiered/Logs/*
 scripts/contract_csharp_plugin
 **/contract_csharp_plugin*
 scripts/patcher/*
-*.c.cs
-*.g.cs
 
 appsettings.json
 *.Development.json
