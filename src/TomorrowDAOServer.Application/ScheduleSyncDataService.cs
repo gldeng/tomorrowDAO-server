@@ -6,6 +6,7 @@ using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.GraphQL;
 using Microsoft.Extensions.Logging;
 using TomorrowDAOServer.Common.Provider;
+using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer;
 

@@ -5,6 +5,7 @@ using GraphQL.Client.Abstractions;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using TomorrowDAOServer.Common.GraphQL;
+using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Grains.Grain.ApplicationHandler;
 using Volo.Abp.DependencyInjection;
 

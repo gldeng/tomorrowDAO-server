@@ -3,6 +3,7 @@ using TomorrowDAOServer.Work;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TomorrowDAOServer.Enums;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Threading;
 

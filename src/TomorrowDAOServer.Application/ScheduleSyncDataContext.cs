@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using TomorrowDAOServer.Common;
 using Microsoft.Extensions.Logging;
+using TomorrowDAOServer.Enums;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer;

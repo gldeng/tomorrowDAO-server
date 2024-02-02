@@ -1,5 +1,5 @@
 using System.Threading;
-using CAServer;
+using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer.Common;
 

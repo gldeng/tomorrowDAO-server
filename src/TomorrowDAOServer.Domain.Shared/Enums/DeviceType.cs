@@ -1,4 +1,4 @@
-namespace CAServer;
+namespace TomorrowDAOServer.Enums;
 
 public enum DeviceType
 {

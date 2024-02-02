@@ -32,7 +32,6 @@
 
   <ItemGroup>
     <Folder Include="Options\" />
-    <Folder Include="Proposal\" />
   </ItemGroup>
 
 </Project>
