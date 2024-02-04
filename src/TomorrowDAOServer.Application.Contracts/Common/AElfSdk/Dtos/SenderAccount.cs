@@ -16,6 +16,8 @@ public class SenderAccount
         _keyPair = CryptoHelper.FromPrivateKey(ByteArrayHelper.HexStringToByteArray(privateKey));
         Address = Address.FromPublicKey(_keyPair.PublicKey);
     }
+
+    public byte[] PublicKey => _keyPair.PublicKey;
     
     public ByteString GetSignatureWith(byte[] txData)
     {

@@ -44,6 +44,10 @@
     <ItemGroup>
       <ProjectReference Include="..\TomorrowDAOServer.Application.Contracts\TomorrowDAOServer.Application.Contracts.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Grain\Consensus\" />
+    </ItemGroup>
 
 
 </Project>

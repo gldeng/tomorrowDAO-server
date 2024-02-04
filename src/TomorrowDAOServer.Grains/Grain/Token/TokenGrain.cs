@@ -10,7 +10,11 @@ using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using TomorrowDAOServer.Common.AElfSdk;
+using TomorrowDAOServer.Common.AElfSdk.Dtos;
+using TomorrowDAOServer.Options;
 using Volo.Abp.ObjectMapping;
+using TokenInfo = AElf.Client.MultiToken.TokenInfo;
 
 namespace TomorrowDAOServer.Grains.Grain.Token;
 
@@ -25,16 +29,18 @@ public class TokenGrain : Grain<TokenState>, ITokenGrain
     private readonly IOptionsMonitor<ChainOptions> _chainOptionsMonitor;
     private readonly IObjectMapper _objectMapper;
     private readonly IBlockchainClientFactory<AElfClient> _blockchainClientFactory;
+    private readonly IContractProvider _contractProvider;
 
 
-    public TokenGrain( ILogger<TokenGrain> logger, IObjectMapper objectMapper, 
-        IOptionsMonitor<ChainOptions> chainOptionsMonitor, 
-        IBlockchainClientFactory<AElfClient> blockchainClientFactory)
+    public TokenGrain(ILogger<TokenGrain> logger, IObjectMapper objectMapper,
+        IOptionsMonitor<ChainOptions> chainOptionsMonitor,
+        IBlockchainClientFactory<AElfClient> blockchainClientFactory, IContractProvider contractProvider)
     {
         _logger = logger;
         _objectMapper = objectMapper;
         _chainOptionsMonitor = chainOptionsMonitor;
         _blockchainClientFactory = blockchainClientFactory;
+        _contractProvider = contractProvider;
     }
 
     public async Task<GrainResultDto<TokenGrainDto>> GetTokenAsync(TokenGrainDto input)
@@ -44,24 +50,14 @@ public class TokenGrain : Grain<TokenState>, ITokenGrain
             return GrainDtoBuilder();
         }
         State = _objectMapper.Map<TokenGrainDto, TokenState>(input);
-        var chainOptions = _chainOptionsMonitor.CurrentValue;
-        var client = _blockchainClientFactory.GetClient(State.ChainId);
-        var privateKey = chainOptions.ChainInfos[State.ChainId].PrivateKey;
-        var address = chainOptions.ChainInfos[State.ChainId].TokenContractAddress;
-        var transactionGetToken =
-            await client.GenerateTransactionAsync(client.GetAddressFromPrivateKey(privateKey), address,
-                "GetTokenInfo", new GetTokenInfoInput { Symbol = State.Symbol });
-        var txWithSignGetToken = client.SignTransaction(privateKey, transactionGetToken);
-        var transactionGetTokenResult = await client.ExecuteTransactionAsync(new ExecuteTransactionDto
-        {
-            RawTransaction = txWithSignGetToken.ToByteArray().ToHex()
-        });
-        var token = TokenInfo.Parser.ParseFrom(
-            ByteArrayHelper.HexStringToByteArray(transactionGetTokenResult));
+        
+        var (_, tx) = await _contractProvider.CreateCallTransactionAsync(input.ChainId,
+            SystemContractName.TokenContract, "GetTokenInfo", new GetTokenInfoInput { Symbol = State.Symbol });
+
+        var transactionGetTokenResult = await _contractProvider.CallTransactionAsync<TokenInfo>(input.ChainId, tx);
         State.Id = GuidHelper.GetTokenInfoId(State.ChainId, State.Symbol);
-        State.Address = address;
-        State.Decimals = token.Decimals;
-        State.TokenName = token.TokenName;
+        State.Decimals = transactionGetTokenResult.Decimals;
+        State.TokenName = transactionGetTokenResult.TokenName;
 
         _logger.LogInformation("[TokenGrain] get token info chainId {} symbol {} decimals {} tokenName {}",
             State.ChainId, State.Symbol, State.Decimals, State.TokenName);

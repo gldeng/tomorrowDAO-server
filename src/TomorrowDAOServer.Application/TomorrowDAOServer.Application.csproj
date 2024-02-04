@@ -30,8 +30,4 @@
     <PackageReference Include="AElf.Whitelist.Application" Version="0.0.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Options\" />
-  </ItemGroup>
-
 </Project>

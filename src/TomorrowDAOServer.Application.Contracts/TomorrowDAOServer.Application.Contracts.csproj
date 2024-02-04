@@ -35,8 +35,6 @@
 
   <ItemGroup>
     <Folder Include="Etos\" />
-    <Folder Include="Permissions\" />
-    <Folder Include="Project\Dto\" />
   </ItemGroup>
 
 </Project>
