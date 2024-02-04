@@ -54,13 +54,31 @@
         <PackageReference Include="Volo.Abp.Account.HttpApi" Version="7.0.0" />
         <ProjectReference Include="..\TomorrowDAOServer.Grains\TomorrowDAOServer.Grains.csproj" />
         <ProjectReference Include="..\TomorrowDAOServer.MongoDB\TomorrowDAOServer.MongoDB.csproj" />
-        <ProjectReference Include="..\TomorrowDAOServer.Application.Contracts\TomorrowDAOServer.Application.Contracts.csproj">
-            <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
-        </ProjectReference>
+        <ProjectReference Include="..\TomorrowDAOServer.Application.Contracts\TomorrowDAOServer.Application.Contracts.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <ContractReference Include="..\..\protobuf\acs2.proto">
+            <Link>Protobuf\Proto\acs2.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\acs12.proto">
+            <Link>Protobuf\Proto\acs12.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\authority_info.proto">
+            <Link>Protobuf\Proto\authority_info.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\authority_info.proto">
+            <Link>Protobuf\Proto\authority_info.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\ca_contract.proto">
+            <Link>Protobuf\Proto\ca_contract.proto</Link>
+        </ContractReference>
+    </ItemGroup>
+    
     <ItemGroup>
       <Folder Include="Logs\" />
+      <Folder Include="Protobuf\Generated\" />
     </ItemGroup>
 
 </Project>
