@@ -6,6 +6,10 @@ public class ExplorerPagerRequest
     public int PageNum { get; set; } = 1;
 
 
+    protected ExplorerPagerRequest()
+    {
+    }
+
     protected ExplorerPagerRequest(int pageNum, int pageSize)
     {
         PageNum = pageNum;

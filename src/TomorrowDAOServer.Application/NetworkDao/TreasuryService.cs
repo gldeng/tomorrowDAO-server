@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CAServer.Commons;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -22,14 +21,14 @@ public class TreasuryService : ITreasuryService
     private readonly ILogger<TreasuryService> _logger;
     private readonly IClusterClient _clusterClient;
     private readonly IOptionsMonitor<NetworkDaoOptions> _networkDaoOptions;
-    private readonly IOptionsMonitor<TokenOptions> _tokenOptions;
+    private readonly IOptionsMonitor<TokenInfoOptions> _tokenOptions;
     private readonly ITokenService _tokenService;
     private readonly IContractProvider _contractProvider;
     private readonly IExplorerProvider _explorerProvider;
 
     public TreasuryService(ILogger<TreasuryService> logger, IContractProvider contractProvider,
         IExplorerProvider explorerProvider, ITokenService tokenService, IClusterClient clusterClient,
-        IOptionsMonitor<NetworkDaoOptions> networkDaoOptions, IOptionsMonitor<TokenOptions> tokenOptions)
+        IOptionsMonitor<NetworkDaoOptions> networkDaoOptions, IOptionsMonitor<TokenInfoOptions> tokenOptions)
     {
         _logger = logger;
         _contractProvider = contractProvider;
@@ -64,7 +63,10 @@ public class TreasuryService : ITreasuryService
                 {
                     Symbol = b.Symbol,
                     Name = token.TokenName,
-                    Decimals = token.Decimals
+                    Decimals = token.Decimals,
+                    ImageUrl = _tokenOptions.CurrentValue.TokenInfos.TryGetValue(b.Symbol, out var img)
+                        ? img.ImageUrl
+                        : null
                 }
             };
         }).ToList();

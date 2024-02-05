@@ -3,10 +3,12 @@ using TomorrowDAOServer.Common.Dtos;
 
 namespace TomorrowDAOServer.Dtos.Explorer;
 
-public class ProposalListRequest : ExplorerPagerRequest
+public class ExplorerProposalListRequest : ExplorerPagerRequest
 {
     
-    public ProposalListRequest(int pageNum, int pageSize) : base(pageNum, pageSize)
+    public ExplorerProposalListRequest() {}
+    
+    public ExplorerProposalListRequest(int pageNum, int pageSize) : base(pageNum, pageSize)
     {
     }
     
@@ -24,12 +26,12 @@ public class ProposalListRequest : ExplorerPagerRequest
     
 }
 
-public class ProposalResponse : ExplorerPagerResult<ProposalResult>
+public class ExplorerProposalResponse : ExplorerPagerResult<ExplorerProposalResult>
 {
     public int BpCount { get; set; }
 }
 
-public class ProposalResult
+public class ExplorerProposalResult
 {
     public int Abstentions { get; set; }
     public int Approvals { get; set; }

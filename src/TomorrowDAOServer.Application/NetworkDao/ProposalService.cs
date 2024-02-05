@@ -19,6 +19,7 @@ using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Providers;
 using Volo.Abp.Caching;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
 using AddressHelper = TomorrowDAOServer.Common.AddressHelper;
 
 namespace TomorrowDAOServer.NetworkDao;
@@ -30,17 +31,18 @@ public class ProposalService : IProposalService, ISingletonDependency
     private readonly IContractProvider _contractProvider;
     private readonly IOptionsMonitor<NetworkDaoOptions> _networkDaoOptions;
     private readonly IDistributedCache<string> _currentTermMiningRewardCache;
+    private readonly IObjectMapper _objectMapper;
 
     // VoteType => count
     private readonly IDistributedCache<Dictionary<string, int>> _voteCountCache;
 
-    // pubkey => CandidateDetail.Hex
+    // pubKey => CandidateDetail.Hex
     private readonly IDistributedCache<Dictionary<string, string>> _candidateDetailCache;
 
     public ProposalService(IExplorerProvider explorerProvider, ILogger<ProposalService> logger,
         IContractProvider contractProvider, IDistributedCache<string> currentTermMiningRewardCache,
         IDistributedCache<Dictionary<string, int>> voteCountCache, IOptionsMonitor<NetworkDaoOptions> networkDaoOptions,
-        IDistributedCache<Dictionary<string, string>> candidateDetailCache)
+        IDistributedCache<Dictionary<string, string>> candidateDetailCache, IObjectMapper objectMapper)
     {
         _explorerProvider = explorerProvider;
         _logger = logger;
@@ -49,6 +51,7 @@ public class ProposalService : IProposalService, ISingletonDependency
         _voteCountCache = voteCountCache;
         _networkDaoOptions = networkDaoOptions;
         _candidateDetailCache = candidateDetailCache;
+        _objectMapper = objectMapper;
     }
 
 
@@ -57,7 +60,7 @@ public class ProposalService : IProposalService, ISingletonDependency
         var currentTermMiningRewardTask = GetCurrentTermMiningRewardWithCacheAsync(homePageRequest.ChainId);
         var candidateListTask = GetCandidateDetailListWithCacheAsync(homePageRequest.ChainId);
         var proposalTask = _explorerProvider.GetProposalPagerAsync(homePageRequest.ChainId,
-            new ProposalListRequest(1, 6)
+            new ExplorerProposalListRequest
             {
                 Address = homePageRequest.Address,
                 Search = homePageRequest.ProposalId
@@ -94,7 +97,6 @@ public class ProposalService : IProposalService, ISingletonDependency
                 }
         };
     }
-
 
     private async Task<Dictionary<string, CandidateDetail>> GetCandidateDetailListWithCacheAsync(string chainId)
     {
@@ -152,7 +154,7 @@ public class ProposalService : IProposalService, ISingletonDependency
         while (true)
         {
             var pager = await _explorerProvider.GetProposalPagerAsync(chainId,
-                new ProposalListRequest(pageNum++, pageSize)
+                new ExplorerProposalListRequest(pageNum++, pageSize)
                 {
                     ProposalType = proposalType.ToString()
                 });
