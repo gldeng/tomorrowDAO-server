@@ -54,15 +54,14 @@ public class ProposalService : IProposalService, ISingletonDependency
 
     public async Task<HomePageResponse> GetHomePageAsync(HomePageRequest homePageRequest)
     {
+        var currentTermMiningRewardTask = GetCurrentTermMiningRewardWithCacheAsync(homePageRequest.ChainId);
+        var candidateListTask = GetCandidateDetailListWithCacheAsync(homePageRequest.ChainId);
         var proposalTask = _explorerProvider.GetProposalPagerAsync(homePageRequest.ChainId,
             new ProposalListRequest(1, 6)
             {
                 Address = homePageRequest.Address,
                 Search = homePageRequest.ProposalId
             });
-
-        var currentTermMiningRewardTask = GetCurrentTermMiningRewardWithCacheAsync(homePageRequest.ChainId);
-
         var voteCountTasks = new List<Task<Dictionary<string, int>>>
         {
             GetProposalVoteCountWithCacheAsync(homePageRequest.ChainId, ProposalType.Parliament),
@@ -70,8 +69,6 @@ public class ProposalService : IProposalService, ISingletonDependency
             GetProposalVoteCountWithCacheAsync(homePageRequest.ChainId, ProposalType.Referendum),
         };
 
-        var candidateListTask = GetCandidateDetailListWithCacheAsync(homePageRequest.ChainId);
-        
         // wait async result and get
         var proposal = (await proposalTask).Data.FirstOrDefault();
         var currentTermMiningReward = await currentTermMiningRewardTask;
@@ -169,7 +166,7 @@ public class ProposalService : IProposalService, ISingletonDependency
             countDict[VoteType.Reject.ToString()] =
                 countDict.GetValueOrDefault(VoteType.Reject.ToString()) + rejectCount;
             countDict[VoteType.Abstain.ToString()] =
-                countDict.GetValueOrDefault(VoteType.Abstain.ToString()) + rejectCount;
+                countDict.GetValueOrDefault(VoteType.Abstain.ToString()) + abstainCount;
         }
 
         return countDict;

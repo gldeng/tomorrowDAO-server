@@ -9,39 +9,44 @@ using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Token;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Volo.Abp.Caching;
 
 namespace TomorrowDAOServer.ThirdPart.Exchange;
 
-public class CoinGeckoProvider : IExchangeProvider
+public class CoinGeckoProvider : AbstractExchangeProvider
 {
     private const string FiatCurrency = "usd";
     private const string SimplePriceUri = "/simple/price";
 
+
+    private readonly IOptionsMonitor<ExchangeOptions> _exchangeOptions;
     private readonly ILogger<CoinGeckoProvider> _logger;
     private readonly IOptionsMonitor<CoinGeckoOptions> _coinGeckoOptions;
     private readonly IHttpProvider _httpProvider;
 
     public CoinGeckoProvider(IOptionsMonitor<CoinGeckoOptions> coinGeckoOptions, IHttpProvider httpProvider,
-        ILogger<CoinGeckoProvider> logger)
+        ILogger<CoinGeckoProvider> logger, IDistributedCache<TokenExchangeDto> exchangeCache,
+        IOptionsMonitor<ExchangeOptions> exchangeOptions) : base(exchangeCache, exchangeOptions)
     {
         _coinGeckoOptions = coinGeckoOptions;
         _httpProvider = httpProvider;
         _logger = logger;
+        _exchangeOptions = exchangeOptions;
     }
 
 
-    public ExchangeProviderName Name()
+    public override ExchangeProviderName Name()
     {
         return ExchangeProviderName.CoinGecko;
     }
 
-    public async Task<TokenExchangeDto> LatestAsync(string fromSymbol, string toSymbol)
+    public override async Task<TokenExchangeDto> LatestAsync(string fromSymbol, string toSymbol)
     {
         var from = MappingSymbol(fromSymbol);
         var to = MappingSymbol(toSymbol);
         var url = _coinGeckoOptions.CurrentValue.BaseUrl + SimplePriceUri;
         _logger.LogDebug("CoinGecko url {Url}", url);
-        
+
         var price = await _httpProvider.InvokeAsync<Price>(HttpMethod.Get,
             _coinGeckoOptions.CurrentValue.BaseUrl + SimplePriceUri,
             header: new Dictionary<string, string>
@@ -72,7 +77,7 @@ public class CoinGeckoProvider : IExchangeProvider
             : sourceSymbol;
     }
 
-    public Task<TokenExchangeDto> HistoryAsync(string fromSymbol, string toSymbol, long timestamp)
+    public override Task<TokenExchangeDto> HistoryAsync(string fromSymbol, string toSymbol, long timestamp)
     {
         throw new NotSupportedException();
     }

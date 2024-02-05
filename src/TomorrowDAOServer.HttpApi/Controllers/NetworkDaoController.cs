@@ -1,5 +1,5 @@
+using System;
 using System.Threading.Tasks;
-using DnsClient.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using TomorrowDAOServer.Dtos.NetworkDao;
@@ -8,30 +8,46 @@ using Volo.Abp;
 
 namespace TomorrowDAOServer.Controllers;
 
-
 [RemoteService]
 [Area("app")]
 [ControllerName("Network dao")]
-[Route("api/proposal-home-page")]
+[Route("api")]
 public class NetworkDaoController
 {
-
     private ILogger<NetworkDaoController> _logger;
     private readonly IProposalService _proposalService;
+    private readonly ITreasuryService _treasuryService;
 
-    public NetworkDaoController(IProposalService proposalService, ILogger<NetworkDaoController> logger)
+    public NetworkDaoController(IProposalService proposalService, ILogger<NetworkDaoController> logger,
+        ITreasuryService treasuryService)
     {
         _proposalService = proposalService;
         _logger = logger;
+        _treasuryService = treasuryService;
     }
 
 
-    [HttpGet]
+    [HttpGet("proposal-home-page")]
     public async Task<HomePageResponse> ProposalHomePage(HomePageRequest homePageRequest)
     {
         return await _proposalService.GetHomePageAsync(homePageRequest);
     }
-    
-    
-    
+
+    [HttpGet("treasury-balance")]
+    public async Task<TreasuryBalanceResponse> TreasuryBalance(TreasuryBalanceRequest request)
+    {
+        return await _treasuryService.GetBalanceAsync(request);
+    }
+
+    [HttpGet("treasury-transactions-records")]
+    public async Task<HomePageResponse> TreasuryTransactionRecords(HomePageRequest homePageRequest)
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpGet("proposal/list")]
+    public async Task<HomePageResponse> ProposalList(HomePageRequest homePageRequest)
+    {
+        throw new NotImplementedException();
+    }
 }

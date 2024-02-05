@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -9,14 +10,10 @@ using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.Providers;
 
-
 public interface IExplorerProvider
 {
-
     Task<ProposalResponse> GetProposalPagerAsync(string chainId, ProposalListRequest request);
-
-    
-    
+    Task<List<ExplorerBalanceOutput>> GetBalancesAsync(string chainId, ExplorerBalanceRequest request);
 }
 
 public static class ExplorerApi
@@ -28,11 +25,10 @@ public static class ExplorerApi
 
 public class ExplorerProvider : IExplorerProvider, ISingletonDependency
 {
-
     private readonly IHttpProvider _httpProvider;
     private readonly IOptionsMonitor<ExplorerOptions> _explorerOptions;
 
-    
+
     public ExplorerProvider(IHttpProvider httpProvider, IOptionsMonitor<ExplorerOptions> explorerOptions)
     {
         _httpProvider = httpProvider;
@@ -56,14 +52,27 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     /// <returns></returns>
     public async Task<ProposalResponse> GetProposalPagerAsync(string chainId, ProposalListRequest request)
     {
-        var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<ProposalResponse>>(BaseUrl(chainId), ExplorerApi.ProposalList);
+        var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<ProposalResponse>>(BaseUrl(chainId),
+            ExplorerApi.ProposalList);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
     }
-    
-    
-    
-    
-    
-    
+
+
+    /// <summary>
+    ///     Get Balances by address
+    /// </summary>
+    /// <param name="chainId"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task<List<ExplorerBalanceOutput>> GetBalancesAsync(string chainId, ExplorerBalanceRequest request)
+    {
+        var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<List<ExplorerBalanceOutput>>>(BaseUrl(chainId),
+            ExplorerApi.Balances, param: new Dictionary<string, string>
+            {
+                ["address"] = request.Address
+            });
+        AssertHelper.IsTrue(resp.Success, resp.Msg);
+        return resp.Data;
+    }
 }
