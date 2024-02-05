@@ -174,7 +174,7 @@ public class ProposalService : IProposalService, ISingletonDependency
         return countDict;
     }
 
-    /// List of CandidateDetail.Hex
+    /// pubKey => CandidateDetail.Hex
     private async Task<Dictionary<string, string>> GetAllCandidatesAsync(string chainId)
     {
         var (_, tx) = await _contractProvider.CreateCallTransactionAsync(chainId, SystemContractName.ElectionContract,

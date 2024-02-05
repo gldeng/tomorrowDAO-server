@@ -82,6 +82,16 @@ public static class TimeHelper
             return defaultDateTime;
         }
     }
+
+    public static bool IsEmpty(this DateTime dateTime)
+    {
+        return dateTime == DateTime.MinValue;
+    }
+    
+    public static DateTime DefaultIfEmpty(this DateTime dateTime, DateTime defaultValue)
+    {
+        return dateTime.IsEmpty() ? defaultValue : dateTime;
+    }
     
     public static DateTime ParseFromZone(string dateTimeString, int utcOffset, string pattern = DefaultPattern)
     {

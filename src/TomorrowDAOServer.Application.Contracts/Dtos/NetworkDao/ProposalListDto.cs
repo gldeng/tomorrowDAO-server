@@ -29,10 +29,10 @@ public class ProposalListResponse
     public string ProposalId { get; set; }
     public string Proposer { get; set; }
     public string DeployTime { get; set; }
-    public string ProposalTitle { get; set; }
+    public string ProposalTitle { get; set; } // todo
     public string GovernanceType { get; set; }
     public string ProposalStatus { get; set; }
-    public string ProposalDescription { get; set; }
+    public string ProposalDescription { get; set; } // TODO
     public string ProposalType { get; set; }
     public string StartTime { get; set; }
     public string EndTime { get; set; }
@@ -45,8 +45,8 @@ public class ProposalListResponse
     public int MinimalRequiredThreshold { get; set; }
     public int MinimalVoteThreshold { get; set; }
     public int MinimalApproveThreshold { get; set; }
-    public int MinimalRejectionThreshold { get; set; }
-    public int MinimalAbstentionThreshold { get; set; }
+    public int MaximalRejectionThreshold { get; set; }
+    public int MaximalAbstentionThreshold { get; set; }
     public List<string> TagList { get; set; }
     
     public class TransactionDto
