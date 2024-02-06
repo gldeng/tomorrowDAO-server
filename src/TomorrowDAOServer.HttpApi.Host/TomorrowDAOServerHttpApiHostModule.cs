@@ -63,7 +63,8 @@ namespace TomorrowDAOServer
             Configure<ChainOption>(configuration.GetSection("ChainOption"));
             Configure<TokenInfoOptions>(configuration.GetSection("TokenInfoOptions"));
             Configure<AssetsInfoOptions>(configuration.GetSection("AssetsInfoOptions"));
-    
+            Configure<ProposalTagOptions>(configuration.GetSection("ProposalTagOptions"));
+            
             ConfigureConventionalControllers();
             ConfigureAuthentication(context, configuration);
             ConfigureLocalization();

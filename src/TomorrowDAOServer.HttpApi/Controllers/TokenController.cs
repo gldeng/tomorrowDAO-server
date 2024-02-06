@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.Token;
 using TomorrowDAOServer.Token.Dto;
 using TomorrowDAOServer.User;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Volo.Abp;
 
-namespace TomorrowDAOServer.Controllers.Project;
+namespace TomorrowDAOServer.Controllers;
 
 
 [RemoteService]
