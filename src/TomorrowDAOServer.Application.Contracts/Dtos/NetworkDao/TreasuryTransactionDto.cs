@@ -7,7 +7,6 @@ public class TreasuryTransactionRequest : PagedResultRequestDto
     
     public TreasuryTransactionRequest() {}
     
-    
     public TreasuryTransactionRequest(int skipCount, int maxResultCount)
     {
         base.SkipCount = skipCount;
@@ -29,6 +28,8 @@ public class TreasuryTransactionDto
     public string From { get; set; }
     public string To { get; set; }
     public string InOrOut { get; set; }
+    public string Symbol { get; set; }
     public string Amount { get; set; }
+    public TokenDto Token { get; set; }
     
 }

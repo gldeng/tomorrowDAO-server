@@ -17,8 +17,12 @@ public interface IExplorerProvider
     Task<ExplorerProposalResponse> GetProposalPagerAsync(string chainId, ExplorerProposalListRequest request);
     Task<List<ExplorerBalanceOutput>> GetBalancesAsync(string chainId, ExplorerBalanceRequest request);
     Task<ExplorerTokenInfoResponse> GetTokenInfoAsync(string chainId, ExplorerTokenInfoRequest request);
+
     Task<ExplorerPagerResult<ExplorerTransactionResponse>> GetTransactionPagerAsync(string chainId,
         ExplorerTransactionRequest request);
+
+    Task<ExplorerPagerResult<ExplorerTransferResult>> GetTransferListAsync(string chainId,
+        ExplorerTransferRequest request);
 }
 
 public static class ExplorerApi
@@ -28,6 +32,7 @@ public static class ExplorerApi
     public static readonly ApiInfo Balances = new(HttpMethod.Get, "/api/viewer/balances");
     public static readonly ApiInfo TokenInfo = new(HttpMethod.Get, "/api/viewer/tokenInfo");
     public static readonly ApiInfo Transactions = new(HttpMethod.Get, "/api/all/transaction");
+    public static readonly ApiInfo TransferList = new(HttpMethod.Get, "/api/viewer/transferList");
 }
 
 public class ExplorerProvider : IExplorerProvider, ISingletonDependency
@@ -106,6 +111,20 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
         return resp.Data;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="chainId"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task<ExplorerPagerResult<ExplorerTransferResult>> GetTransferListAsync(string chainId,
+        ExplorerTransferRequest request)
+    {
+        var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<ExplorerPagerResult<ExplorerTransferResult>>>(
+            BaseUrl(chainId), ExplorerApi.TransferList, param: ToDictionary(request));
+        AssertHelper.IsTrue(resp.Success, resp.Msg);
+        return resp.Data;
+    }
 
     private Dictionary<string, string> ToDictionary(object param)
     {

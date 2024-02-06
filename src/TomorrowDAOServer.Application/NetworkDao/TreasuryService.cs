@@ -8,6 +8,7 @@ using Orleans;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.AElfSdk;
 using TomorrowDAOServer.Common.AElfSdk.Dtos;
+using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Options;
@@ -65,7 +66,7 @@ public class TreasuryService : ITreasuryService
             {
                 TotalCount = b.Balance,
                 DollarValue = exchange == null ? null : (b.Balance.SafeToDecimal() * exchange.Price).ToString(2),
-                Token = new TreasuryBalanceResponse.TokenItem
+                Token = new TokenDto
                 {
                     Symbol = b.Symbol,
                     Name = token.TokenName,
@@ -92,13 +93,14 @@ public class TreasuryService : ITreasuryService
             _contractProvider.ContractAddress(request.ChainId, SystemContractName.TreasuryContract);
         AssertHelper.NotEmpty(treasuryContractAddress, "Treasury contract address empty");
         
-        var explorerResult = await _explorerProvider.GetTransactionPagerAsync(request.ChainId,
-            new ExplorerTransactionRequest(request)
+        var explorerResult = await _explorerProvider.GetTransferListAsync(request.ChainId,
+            new ExplorerTransferRequest(request)
             {
                 Address = treasuryContractAddress
             });
         var items =
-            _objectMapper.Map<List<ExplorerTransactionResponse>, List<TreasuryTransactionDto>>(explorerResult.List);
+            _objectMapper.Map<List<ExplorerTransferResult>, List<TreasuryTransactionDto>>(explorerResult.List);
+        
         return new PagedResultDto<TreasuryTransactionDto>
         {
             TotalCount = explorerResult.Total,
