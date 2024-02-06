@@ -6,6 +6,6 @@ public class ExplorerPagerResult<T>
 {
     
     public long Total { get; set; }
-    public List<T> Data { get; set; }
+    public List<T> List { get; set; }
     
 }
