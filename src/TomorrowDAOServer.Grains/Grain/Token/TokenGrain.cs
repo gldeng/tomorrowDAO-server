@@ -1,12 +1,9 @@
-using AElf;
-using AElf.Client.Dto;
-using AElf.Client.MultiToken;
-using AElf.Client.Service;
+using AElf.Client;
+using AElf.Contracts.MultiToken;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Grains.Grain.ApplicationHandler;
 using TomorrowDAOServer.Grains.State.Token;
 using TomorrowDAOServer.Token;
-using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -14,7 +11,7 @@ using TomorrowDAOServer.Common.AElfSdk;
 using TomorrowDAOServer.Common.AElfSdk.Dtos;
 using TomorrowDAOServer.Options;
 using Volo.Abp.ObjectMapping;
-using TokenInfo = AElf.Client.MultiToken.TokenInfo;
+using TokenInfo = AElf.Contracts.MultiToken.TokenInfo;
 
 namespace TomorrowDAOServer.Grains.Grain.Token;
 

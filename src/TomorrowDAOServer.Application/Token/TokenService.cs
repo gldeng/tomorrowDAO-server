@@ -1,14 +1,17 @@
 using System;
 using System.Linq;
-using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Grains.Grain.Token;
 using TomorrowDAOServer.Token.Dto;
 using Microsoft.Extensions.Logging;
 using Orleans;
+using TomorrowDAOServer.Dtos;
+using TomorrowDAOServer.Dtos.Explorer;
+using TomorrowDAOServer.Providers;
 using Volo.Abp;
 using Volo.Abp.Auditing;
+using Volo.Abp.ObjectMapping;
 
 namespace TomorrowDAOServer.Token;
 
@@ -18,11 +21,15 @@ public class TokenService : TomorrowDAOServerAppService, ITokenService
 {
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<TokenService> _logger;
-
-    public TokenService(IClusterClient clusterClient, ILogger<TokenService> logger)
+    private readonly IExplorerProvider _explorerProvider;
+    private readonly IObjectMapper _objectMapper;
+    
+    public TokenService(IClusterClient clusterClient, ILogger<TokenService> logger, IExplorerProvider explorerProvider, IObjectMapper objectMapper)
     {
         _clusterClient = clusterClient;
         _logger = logger;
+        _explorerProvider = explorerProvider;
+        _objectMapper = objectMapper;
     }
 
     public async Task<TokenGrainDto> GetTokenAsync(string chainId, string symbol)
@@ -41,6 +48,15 @@ public class TokenService : TomorrowDAOServerAppService, ITokenService
         return grainResultDto.Data;
     }
 
+    public async Task<TokenDto> GetTokenByExplorerAsync(string chainId, string symbol)
+    {
+        var tokenInfo = await _explorerProvider.GetTokenInfoAsync(chainId, new ExplorerTokenInfoRequest()
+        {
+            Symbol = symbol
+        });
+        return _objectMapper.Map<ExplorerTokenInfoResponse, TokenDto>(tokenInfo);
+    }
+    
     public async Task<TokenPriceDto> GetTokenPriceAsync(string baseCoin, string quoteCoin)
     {
         AssertHelper.IsTrue(!baseCoin.IsNullOrEmpty() && !quoteCoin.IsNullOrEmpty(),

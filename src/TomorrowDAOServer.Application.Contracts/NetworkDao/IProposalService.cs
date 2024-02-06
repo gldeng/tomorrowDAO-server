@@ -8,6 +8,6 @@ public interface IProposalService
     
     Task<HomePageResponse> GetHomePageAsync(HomePageRequest proposalResult);
 
-
+    
     
 }

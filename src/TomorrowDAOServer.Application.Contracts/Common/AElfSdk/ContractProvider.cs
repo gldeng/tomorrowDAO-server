@@ -2,11 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf;
+using AElf.Client;
 using AElf.Client.Dto;
-using AElf.Client.Service;
 using AElf.Types;
 using Google.Protobuf;
-using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -28,6 +27,8 @@ public interface IContractProvider
         string contractName, string methodName,
         IMessage param);
 
+    string ContractAddress(string chainId, string contractName);
+    
     // Task SendTransactionAsync(string chainId, Transaction transaction);
 
     Task<T> CallTransactionAsync<T>(string chainId, Transaction transaction) where T : class;
@@ -77,7 +78,7 @@ public class ContractProvider : IContractProvider, ISingletonDependency
     }
 
     
-    private string ContractAddress(string chainId, string contractName)
+    public string ContractAddress(string chainId, string contractName)
     {
         _ = _chainOptions.ChainInfos.TryGetValue(chainId, out var chainInfo);
         var contractAddress = _contractAddress.GetOrAdd(chainId, _ => new Dictionary<string, string>());

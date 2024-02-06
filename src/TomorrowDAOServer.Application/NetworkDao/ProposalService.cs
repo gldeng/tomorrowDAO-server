@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AElf;
-using AElf.Client.Election;
+using AElf.Contracts.Election;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Caching.Distributed;
@@ -19,6 +19,7 @@ using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Providers;
 using Volo.Abp.Caching;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
 using AddressHelper = TomorrowDAOServer.Common.AddressHelper;
 
 namespace TomorrowDAOServer.NetworkDao;
@@ -30,17 +31,18 @@ public class ProposalService : IProposalService, ISingletonDependency
     private readonly IContractProvider _contractProvider;
     private readonly IOptionsMonitor<NetworkDaoOptions> _networkDaoOptions;
     private readonly IDistributedCache<string> _currentTermMiningRewardCache;
+    private readonly IObjectMapper _objectMapper;
 
     // VoteType => count
     private readonly IDistributedCache<Dictionary<string, int>> _voteCountCache;
 
-    // pubkey => CandidateDetail.Hex
+    // pubKey => CandidateDetail.Hex
     private readonly IDistributedCache<Dictionary<string, string>> _candidateDetailCache;
 
     public ProposalService(IExplorerProvider explorerProvider, ILogger<ProposalService> logger,
         IContractProvider contractProvider, IDistributedCache<string> currentTermMiningRewardCache,
         IDistributedCache<Dictionary<string, int>> voteCountCache, IOptionsMonitor<NetworkDaoOptions> networkDaoOptions,
-        IDistributedCache<Dictionary<string, string>> candidateDetailCache)
+        IDistributedCache<Dictionary<string, string>> candidateDetailCache, IObjectMapper objectMapper)
     {
         _explorerProvider = explorerProvider;
         _logger = logger;
@@ -49,20 +51,20 @@ public class ProposalService : IProposalService, ISingletonDependency
         _voteCountCache = voteCountCache;
         _networkDaoOptions = networkDaoOptions;
         _candidateDetailCache = candidateDetailCache;
+        _objectMapper = objectMapper;
     }
 
 
     public async Task<HomePageResponse> GetHomePageAsync(HomePageRequest homePageRequest)
     {
+        var currentTermMiningRewardTask = GetCurrentTermMiningRewardWithCacheAsync(homePageRequest.ChainId);
+        var candidateListTask = GetCandidateDetailListWithCacheAsync(homePageRequest.ChainId);
         var proposalTask = _explorerProvider.GetProposalPagerAsync(homePageRequest.ChainId,
-            new ProposalListRequest(1, 6)
+            new ExplorerProposalListRequest
             {
                 Address = homePageRequest.Address,
                 Search = homePageRequest.ProposalId
             });
-
-        var currentTermMiningRewardTask = GetCurrentTermMiningRewardWithCacheAsync(homePageRequest.ChainId);
-
         var voteCountTasks = new List<Task<Dictionary<string, int>>>
         {
             GetProposalVoteCountWithCacheAsync(homePageRequest.ChainId, ProposalType.Parliament),
@@ -70,8 +72,6 @@ public class ProposalService : IProposalService, ISingletonDependency
             GetProposalVoteCountWithCacheAsync(homePageRequest.ChainId, ProposalType.Referendum),
         };
 
-        var candidateListTask = GetCandidateDetailListWithCacheAsync(homePageRequest.ChainId);
-        
         // wait async result and get
         var proposal = (await proposalTask).Data.FirstOrDefault();
         var currentTermMiningReward = await currentTermMiningRewardTask;
@@ -97,7 +97,6 @@ public class ProposalService : IProposalService, ISingletonDependency
                 }
         };
     }
-
 
     private async Task<Dictionary<string, CandidateDetail>> GetCandidateDetailListWithCacheAsync(string chainId)
     {
@@ -155,7 +154,7 @@ public class ProposalService : IProposalService, ISingletonDependency
         while (true)
         {
             var pager = await _explorerProvider.GetProposalPagerAsync(chainId,
-                new ProposalListRequest(pageNum++, pageSize)
+                new ExplorerProposalListRequest(pageNum++, pageSize)
                 {
                     ProposalType = proposalType.ToString()
                 });
@@ -169,13 +168,13 @@ public class ProposalService : IProposalService, ISingletonDependency
             countDict[VoteType.Reject.ToString()] =
                 countDict.GetValueOrDefault(VoteType.Reject.ToString()) + rejectCount;
             countDict[VoteType.Abstain.ToString()] =
-                countDict.GetValueOrDefault(VoteType.Abstain.ToString()) + rejectCount;
+                countDict.GetValueOrDefault(VoteType.Abstain.ToString()) + abstainCount;
         }
 
         return countDict;
     }
 
-    /// List of CandidateDetail.Hex
+    /// pubKey => CandidateDetail.Hex
     private async Task<Dictionary<string, string>> GetAllCandidatesAsync(string chainId)
     {
         var (_, tx) = await _contractProvider.CreateCallTransactionAsync(chainId, SystemContractName.ElectionContract,

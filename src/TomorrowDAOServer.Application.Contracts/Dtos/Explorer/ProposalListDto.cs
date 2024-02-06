@@ -3,10 +3,12 @@ using TomorrowDAOServer.Common.Dtos;
 
 namespace TomorrowDAOServer.Dtos.Explorer;
 
-public class ProposalListRequest : ExplorerPagerRequest
+public class ExplorerProposalListRequest : ExplorerPagerRequest
 {
     
-    public ProposalListRequest(int pageNum, int pageSize) : base(pageNum, pageSize)
+    public ExplorerProposalListRequest() {}
+    
+    public ExplorerProposalListRequest(int pageNum, int pageSize) : base(pageNum, pageSize)
     {
     }
     
@@ -24,12 +26,12 @@ public class ProposalListRequest : ExplorerPagerRequest
     
 }
 
-public class ProposalResponse : ExplorerPagerResult<ProposalResult>
+public class ExplorerProposalResponse : ExplorerPagerResult<ExplorerProposalResult>
 {
     public int BpCount { get; set; }
 }
 
-public class ProposalResult
+public class ExplorerProposalResult
 {
     public int Abstentions { get; set; }
     public int Approvals { get; set; }
@@ -47,7 +49,6 @@ public class ProposalResult
     public string OrgAddress { get; set; }
     public OrganizationInfoDto OrganizationInfo { get; set; }
     public string ProposalType { get; set; }
-    public ReleaseThresholdDto ReleaseThreshold { get; set; }
     public string TxId { get; set; }
     public DateTime UpdatedAt { get; set; }
     public string ProposalId { get; set; }
@@ -71,8 +72,10 @@ public class ProposalResult
         public string OrgAddress { get; set; }
         public string OrgHash { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public ReleaseThresholdDto ReleaseThreshold { get; set; }
     }
 
+    
     public class LeftOrgInfo
     {
         public bool ProposerAuthorityRequired { get; set; }
@@ -82,7 +85,9 @@ public class ProposalResult
 
     public class ReleaseThresholdDto
     {
-        public string MinimalApprovalThreshold { get; set; }
-        public string MaximalRejectionThreshold { get; set; }
+        public int MinimalApprovalThreshold { get; set; }
+        public int MaximalRejectionThreshold { get; set; }
+        public int MaximalAbstentionThreshold { get; set; }
+        public int MinimalVoteThreshold { get; set; }
     }
 }

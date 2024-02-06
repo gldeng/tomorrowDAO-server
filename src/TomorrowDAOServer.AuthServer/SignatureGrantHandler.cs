@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using AElf;
+using AElf.Client;
 using AElf.Client.Dto;
 using AElf.Client.Service;
 using AElf.Types;
