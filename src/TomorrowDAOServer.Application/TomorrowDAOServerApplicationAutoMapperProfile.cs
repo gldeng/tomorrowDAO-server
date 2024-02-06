@@ -1,5 +1,7 @@
 using System;
 using AutoMapper;
+using TomorrowDAOServer.DAO;
+using TomorrowDAOServer.Dtos.DAO;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
@@ -20,6 +22,12 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<TokenGrainDto, TokenBasicInfo>()
             .ForMember(des => des.Name, opt
                 => opt.MapFrom(source => source.TokenName));
+        CreateMap<DAOIndex, DAODto>().ReverseMap();
+        CreateMap<DAOMetadata, DAOMetadataDto>().ReverseMap();
+        CreateMap<GovernanceSchemeThreshold, GovernanceSchemeThresholdDto>().ReverseMap();
+        CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
+        CreateMap<FileInfo, FileInfoDto>().ReverseMap();
+        CreateMap<PermissionInfo, PermissionInfoDto>().ReverseMap();
 
         CreateMap<ExplorerProposalResult, ProposalListResponse>()
             .ForMember(des => des.DeployTime, opt => opt.MapFrom(src => src.ReleasedTime.DefaultIfEmpty(src.ReleasedTime).ToUtcMilliSeconds()))
@@ -43,7 +51,6 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.MinimalVoteThreshold, opt => opt.MapFrom(src => src.OrganizationInfo.ReleaseThreshold.MinimalVoteThreshold))
             .ForMember(des => des.MaximalRejectionThreshold, opt => opt.MapFrom(src => src.OrganizationInfo.ReleaseThreshold.MaximalRejectionThreshold))
             .ForMember(des => des.MaximalAbstentionThreshold, opt => opt.MapFrom(src => src.OrganizationInfo.ReleaseThreshold.MaximalAbstentionThreshold))
-
             ;
     }
 }
