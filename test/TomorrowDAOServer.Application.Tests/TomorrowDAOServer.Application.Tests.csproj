@@ -25,9 +25,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Proposal\Provider\" />
-  </ItemGroup>
-
-
 </Project>
