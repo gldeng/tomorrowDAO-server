@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.DAO;
-using TomorrowDAOServer.Dtos.DAO;
+using TomorrowDAOServer.DAO.Dtos;
 using Volo.Abp;
 
 namespace TomorrowDAOServer.Controllers;
@@ -21,20 +21,20 @@ public class DAOController
     }
     
     [HttpGet("dao-info")]
-    public async Task<DAODto> GetDAOByIdAsync(GetDAORequestDto request)
+    public async Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input)
     {
-        return await _daoAppService.GetDAOByIdAsync(request);
+        return await _daoAppService.GetDAOByIdAsync(input);
     }
     
     [HttpGet("hc-member-list")]
-    public async Task<List<string>> GetMemberListAsync(GetDAORequestDto request)
+    public async Task<List<string>> GetMemberListAsync(GetDAOInfoInput input)
     {
-        return await _daoAppService.GetMemberListAsync(request);
+        return await _daoAppService.GetMemberListAsync(input);
     }
     
     [HttpGet("hc-candidate-list")]
-    public async Task<List<string>> GetCandidateListAsync(GetDAORequestDto request)
+    public async Task<List<string>> GetCandidateListAsync(GetDAOInfoInput input)
     {
-        return await _daoAppService.GetCandidateListAsync(request);
+        return await _daoAppService.GetCandidateListAsync(input);
     }
 }

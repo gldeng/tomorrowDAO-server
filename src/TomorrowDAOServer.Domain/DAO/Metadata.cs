@@ -3,7 +3,7 @@ using Nest;
 
 namespace TomorrowDAOServer.DAO;
 
-public class DAOMetadata
+public class Metadata
 {
     [Keyword] public string Name { get; set; }
     [Keyword] public string LogoUrl { get; set; }

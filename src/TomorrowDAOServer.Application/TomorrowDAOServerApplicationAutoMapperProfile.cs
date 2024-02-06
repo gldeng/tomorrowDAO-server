@@ -1,8 +1,8 @@
-using System;
 using AutoMapper;
 using TomorrowDAOServer.DAO;
-using TomorrowDAOServer.Dtos.DAO;
 using TomorrowDAOServer.Common;
+using TomorrowDAOServer.DAO.Dtos;
+using TomorrowDAOServer.DAO.Indexer;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Entities;
@@ -22,10 +22,13 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<TokenGrainDto, TokenBasicInfo>()
             .ForMember(des => des.Name, opt
                 => opt.MapFrom(source => source.TokenName));
-        CreateMap<DAOIndex, DAODto>().ReverseMap();
-        CreateMap<DAOMetadata, DAOMetadataDto>().ReverseMap();
+        CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
+        CreateMap<IndexerDAOInfo, DAOIndex>().ReverseMap();
+        CreateMap<Metadata, MetadataDto>().ReverseMap();
+        CreateMap<IndexerMetadata, Metadata>().ReverseMap();
         CreateMap<GovernanceSchemeThreshold, GovernanceSchemeThresholdDto>().ReverseMap();
         CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
+        CreateMap<IndexerHighCouncilConfig, HighCouncilConfig>().ReverseMap();
         CreateMap<FileInfo, FileInfoDto>().ReverseMap();
         CreateMap<PermissionInfo, PermissionInfoDto>().ReverseMap();
 

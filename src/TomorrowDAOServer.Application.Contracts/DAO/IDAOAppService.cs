@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TomorrowDAOServer.Dtos.DAO;
+using TomorrowDAOServer.DAO.Dtos;
 
 namespace TomorrowDAOServer.DAO;
 
 public interface IDAOAppService
 {
-    Task<DAODto> GetDAOByIdAsync(GetDAORequestDto request);
-    Task<List<string>> GetMemberListAsync(GetDAORequestDto request);
-    Task<List<string>> GetCandidateListAsync(GetDAORequestDto request);
+    Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input);
+    Task<List<string>> GetMemberListAsync(GetDAOInfoInput input);
+    Task<List<string>> GetCandidateListAsync(GetDAOInfoInput input);
 }
