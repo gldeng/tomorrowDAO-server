@@ -63,6 +63,7 @@ namespace TomorrowDAOServer
             Configure<ChainOptions>(configuration.GetSection("ChainOptions"));
             Configure<TokenInfoOptions>(configuration.GetSection("TokenInfoOptions"));
             Configure<AssetsInfoOptions>(configuration.GetSection("AssetsInfoOptions"));
+            Configure<ProposalTagOptions>(configuration.GetSection("ProposalTagOptions"));
             Configure<ExplorerOptions>(configuration.GetSection("Explorer"));
     
             ConfigureConventionalControllers();

@@ -1,5 +1,4 @@
 using AutoMapper;
-using MongoDB.Bson;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.DAO.Dtos;
@@ -7,6 +6,8 @@ using TomorrowDAOServer.DAO.Indexer;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Proposal.Dto;
+using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Token;
 using TomorrowDAOServer.Token.Index;
 using TomorrowDAOServer.User.Dtos;
@@ -24,6 +25,8 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.Name, opt
                 => opt.MapFrom(source => source.TokenName))
             .ReverseMap();
+        CreateMap<IndexerProposal, ProposalIndex>();
+        CreateMap<ProposalIndex, ProposalDto>();
         
         CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
         CreateMap<IndexerDAOInfo, DAOIndex>().ReverseMap();

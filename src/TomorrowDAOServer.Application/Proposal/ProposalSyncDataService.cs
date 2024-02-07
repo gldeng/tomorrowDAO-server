@@ -2,47 +2,155 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Chains;
 using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
+using TomorrowDAOServer.Options;
+using TomorrowDAOServer.Organization.Provider;
+using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Proposal.Provider;
+using TomorrowDAOServer.Vote.Provider;
+using Volo.Abp.Caching;
+using Volo.Abp.ObjectMapping;
 
 namespace TomorrowDAOServer.Proposal;
 
 public class ProposalSyncDataService : ScheduleSyncDataService
 {
     private readonly ILogger<ScheduleSyncDataService> _logger;
+    private readonly IObjectMapper _objectMapper;
     private readonly IProposalProvider _proposalProvider;
-    private readonly INESTRepository<ProposalIndex, string> _proposalIndexRepository;
+    private readonly IVoteProvider _voteProvider;
+    private readonly IOrganizationInfoProvider _organizationInfoProvider;
     private readonly IChainAppService _chainAppService;
+    private readonly IDistributedCache<List<string>> _distributedCache;
+    private readonly IOptionsMonitor<SyncDataOptions> _syncDataOptionsMonitor;
+    private readonly IProposalAssistService _proposalAssistService;
 
     public ProposalSyncDataService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
         IProposalProvider proposalProvider,
         IChainAppService chainAppService,
-        INESTRepository<ProposalIndex, string> proposalIndexRepository)
+        IDistributedCache<List<string>> distributedCache,
+        IOptionsMonitor<SyncDataOptions> syncDataOptionsMonitor, 
+        IObjectMapper objectMapper, IVoteProvider voteProvider, 
+        IOrganizationInfoProvider organizationInfoProvider, 
+        IProposalAssistService proposalAssistService)
         : base(logger, graphQlProvider)
     {
         _logger = logger;
         _proposalProvider = proposalProvider;
         _chainAppService = chainAppService;
-        _proposalIndexRepository = proposalIndexRepository;
+        _distributedCache = distributedCache;
+        _syncDataOptionsMonitor = syncDataOptionsMonitor;
+        _objectMapper = objectMapper;
+        _voteProvider = voteProvider;
+        _organizationInfoProvider = organizationInfoProvider;
+        _proposalAssistService = proposalAssistService;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
     {
         var skipCount = 0;
         var blockHeight = -1L;
-        List<ProposalIndex> queryList = new List<ProposalIndex>();
+        List<IndexerProposal> queryList;
         do
         {
-            //TODO
+            queryList = await _proposalProvider.GetSyncProposalDataAsync(skipCount, chainId, lastEndHeight, 0);
+            _logger.LogInformation(
+                "SyncProposalData queryList skipCount {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
+                skipCount, lastEndHeight, newIndexHeight, queryList?.Count);
+            if (queryList.IsNullOrEmpty())
+            {
+                break;
+            }
+            List<string> proposalList = await _distributedCache.GetAsync(GetProposalSyncHeightCacheKey(lastEndHeight));
+            var filterProposals = new List<IndexerProposal>();
+            foreach (var info in queryList)
+            {
+                if (proposalList != null && proposalList.Contains(info.ProposalId))
+                {
+                    continue;
+                }
+                blockHeight = Math.Max(blockHeight, info.BlockHeight);
+                filterProposals.Add(info);
+            }
+            
+            var resultList = await ConvertProposalList(chainId, filterProposals);
+            
+            await _proposalProvider.BulkAddOrUpdateAsync(resultList);
+            
+            proposalList = queryList.Where(obj => obj.BlockHeight == lastEndHeight)
+                .Select(obj => obj.ProposalId)
+                .ToList();
+            
+            await _distributedCache.SetAsync(GetProposalSyncHeightCacheKey(lastEndHeight), proposalList,
+                new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpiration =
+                        DateTimeOffset.Now.AddSeconds(_syncDataOptionsMonitor.CurrentValue.CacheSeconds)
+                });
+
+            skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 
         return blockHeight;
+    }
+
+    private async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> indexers)
+    {
+        //get server index before
+        var preProposalDict = await _proposalProvider
+            .GetProposalListByIds(indexers.Select(p => p.ProposalId).ToList());
+        var voteFinishedProposalIds = indexers.Where(index => index.VoteFinished)
+            .Select(index => index.ProposalId).ToList();
+        var voteDict = await _voteProvider.GetVoteInfosMemory(chainId, voteFinishedProposalIds);
+        var organizationAddressList = indexers.Where(index => index.VoteFinished)
+            .Select(index => index.OrganizationAddress).ToList();
+        var organizationInfoDict = await _organizationInfoProvider
+            .GetOrganizationInfosMemory(chainId, organizationAddressList);
+        return indexers.Select(indexer =>
+        {
+            var proposal = _objectMapper.Map<IndexerProposal, ProposalIndex>(indexer);
+            if (proposal.ProposalStatus == ProposalStatus.Executed)
+            {
+                return proposal;
+            }
+
+            if (preProposalDict.TryGetValue(proposal.ProposalId, out var preProposal) && preProposal.IsFinalStatus())
+            {
+                proposal.ProposalStatus = preProposal.ProposalStatus;
+            }
+            else if (preProposal?.ProposalStatus == ProposalStatus.Approved && proposal.ExpiredTime <= DateTime.UtcNow)
+            {
+                proposal.ProposalStatus = ProposalStatus.Expired;
+            }
+            else if (!proposal.IsFinalStatus())
+            {
+                if (proposal.EndTime > DateTime.UtcNow)
+                {
+                    proposal.ProposalStatus = ProposalStatus.Active;
+                }
+                else if (proposal.VoteFinished
+                         && voteDict.TryGetValue(proposal.ProposalId, out var voteInfo)
+                         && organizationInfoDict.TryGetValue(proposal.OrganizationAddress, out var organizationInfo))
+                {
+                    _logger.LogInformation(
+                        "[VoteFinishedStatus] start proposalId:{proposalId} proposalStatus:{proposalStatus}",
+                        proposal.ProposalId, proposal.ProposalStatus);
+                    proposal.ProposalStatus = _proposalAssistService.ToProposalResult(proposal, voteInfo, organizationInfo);
+                    _logger.LogInformation(
+                        "[VoteFinishedStatus] end proposalId:{proposalId} proposalStatus:{proposalStatus}",
+                        proposal.ProposalId, proposal.ProposalStatus);
+                }
+            }
+
+            return proposal;
+        }).ToList();
     }
 
     public override async Task<List<string>> GetChainIdsAsync()
@@ -55,5 +163,10 @@ public class ProposalSyncDataService : ScheduleSyncDataService
     public override WorkerBusinessType GetBusinessType()
     {
         return WorkerBusinessType.ProposalSync;
+    }
+
+    private string GetProposalSyncHeightCacheKey(long blockHeight)
+    {
+        return $"ProposalSync:{blockHeight}";
     }
 }
