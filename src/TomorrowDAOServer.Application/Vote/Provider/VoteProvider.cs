@@ -11,7 +11,7 @@ namespace TomorrowDAOServer.Vote.Provider;
 
 public interface IVoteProvider
 {
-    Task<IndexerVote> GetVoteInfoMemory(string chainId, string votingItemId);
+    Task<Dictionary<string, IndexerVote>> GetVoteInfosMemory(string chainId, List<string> votingItemIds);
     
     Task<Dictionary<string, IndexerVote>> GetVoteInfos(string chainId, List<string> votingItemIds);
 }
@@ -25,13 +25,18 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
         _graphQlHelper = graphQlHelper;
     }
 
-    public async Task<IndexerVote> GetVoteInfoMemory(string chainId, string votingItemId)
+    public async Task<Dictionary<string, IndexerVote>> GetVoteInfosMemory(string chainId, List<string> votingItemIds)
     {
-        var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVote>>(new GraphQLRequest
+        if (votingItemIds.IsNullOrEmpty())
+        {
+            return new();
+        }
+
+        var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(new GraphQLRequest
         {
             Query = @"
-			    query($chainId: String!,$votingItemId: String!) {
-                    data:getVoteInfoMemory(input:{chainId:$chainId,votingItemId:$votingItemId}) {
+			    query($chainId: String!,$votingItemIds: [votingItemId!]!) {
+                    dataList:getVoteInfosMemory(input:{chainId:$chainId,votingItemIds:$votingItemIds}) {
                         votingItemId,
                         voteSchemeId,
                         daoId,
@@ -44,14 +49,20 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                   }",
             Variables = new
             {
-                chainId, votingItemId
+                chainId, votingItemIds
             }
         });
-        return result.Data?.Data ?? new IndexerVote();
+        var voteInfos = result.Data?.Data ?? new IndexerVotes();
+        return voteInfos.DataList.ToDictionary(vote => vote.VotingItemId, vote => vote);
     }
 
     public async Task<Dictionary<string, IndexerVote>> GetVoteInfos(string chainId, List<string> votingItemIds)
     {
+        if (votingItemIds.IsNullOrEmpty())
+        {
+            return new();
+        }
+        
         var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(new GraphQLRequest
         {
             Query = @"

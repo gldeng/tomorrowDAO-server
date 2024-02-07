@@ -10,8 +10,10 @@ using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
+using TomorrowDAOServer.Organization.Provider;
 using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Proposal.Provider;
+using TomorrowDAOServer.Vote.Provider;
 using Volo.Abp.Caching;
 using Volo.Abp.ObjectMapping;
 
@@ -22,9 +24,12 @@ public class ProposalSyncDataService : ScheduleSyncDataService
     private readonly ILogger<ScheduleSyncDataService> _logger;
     private readonly IObjectMapper _objectMapper;
     private readonly IProposalProvider _proposalProvider;
+    private readonly IVoteProvider _voteProvider;
+    private readonly IOrganizationInfoProvider _organizationInfoProvider;
     private readonly IChainAppService _chainAppService;
     private readonly IDistributedCache<List<string>> _distributedCache;
     private readonly IOptionsMonitor<SyncDataOptions> _syncDataOptionsMonitor;
+    private readonly IProposalAssistService _proposalAssistService;
 
     public ProposalSyncDataService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
@@ -32,7 +37,9 @@ public class ProposalSyncDataService : ScheduleSyncDataService
         IChainAppService chainAppService,
         IDistributedCache<List<string>> distributedCache,
         IOptionsMonitor<SyncDataOptions> syncDataOptionsMonitor, 
-        IObjectMapper objectMapper)
+        IObjectMapper objectMapper, IVoteProvider voteProvider, 
+        IOrganizationInfoProvider organizationInfoProvider, 
+        IProposalAssistService proposalAssistService)
         : base(logger, graphQlProvider)
     {
         _logger = logger;
@@ -41,6 +48,9 @@ public class ProposalSyncDataService : ScheduleSyncDataService
         _distributedCache = distributedCache;
         _syncDataOptionsMonitor = syncDataOptionsMonitor;
         _objectMapper = objectMapper;
+        _voteProvider = voteProvider;
+        _organizationInfoProvider = organizationInfoProvider;
+        _proposalAssistService = proposalAssistService;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
@@ -69,11 +79,8 @@ public class ProposalSyncDataService : ScheduleSyncDataService
                 blockHeight = Math.Max(blockHeight, info.BlockHeight);
                 filterProposals.Add(info);
             }
-            //get server index
-            var proposalDict = await _proposalProvider
-                .GetProposalListByIds(filterProposals.Select(p => p.ProposalId).ToList());
-
-            var resultList = ToProposalList(proposalDict, filterProposals);
+            
+            var resultList = await ConvertProposalList(chainId, filterProposals);
             
             await _proposalProvider.BulkAddOrUpdateAsync(resultList);
             
@@ -94,31 +101,54 @@ public class ProposalSyncDataService : ScheduleSyncDataService
         return blockHeight;
     }
 
-    private List<ProposalIndex> ToProposalList(Dictionary<string, ProposalIndex> proposalDict, List<IndexerProposal> indexers)
+    private async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> indexers)
     {
+        //get server index before
+        var preProposalDict = await _proposalProvider
+            .GetProposalListByIds(indexers.Select(p => p.ProposalId).ToList());
+        var voteFinishedProposalIds = indexers.Where(index => index.VoteFinished)
+            .Select(index => index.ProposalId).ToList();
+        var voteDict = await _voteProvider.GetVoteInfosMemory(chainId, voteFinishedProposalIds);
+        var organizationAddressList = indexers.Where(index => index.VoteFinished)
+            .Select(index => index.OrganizationAddress).ToList();
+        var organizationInfoDict = await _organizationInfoProvider
+            .GetOrganizationInfosMemory(chainId, organizationAddressList);
         return indexers.Select(indexer =>
         {
             var proposal = _objectMapper.Map<IndexerProposal, ProposalIndex>(indexer);
-
-            if (indexer.ProposalStatus == ProposalStatus.Executed)
+            if (proposal.ProposalStatus == ProposalStatus.Executed)
             {
                 return proposal;
             }
 
-            if (proposalDict.TryGetValue(proposal.ProposalId, out var preProposal))
+            if (preProposalDict.TryGetValue(proposal.ProposalId, out var preProposal) && preProposal.IsFinalStatus())
             {
-                if (preProposal.IsFinalStatus())
+                proposal.ProposalStatus = preProposal.ProposalStatus;
+            }
+            else if (preProposal?.ProposalStatus == ProposalStatus.Approved && proposal.ExpiredTime <= DateTime.UtcNow)
+            {
+                proposal.ProposalStatus = ProposalStatus.Expired;
+            }
+            else if (!proposal.IsFinalStatus())
+            {
+                if (proposal.EndTime > DateTime.UtcNow)
                 {
-                    proposal.ProposalStatus = preProposal.ProposalStatus;
+                    proposal.ProposalStatus = ProposalStatus.Active;
                 }
-                else if (preProposal.ProposalStatus == ProposalStatus.Approved &&
-                         proposal.ExpiredTime <= DateTime.UtcNow)
+                else if (proposal.VoteFinished
+                         && voteDict.TryGetValue(proposal.ProposalId, out var voteInfo)
+                         && organizationInfoDict.TryGetValue(proposal.OrganizationAddress, out var organizationInfo))
                 {
-                    proposal.ProposalStatus = ProposalStatus.Expired;
+                    _logger.LogInformation(
+                        "[VoteFinishedStatus] start proposalId:{proposalId} proposalStatus:{proposalStatus}",
+                        proposal.ProposalId, proposal.ProposalStatus);
+                    proposal.ProposalStatus = _proposalAssistService.ToProposalResult(proposal, voteInfo, organizationInfo);
+                    _logger.LogInformation(
+                        "[VoteFinishedStatus] end proposalId:{proposalId} proposalStatus:{proposalStatus}",
+                        proposal.ProposalId, proposal.ProposalStatus);
                 }
             }
 
-            proposal.OfProposalStatus();
             return proposal;
         }).ToList();
     }

@@ -19,13 +19,13 @@ public interface IProposalProvider
 {
     Task<List<IndexerProposal>> GetSyncProposalDataAsync(int skipCount, string chainId, long startBlockHeight,
         long endBlockHeight);
-    
+
     public Task<Tuple<long, List<ProposalIndex>>> GetProposalListAsync(QueryProposalListInput input);
-    
+
     public Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(List<string> ids);
 
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
-    
+
     public Task<List<ProposalIndex>> GetExpiredProposalListAsync(List<ProposalStatus> statusList);
 }
 
@@ -52,11 +52,9 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             {
                 id,chainId,blockHeight,blockHash
                 daoId,proposalId,proposalTitle,proposalType,governanceType,proposalStatus,startTime,endTime,expiredTime,
-                organizationAddress,releaseAddress,proposalDescription,transaction{toAddress,contractMethodName,params{key,value}},
+                organizationAddress,executeAddress,proposalDescription,transaction{toAddress,contractMethodName,params{key,value}},
                 governanceSchemeId,voteSchemeId,executeByHighCouncil,deployTime,
-                minimalRequiredThreshold,minimalVoteThreshold,minimalApproveThreshold,minimalRejectionThreshold,minimalAbstentionThreshold,
-                acceptedCurrency,approveCounts,rejectCounts,abstainCounts,votesAmount,
-                voterCount,organizationMemberCount  
+                minimalRequiredThreshold,minimalVoteThreshold,minimalApproveThreshold,minimalRejectionThreshold,minimalAbstentionThreshold
             }}",
             Variables = new
             {
@@ -132,7 +130,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         var tuple = await _proposalIndexRepository.GetListAsync(Filter);
         return tuple.Item2;
     }
-
+    
     private static void AssemblyBaseQuery(QueryProposalListInput input,
         List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>> mustQuery)
     {

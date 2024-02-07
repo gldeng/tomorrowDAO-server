@@ -25,4 +25,6 @@ public class IndexerVote : IndexerCommonResult<IndexerVote>
     public int AbstainCounts { get; set; }
 
     public int VotesAmount { get; set; }
+    
+    public int VoterCount { get; set; }
 }
