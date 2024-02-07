@@ -44,11 +44,4 @@
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
     </ItemGroup>
-
-    <ItemGroup>
-      <Reference Include="TomorrowDAOServer.Domain.Shared">
-        <HintPath>..\TomorrowDAOServer.Silo\bin\Debug\net7.0\TomorrowDAOServer.Domain.Shared.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-
 </Project>

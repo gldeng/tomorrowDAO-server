@@ -33,13 +33,4 @@
     <PackageReference Include="GraphQL.Client" Version="5.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Etos\" />
-    <Folder Include="Organization\Dto\" />
-    <Folder Include="Permissions\" />
-    <Folder Include="Project\Dto\" />
-    <Folder Include="Vote\Dto\" />
-  </ItemGroup>
-
 </Project>
