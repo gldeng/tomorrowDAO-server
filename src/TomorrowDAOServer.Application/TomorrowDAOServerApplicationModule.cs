@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using TomorrowDAOServer.Grains;
 using TomorrowDAOServer.Proposal;
+using TomorrowDAOServer.Options;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
@@ -27,6 +28,8 @@ public class TomorrowDAOServerApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
+        Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TomorrowDAOServerApplicationModule>(); });
         context.Services.AddTransient<IScheduleSyncDataService, ProposalSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, ProposalExpiredService>();
