@@ -30,8 +30,6 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<Metadata, MetadataDto>().ReverseMap();
         CreateMap<IndexerMetadata, Metadata>().ReverseMap();
         
-        // CreateMap<DAOIndex, DAODto>().ReverseMap();
-        // CreateMap<DAOMetadata, DAOMetadataDto>().ReverseMap();
         CreateMap<GovernanceSchemeThreshold, GovernanceSchemeThresholdDto>().ReverseMap();
         CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
         CreateMap<IndexerHighCouncilConfig, HighCouncilConfig>().ReverseMap();
