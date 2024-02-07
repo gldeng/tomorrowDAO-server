@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.NetworkDao;
 using Volo.Abp;
@@ -37,7 +36,7 @@ public class NetworkDaoController
     [HttpGet("proposal/list")]
     public async Task<PagedResultDto<ProposalListResponse>> ProposalList(ProposalListRequest request)
     {
-        throw new NotImplementedException();
+        return await _proposalService.GetProposalList(request);
     }
     
     [HttpGet("treasury/balance")]
@@ -47,9 +46,9 @@ public class NetworkDaoController
     }
 
     [HttpGet("treasury/transactions-records")]
-    public async Task<HomePageResponse> TreasuryTransactionRecords(HomePageRequest homePageRequest)
+    public async Task<PagedResultDto<TreasuryTransactionDto>> TreasuryTransactionRecords(TreasuryTransactionRequest request)
     {
-        throw new NotImplementedException();
+        return await _treasuryService.GetTreasuryTransactionAsync(request);
     }
 
 }

@@ -19,6 +19,8 @@ public class ProposalListRequest : PagedResultRequestDto
     public string GovernanceType { get; set; }
     public string ProposalStatus { get; set; }
     public string Content { get; set; }
+    
+    public string Address { get; set; }
 }
 
 

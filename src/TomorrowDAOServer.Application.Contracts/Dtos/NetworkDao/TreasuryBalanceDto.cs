@@ -18,15 +18,8 @@ public class TreasuryBalanceResponse
     {
         public string TotalCount { get; set; }
         public string DollarValue { get; set; }
-        public TokenItem Token { get; set; }
+        public TokenDto Token { get; set; }
     }
 
-    public class TokenItem
-    {
-        public string Name { get; set; }
-        public string Symbol { get; set; }
-        public int Decimals { get; set; }
-        public string ImageUrl { get; set; }
-    }
     
 }

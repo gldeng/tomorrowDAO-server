@@ -17,6 +17,7 @@ using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Providers;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Caching;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
@@ -54,7 +55,36 @@ public class ProposalService : IProposalService, ISingletonDependency
         _objectMapper = objectMapper;
     }
 
+    /// <summary>
+    ///     
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async Task<PagedResultDto<ProposalListResponse>> GetProposalList(ProposalListRequest request)
+    {
 
+        var explorerResp = await _explorerProvider.GetProposalPagerAsync(request.ChainId, new ExplorerProposalListRequest
+        {
+            Status = request.ProposalStatus,
+            ProposalType = request.GovernanceType,
+            Search = request.Content,
+            Address = request.Address
+        });
+
+        var items = _objectMapper.Map<List<ExplorerProposalResult>, List<ProposalListResponse>>(explorerResp.List);
+        return new PagedResultDto<ProposalListResponse>
+        {
+            TotalCount = explorerResp.Total,
+            Items = items
+        };
+    }
+    
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="homePageRequest"></param>
+    /// <returns></returns>
     public async Task<HomePageResponse> GetHomePageAsync(HomePageRequest homePageRequest)
     {
         var currentTermMiningRewardTask = GetCurrentTermMiningRewardWithCacheAsync(homePageRequest.ChainId);
@@ -73,7 +103,7 @@ public class ProposalService : IProposalService, ISingletonDependency
         };
 
         // wait async result and get
-        var proposal = (await proposalTask).Data.FirstOrDefault();
+        var proposal = (await proposalTask).List.FirstOrDefault();
         var currentTermMiningReward = await currentTermMiningRewardTask;
         var voteCount = (await Task.WhenAll(voteCountTasks)).SelectMany(k => k.Values).Sum();
         var candidateList = (await candidateListTask).Values;
@@ -159,10 +189,10 @@ public class ProposalService : IProposalService, ISingletonDependency
                     ProposalType = proposalType.ToString()
                 });
 
-            if (pager.Data.IsNullOrEmpty() || pager.Data.Count < pageSize) break;
-            var approveCount = pager.Data.Sum(p => p.Approvals);
-            var rejectCount = pager.Data.Sum(p => p.Rejections);
-            var abstainCount = pager.Data.Sum(p => p.Abstentions);
+            if (pager.List.IsNullOrEmpty() || pager.List.Count < pageSize) break;
+            var approveCount = pager.List.Sum(p => p.Approvals);
+            var rejectCount = pager.List.Sum(p => p.Rejections);
+            var abstainCount = pager.List.Sum(p => p.Abstentions);
             countDict[VoteType.Approve.ToString()] =
                 countDict.GetValueOrDefault(VoteType.Approve.ToString()) + approveCount;
             countDict[VoteType.Reject.ToString()] =
