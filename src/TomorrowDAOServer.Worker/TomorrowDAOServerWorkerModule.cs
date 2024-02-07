@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TomorrowDAOServer.Worker.Jobs;
 using Volo.Abp;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Modularity;
@@ -14,6 +15,7 @@ namespace TomorrowDAOServer.Worker
         public override void OnApplicationInitialization(ApplicationInitializationContext context)
         {
             var backgroundWorkerManger = context.ServiceProvider.GetRequiredService<IBackgroundWorkerManager>();
+            backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<DAOSyncWorker>());
         }
     }
 }

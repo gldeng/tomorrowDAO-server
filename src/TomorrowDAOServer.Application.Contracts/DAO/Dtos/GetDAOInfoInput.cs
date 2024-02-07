@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TomorrowDAOServer.Dtos.DAO;
+namespace TomorrowDAOServer.DAO.Dtos;
 
-public class GetDAORequestDto
+public class GetDAOInfoInput
 {
     [Required]
     public string ChainId { get; set; }

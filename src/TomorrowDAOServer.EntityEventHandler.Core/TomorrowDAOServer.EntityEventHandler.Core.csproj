@@ -19,13 +19,5 @@
         <ProjectReference Include="..\TomorrowDAOServer.Domain\TomorrowDAOServer.Domain.csproj" />
         <ProjectReference Include="..\TomorrowDAOServer.Application.Contracts\TomorrowDAOServer.Application.Contracts.csproj" />
     </ItemGroup>
-    
-    <ItemGroup>
-      <Folder Include="Background\BackgroundJobs\BackgroundJobDescriptions\" />
-      <Folder Include="Background\Etos\" />
-      <Folder Include="Handler\" />
-    </ItemGroup>
-
-   
 
 </Project>
