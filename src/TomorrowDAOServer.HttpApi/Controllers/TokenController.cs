@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Token;
 using TomorrowDAOServer.Token.Dto;
 using TomorrowDAOServer.User;
@@ -28,6 +29,12 @@ public class TokenController
     }
 
     [HttpGet]
+    public async Task<TokenDto> GetTokenAsync(GetTokenInput input)
+    {
+        return await _tokenService.GetTokenByExplorerAsync(input.ChainId, input.Symbol);
+    }
+
+    [HttpGet]
     [Route("list")]
     [Authorize]
     public async Task<List<UserTokenDto>> GetTokenAsync(GetUserTokenInput input)
@@ -42,4 +49,5 @@ public class TokenController
     {
         return await _tokenService.GetTokenPriceAsync(input.BaseCoin, input.QuoteCoin);
     }
+    
 }

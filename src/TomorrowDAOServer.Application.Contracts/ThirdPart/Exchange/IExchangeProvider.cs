@@ -7,6 +7,8 @@ public interface IExchangeProvider
 {
     public ExchangeProviderName Name();
 
+    public Task<TokenExchangeDto> LatestWithCacheAsync(string fromSymbol, string toSymbol);
+    
     public Task<TokenExchangeDto> LatestAsync(string fromSymbol, string toSymbol);
 
     public Task<TokenExchangeDto> HistoryAsync(string fromSymbol, string toSymbol, long timestamp);

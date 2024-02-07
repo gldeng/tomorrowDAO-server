@@ -8,6 +8,7 @@ using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Token;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Volo.Abp.Caching;
 
 namespace TomorrowDAOServer.ThirdPart.Exchange;
 
@@ -17,12 +18,13 @@ public static class OkxApi
     public static ApiInfo KLineHistory = new(HttpMethod.Get, "/api/v5/market/history-index-candles");
 }
 
-public class OkxProvider : IExchangeProvider
+public class OkxProvider : AbstractExchangeProvider
 {
     private readonly IOptionsMonitor<ExchangeOptions> _exchangeOptions;
     private readonly IHttpProvider _httpProvider;
 
-    public OkxProvider(IOptionsMonitor<ExchangeOptions> exchangeOptions, IHttpProvider httpProvider)
+    public OkxProvider(IOptionsMonitor<ExchangeOptions> exchangeOptions, IHttpProvider httpProvider,
+        IDistributedCache<TokenExchangeDto> exchangeCache) : base(exchangeCache, exchangeOptions)
     {
         _exchangeOptions = exchangeOptions;
         _httpProvider = httpProvider;
@@ -34,12 +36,12 @@ public class OkxProvider : IExchangeProvider
     }
 
 
-    public ExchangeProviderName Name()
+    public override ExchangeProviderName Name()
     {
         return ExchangeProviderName.Okx;
     }
 
-    public async Task<TokenExchangeDto> LatestAsync(string fromSymbol, string toSymbol)
+    public override async Task<TokenExchangeDto> LatestAsync(string fromSymbol, string toSymbol)
     {
         // The first k-line after one minute of inquiry returns the latest price.
         var req = new OkxKLineReq()
@@ -71,7 +73,7 @@ public class OkxProvider : IExchangeProvider
         };
     }
 
-    public async Task<TokenExchangeDto> HistoryAsync(string fromSymbol, string toSymbol, long timestamp)
+    public override async Task<TokenExchangeDto> HistoryAsync(string fromSymbol, string toSymbol, long timestamp)
     {
         // The first k-line after one minute of inquiry returns the latest price.
         var req = new OkxKLineReq()

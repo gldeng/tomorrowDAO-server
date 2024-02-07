@@ -51,7 +51,6 @@ public class TomorrowDAOServerEntityEventHandlerModule : AbpModule
         ConfigureTokenCleanupService();
         var configuration = context.Services.GetConfiguration();
         Configure<WorkerOptions>(configuration);
-        Configure<ApiOptions>(configuration.GetSection("Api"));
         Configure<TmrwdaoOption>(configuration.GetSection("TmrwdaoOption"));
         ConfigureHangfire(context, configuration);
         // Configure<AbpRabbitMqBackgroundJobOptions>(configuration.GetSection("AbpRabbitMqBackgroundJob"));

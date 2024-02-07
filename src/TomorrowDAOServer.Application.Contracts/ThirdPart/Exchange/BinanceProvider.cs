@@ -22,7 +22,7 @@ public static class BinanceApi
     public static ApiInfo KLine = new(HttpMethod.Get, "/api/v3/klines");
 }
 
-public class BinanceProvider : IExchangeProvider
+public class BinanceProvider : AbstractExchangeProvider
 {
     private readonly IOptionsMonitor<ExchangeOptions> _exchangeOptions;
     private readonly IHttpProvider _httpProvider;
@@ -30,7 +30,8 @@ public class BinanceProvider : IExchangeProvider
     private readonly ILogger<BinanceProvider> _logger;
 
     public BinanceProvider(IOptionsMonitor<ExchangeOptions> exchangeOptions, IHttpProvider httpProvider,
-        IDistributedCache<string> blocked, ILogger<BinanceProvider> logger)
+        IDistributedCache<string> blocked, ILogger<BinanceProvider> logger,
+        IDistributedCache<TokenExchangeDto> exchangeCache) : base(exchangeCache, exchangeOptions)
     {
         _exchangeOptions = exchangeOptions;
         _httpProvider = httpProvider;
@@ -44,12 +45,12 @@ public class BinanceProvider : IExchangeProvider
         return _exchangeOptions.CurrentValue.Binance;
     }
 
-    public ExchangeProviderName Name()
+    public override ExchangeProviderName Name()
     {
         return ExchangeProviderName.Binance;
     }
 
-    public async Task<TokenExchangeDto> LatestAsync(string fromToken, string toToken)
+    public override async Task<TokenExchangeDto> LatestAsync(string fromToken, string toToken)
     {
         return await BlockDetectAsync(async () =>
         {
@@ -69,7 +70,7 @@ public class BinanceProvider : IExchangeProvider
     }
 
 
-    public async Task<TokenExchangeDto> HistoryAsync(string fromToken, string toToken, long timestamp)
+    public override async Task<TokenExchangeDto> HistoryAsync(string fromToken, string toToken, long timestamp)
     {
         return await BlockDetectAsync(async () =>
         {
@@ -158,7 +159,7 @@ public class KLineItem
     public static KLineItem FromArray(List<string> data)
     {
         AssertHelper.NotEmpty(data, "Binance k-line data empty");
-        AssertHelper.IsTrue(data.Count >= 7, "Iinvalic Binance k-line data: {Data}", string.Join(",", data));
+        AssertHelper.IsTrue(data.Count >= 7, "Iinvalic Binance k-line data: {List}", string.Join(",", data));
 
         return new KLineItem
         {
