@@ -5,7 +5,7 @@ using TomorrowDAOServer.Proposal.Dto;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 
-namespace TomorrowDAOServer.Controllers.Proposal;
+namespace TomorrowDAOServer.Controllers;
 
 [RemoteService]
 [Area("app")]

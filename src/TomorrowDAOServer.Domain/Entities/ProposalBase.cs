@@ -11,7 +11,8 @@ public class ProposalBase : BlockInfoBase
 {
     [Keyword] public override string Id { get; set; }
 
-    [Keyword] public string DaoId { get; set; }
+    [PropertyName("DAOId")]
+    [Keyword] public string DAOId { get; set; }
 
     [Keyword] public string ProposalId { get; set; }
 
@@ -48,6 +49,8 @@ public class ProposalBase : BlockInfoBase
 
     public DateTime DeployTime { get; set; }
 
+    public DateTime? ExecuteTime { get; set; }
+
     public bool VoteFinished { get; set; }
 
     [Keyword] public string OrganizationAddress { get; set; }
@@ -62,10 +65,10 @@ public class ProposalBase : BlockInfoBase
     public int MinimalApproveThreshold { get; set; }
 
     //percentage    
-    public int MinimalRejectionThreshold { get; set; }
-
+    public int MaximalRejectionThreshold { get; set; }
+    
     //percentage    
-    public int MinimalAbstentionThreshold { get; set; }
+    public int MaximalAbstentionThreshold { get; set; }
     
     public bool IsFinalStatus()
     {

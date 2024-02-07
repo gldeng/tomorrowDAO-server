@@ -64,16 +64,16 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         double approvalPercentage = GetPercentage(voteInfo.ApproveCounts, voteInfo.VotesAmount);
         _logger.LogInformation(
             "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
-            "rejectionPercentage: {rejectionPercentage} MinimalRejectionThreshold: {MinimalRejectionThreshold} " +
-            "abstentionPercentage:{abstentionPercentage} MinimalAbstentionThreshold:{MinimalAbstentionThreshold} " +
+            "rejectionPercentage: {rejectionPercentage} MaximalRejectionThreshold: {MaximalRejectionThreshold} " +
+            "abstentionPercentage:{abstentionPercentage} MaximalAbstentionThreshold:{MaximalAbstentionThreshold} " +
             "approvalPercentage:{approvalPercentage} MinimalApproveThreshold:{MinimalApproveThreshold}",
-            proposal.ProposalId, proposal.GovernanceMechanism, rejectionPercentage, proposal.MinimalRejectionThreshold,
-            abstentionPercentage, proposal.MinimalAbstentionThreshold, approvalPercentage, proposal.MinimalApproveThreshold);
-        if (rejectionPercentage >= proposal.MinimalRejectionThreshold)
+            proposal.ProposalId, proposal.GovernanceMechanism, rejectionPercentage, proposal.MaximalRejectionThreshold,
+            abstentionPercentage, proposal.MaximalAbstentionThreshold, approvalPercentage, proposal.MinimalApproveThreshold);
+        if (rejectionPercentage >= proposal.MaximalRejectionThreshold)
         {
             targetStatus = ProposalStatus.Rejected;
         }
-        else if (abstentionPercentage >= proposal.MinimalAbstentionThreshold)
+        else if (abstentionPercentage >= proposal.MaximalAbstentionThreshold)
         {
             targetStatus = ProposalStatus.Abstained;
         }

@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using JetBrains.Annotations;
-using Microsoft.Extensions.Logging;
 using TomorrowDAOServer.Entities;
 
 namespace TomorrowDAOServer.Proposal.Dto;

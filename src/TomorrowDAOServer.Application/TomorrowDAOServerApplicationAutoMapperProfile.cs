@@ -1,5 +1,6 @@
 using AutoMapper;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Token;
 using TomorrowDAOServer.Token.Index;
@@ -18,5 +19,6 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.Name, opt
                 => opt.MapFrom(source => source.TokenName));
         CreateMap<IndexerProposal, ProposalIndex>();
+        CreateMap<ProposalIndex, ProposalDto>();
     }
 }

@@ -3,42 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Chains;
 using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
-using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal.Provider;
-using Volo.Abp.Caching;
-using Volo.Abp.ObjectMapping;
 
 namespace TomorrowDAOServer.Proposal;
 
 public class ProposalExpiredService : ScheduleSyncDataService
 {
     private readonly ILogger<ScheduleSyncDataService> _logger;
-    private readonly IObjectMapper _objectMapper;
     private readonly IProposalProvider _proposalProvider;
     private readonly IChainAppService _chainAppService;
-    private readonly IDistributedCache<List<string>> _distributedCache;
-    private readonly IOptionsMonitor<SyncDataOptions> _syncDataOptionsMonitor;
 
     public ProposalExpiredService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
         IProposalProvider proposalProvider,
-        IChainAppService chainAppService,
-        IDistributedCache<List<string>> distributedCache,
-        IOptionsMonitor<SyncDataOptions> syncDataOptionsMonitor, 
-        IObjectMapper objectMapper)
+        IChainAppService chainAppService)
         : base(logger, graphQlProvider)
     {
         _logger = logger;
         _proposalProvider = proposalProvider;
         _chainAppService = chainAppService;
-        _distributedCache = distributedCache;
-        _syncDataOptionsMonitor = syncDataOptionsMonitor;
-        _objectMapper = objectMapper;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
@@ -48,7 +35,8 @@ public class ProposalExpiredService : ScheduleSyncDataService
         List<ProposalIndex> queryList;
         do
         {
-            queryList = await _proposalProvider.GetExpiredProposalListAsync(new List<ProposalStatus> { ProposalStatus.Approved });
+            queryList = await _proposalProvider.GetExpiredProposalListAsync(new List<ProposalStatus>
+                { ProposalStatus.Approved });
             _logger.LogInformation(
                 "ExpiredProposal queryList skipCount {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
                 skipCount, lastEndHeight, newIndexHeight, queryList?.Count);
@@ -56,6 +44,7 @@ public class ProposalExpiredService : ScheduleSyncDataService
             {
                 break;
             }
+
             var resultList = new List<ProposalIndex>();
             foreach (var info in queryList)
             {
@@ -63,6 +52,7 @@ public class ProposalExpiredService : ScheduleSyncDataService
                 info.ProposalStatus = ProposalStatus.Expired;
                 resultList.Add(info);
             }
+
             await _proposalProvider.BulkAddOrUpdateAsync(resultList);
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());

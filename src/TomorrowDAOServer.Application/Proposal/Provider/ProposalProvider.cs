@@ -51,10 +51,10 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             dataList:getSyncProposalInfos(input: {skipCount:$skipCount,chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight})
             {
                 id,chainId,blockHeight,blockHash
-                daoId,proposalId,proposalTitle,proposalType,governanceType,proposalStatus,startTime,endTime,expiredTime,
+                DAOId,proposalId,proposalTitle,proposalType,governanceType,proposalStatus,startTime,endTime,expiredTime,
                 organizationAddress,executeAddress,proposalDescription,transaction{toAddress,contractMethodName,params{key,value}},
-                governanceSchemeId,voteSchemeId,executeByHighCouncil,deployTime,
-                minimalRequiredThreshold,minimalVoteThreshold,minimalApproveThreshold,minimalRejectionThreshold,minimalAbstentionThreshold
+                governanceSchemeId,voteSchemeId,executeByHighCouncil,deployTime,executeTime,
+                minimalRequiredThreshold,minimalVoteThreshold,minimalApproveThreshold,maximalRejectionThreshold,maximalAbstentionThreshold
             }}",
             Variables = new
             {
@@ -143,7 +143,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         if (!input.DaoId.IsNullOrEmpty())
         {
             mustQuery.Add(q => q.Term(i =>
-                i.Field(f => f.DaoId).Value(input.DaoId)));
+                i.Field(f => f.DAOId).Value(input.DaoId)));
         }
 
         if (input.GovernanceMechanism != null)
