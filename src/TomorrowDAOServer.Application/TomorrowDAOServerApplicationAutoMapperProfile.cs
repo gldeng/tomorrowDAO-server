@@ -22,16 +22,16 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<IndexerUserToken, UserTokenDto>();
         CreateMap<TokenGrainDto, TokenBasicInfo>()
             .ForMember(des => des.Name, opt
-                => opt.MapFrom(source => source.TokenName));
+                => opt.MapFrom(source => source.TokenName))
+            .ReverseMap();
+        
         CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
         CreateMap<IndexerDAOInfo, DAOIndex>().ReverseMap();
         CreateMap<Metadata, MetadataDto>().ReverseMap();
         CreateMap<IndexerMetadata, Metadata>().ReverseMap();
-                => opt.MapFrom(source => source.TokenName))
-            .ReverseMap();
         
-        CreateMap<DAOIndex, DAODto>().ReverseMap();
-        CreateMap<DAOMetadata, DAOMetadataDto>().ReverseMap();
+        // CreateMap<DAOIndex, DAODto>().ReverseMap();
+        // CreateMap<DAOMetadata, DAOMetadataDto>().ReverseMap();
         CreateMap<GovernanceSchemeThreshold, GovernanceSchemeThresholdDto>().ReverseMap();
         CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
         CreateMap<IndexerHighCouncilConfig, HighCouncilConfig>().ReverseMap();
