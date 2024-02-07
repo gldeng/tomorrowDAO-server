@@ -75,5 +75,14 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.To, opt => opt.MapFrom(src => src.AddressTo))
             .ForMember(des => des.TransactionTime, opt => opt.MapFrom(src => src.Time))
             .ReverseMap();
+        
+        CreateMap<DAOIndex, DAOListDto>()
+            .ForMember(des => des.DaoId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(des => des.Logo, opt => opt.MapFrom(src => src.Metadata.LogoUrl))
+            .ForMember(des => des.Name, opt => opt.MapFrom(src => src.Metadata.Name))
+            .ForMember(des => des.Description, opt => opt.MapFrom(src => src.Metadata.Description))
+            .ForMember(des => des.Creator, opt => opt.MapFrom(src => src.Creator))
+            .ForMember(des => des.Symbol, opt => opt.MapFrom(src => src.GovernanceToken))
+            ;
     }
 }

@@ -37,4 +37,10 @@ public class DAOController
     {
         return await _daoAppService.GetCandidateListAsync(input);
     }
+    
+    [HttpGet("dao-list")]
+    public async Task<GetDAOListResponseDto> GetDAOListAsync(GetDAOListRequestDto request)
+    {
+        return await _daoAppService.GetDAOListAsync(request);
+    }
 }
