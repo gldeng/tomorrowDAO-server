@@ -32,5 +32,7 @@
     <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="5.1.0" />
     <PackageReference Include="GraphQL.Client" Version="5.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.205.22" />
+    <PackageReference Include="AWSSDK.CognitoIdentity" Version="3.7.205.22" />
   </ItemGroup>
 </Project>

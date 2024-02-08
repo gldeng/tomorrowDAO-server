@@ -24,6 +24,8 @@ public class TomorrowDAOServerOrleansSiloModule : AbpModule
         Configure<ChainOptions>(configuration.GetSection("Chains"));
         Configure<ExchangeOptions>(configuration.GetSection("Exchange"));
         Configure<CoinGeckoOptions>(configuration.GetSection("CoinGecko"));
+        Configure<AwsS3Option>(configuration.GetSection("AwsS3"));
+        Configure<SecurityServerOptions>(configuration.GetSection("SecurityServer"));
         
         context.Services.AddHostedService<TomorrowDAOServerHostedService>();
         context.Services.AddTransient<IUserAppService, UserAppService>();

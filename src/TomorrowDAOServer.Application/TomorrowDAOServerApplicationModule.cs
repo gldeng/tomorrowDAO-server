@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TomorrowDAOServer.Common.Cache;
 using TomorrowDAOServer.Grains;
 using TomorrowDAOServer.Proposal;
 using TomorrowDAOServer.Options;
@@ -34,5 +35,8 @@ public class TomorrowDAOServerApplicationModule : AbpModule
         context.Services.AddTransient<IScheduleSyncDataService, ProposalSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, ProposalExpiredService>();
         context.Services.AddHttpClient();
+        context.Services.AddMemoryCache();
+        context.Services.AddSingleton(typeof(ILocalMemoryCache<>), typeof(LocalMemoryCache<>));
+
     }
 }
