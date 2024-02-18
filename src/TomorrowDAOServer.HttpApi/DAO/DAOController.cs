@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.DAO.Dtos;
 using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 
 namespace TomorrowDAOServer.Controllers;
 
@@ -39,7 +40,7 @@ public class DAOController
     }
     
     [HttpGet("dao-list")]
-    public async Task<GetDAOListResponseDto> GetDAOListAsync(GetDAOListRequestDto request)
+    public async Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput request)
     {
         return await _daoAppService.GetDAOListAsync(request);
     }

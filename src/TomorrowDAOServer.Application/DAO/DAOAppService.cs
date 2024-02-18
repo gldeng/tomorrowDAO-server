@@ -7,6 +7,7 @@ using Nest;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.Common.Provider;
 using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Auditing;
 
@@ -55,7 +56,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
         return ObjectMapper.Map<DAOIndex, DAOInfoDto>(dao);
     }
     
-    public async Task<GetDAOListResponseDto> GetDAOListAsync(GetDAOListRequestDto request)
+    public async Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput request)
     {
         var chainId = request.ChainId;
         var mustQuery = new List<Func<QueryContainerDescriptor<DAOIndex>, QueryContainer>>
@@ -71,7 +72,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
         {
             dto.SymbolHoldersNum = await _graphQlProvider.GetHoldersAsync(dto.Symbol.ToUpper(), chainId, GetHoldersSkipCount, GetHoldersMaxResultCount);
         }
-        return new GetDAOListResponseDto
+        return new PagedResultDto<DAOListDto>
         {
             TotalCount = item1,
             Items = items

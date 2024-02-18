@@ -1,12 +1,4 @@
-using System.Collections.Generic;
-
 namespace TomorrowDAOServer.DAO.Dtos;
-
-public class GetDAOListResponseDto
-{
-    public long TotalCount { get; set; } = 0;
-    public List<DAOListDto> Items { get; set; } = new();
-}
 
 public class DAOListDto
 {

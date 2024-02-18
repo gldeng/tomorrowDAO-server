@@ -62,6 +62,7 @@ namespace TomorrowDAOServer
             var hostingEnvironment = context.Services.GetHostingEnvironment();
             Configure<ChainOptions>(configuration.GetSection("ChainOptions"));
             Configure<TokenInfoOptions>(configuration.GetSection("TokenInfoOptions"));
+            Configure<ContractInfoOptions>(configuration.GetSection("ContractInfoOptions"));
             Configure<AssetsInfoOptions>(configuration.GetSection("AssetsInfoOptions"));
             Configure<ProposalTagOptions>(configuration.GetSection("ProposalTagOptions"));
             Configure<ExplorerOptions>(configuration.GetSection("Explorer"));
