@@ -21,9 +21,23 @@ public class ProposalController
     }
     
     [HttpGet]
-    [Route("list")]
-    public async Task<PagedResultDto<ProposalDto>> GetTokenAsync(QueryProposalListInput input)
+    [Route("query-list")]
+    public async Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input)
     {
          return await _proposalService.QueryProposalListAsync(input);
+    }
+    
+    [HttpGet]
+    [Route("detail")]
+    public async Task<ProposalDetailDto> QueryProposalDetailAsync(QueryProposalDetailInput input)
+    {
+        return await _proposalService.QueryProposalDetailAsync(input);
+    }
+    
+    [HttpGet]
+    [Route("my-info")]
+    public async Task<MyProposalDto> QueryMyInfoAsync(QueryMyProposalInput input)
+    {
+        return await _proposalService.QueryMyInfoAsync(input);
     }
 }

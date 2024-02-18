@@ -11,6 +11,8 @@ public class IndexerOrganizationInfos : IndexerCommonResult<IndexerOrganizationI
 
 public class IndexerOrganizationInfo : IndexerCommonResult<IndexerOrganizationInfo>
 {
+    public string OrganizationName { get; set; }
+    
     public string OrganizationAddress { get; set; }
     
     public int OrganizationMemberCount { get; set; }

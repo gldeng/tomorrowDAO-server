@@ -108,11 +108,11 @@ public class ProposalSyncDataService : ScheduleSyncDataService
             .GetProposalListByIds(indexers.Select(p => p.ProposalId).ToList());
         var voteFinishedProposalIds = indexers.Where(index => index.VoteFinished)
             .Select(index => index.ProposalId).ToList();
-        var voteDict = await _voteProvider.GetVoteInfosMemory(chainId, voteFinishedProposalIds);
+        var voteDict = await _voteProvider.GetVoteInfosMemoryAsync(chainId, voteFinishedProposalIds);
         var organizationAddressList = indexers.Where(index => index.VoteFinished)
             .Select(index => index.OrganizationAddress).ToList();
         var organizationInfoDict = await _organizationInfoProvider
-            .GetOrganizationInfosMemory(chainId, organizationAddressList);
+            .GetOrganizationInfosMemoryAsync(chainId, organizationAddressList);
         return indexers.Select(indexer =>
         {
             var proposal = _objectMapper.Map<IndexerProposal, ProposalIndex>(indexer);

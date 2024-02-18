@@ -11,8 +11,11 @@ namespace TomorrowDAOServer.Organization.Provider;
 
 public interface IOrganizationInfoProvider
 {
-    Task<Dictionary<string, IndexerOrganizationInfo>> GetOrganizationInfosMemory(string chainId,
+    Task<Dictionary<string, IndexerOrganizationInfo>> GetOrganizationInfosMemoryAsync(string chainId,
         List<string> organizationAddressList);
+
+    Task<List<IndexerOrganizationInfo>> GetOrganizationInfosAsync(string chainId, List<string> organizationAddressList,
+        string governanceSchemeId);
 }
 
 public class OrganizationInfoProvider : IOrganizationInfoProvider, ISingletonDependency
@@ -24,7 +27,7 @@ public class OrganizationInfoProvider : IOrganizationInfoProvider, ISingletonDep
         _graphQlHelper = graphQlHelper;
     }
     
-    public async Task<Dictionary<string, IndexerOrganizationInfo>> GetOrganizationInfosMemory(string chainId, List<string> organizationAddressList)
+    public async Task<Dictionary<string, IndexerOrganizationInfo>> GetOrganizationInfosMemoryAsync(string chainId, List<string> organizationAddressList)
     {
         if (organizationAddressList.IsNullOrEmpty())
         {
@@ -35,7 +38,8 @@ public class OrganizationInfoProvider : IOrganizationInfoProvider, ISingletonDep
         {
             Query = @"
 			    query($chainId: String!,$organizationAddressList: [organizationAddress!]!) {
-                    dataList:getVoteInfosMemory(input:{chainId:$chainId,organizationAddressList:$organizationAddressList}) {
+                    dataList:getOrganizationInfosMemory(input:{chainId:$chainId,organizationAddressList:$organizationAddressList}) {
+                        organizationName,
                         organizationAddress,
                         organizationMemberCount
                     }
@@ -47,5 +51,26 @@ public class OrganizationInfoProvider : IOrganizationInfoProvider, ISingletonDep
         });
         var infos = result.Data?.Data ?? new IndexerOrganizationInfos();
         return infos.DataList.ToDictionary(info => info.OrganizationAddress, info => info);
+    }
+    
+    public async Task<List<IndexerOrganizationInfo>> GetOrganizationInfosAsync(string chainId, List<string> organizationAddressList, string governanceSchemeId)
+    {
+        var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerOrganizationInfos>>(new GraphQLRequest
+        {
+            Query = @"
+			    query($chainId: String!,$organizationAddressList: [organizationAddress!],$governanceSchemeId: String) {
+                    dataList:getOrganizationInfos(input:{chainId:$chainId,governanceSchemeId:$governanceSchemeId}) {
+                        organizationName,
+                        organizationAddress,
+                        organizationMemberCount
+                    }
+                  }",
+            Variables = new
+            {
+                chainId, governanceSchemeId
+            }
+        });
+        var infos = result.Data?.Data ?? new IndexerOrganizationInfos();
+        return infos.DataList;
     }
 }
