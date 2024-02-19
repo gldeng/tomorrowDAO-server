@@ -4,7 +4,7 @@ using TomorrowDAOServer.Vote.Dto;
 
 namespace TomorrowDAOServer.Proposal.Dto;
 
-public class ProposalDetailDto : ProposalListDto
+public class ProposalDetailDto : ProposalDto
 {
     public OrganizationDto OrganizationInfo { get; set; }
     

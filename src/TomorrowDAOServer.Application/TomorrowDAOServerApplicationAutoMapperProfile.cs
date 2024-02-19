@@ -13,6 +13,7 @@ using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Token;
 using TomorrowDAOServer.Token.Index;
 using TomorrowDAOServer.User.Dtos;
+using TomorrowDAOServer.Vote.Index;
 
 namespace TomorrowDAOServer;
 
@@ -32,7 +33,9 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<ProposalIndex, ProposalListDto>();
         CreateMap<ProposalIndex, ProposalDetailDto>();
         CreateMap<ProposalIndex, MyProposalDto>();
-            
+        CreateMap<IndexerVote, ProposalListDto>();
+        CreateMap<IndexerVote, ProposalDetailDto>();
+
         CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
         CreateMap<IndexerDAOInfo, DAOIndex>().ReverseMap();
         CreateMap<Metadata, MetadataDto>().ReverseMap();

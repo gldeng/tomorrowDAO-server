@@ -53,8 +53,8 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
 
         //query proposal vote infos
-        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, 
-            tuple.Item2.Select(item => item.ProposalId).ToList());
+        var proposalIds = tuple.Item2.Select(item => item.ProposalId).ToList();
+        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, proposalIds);
         var resultList = new List<ProposalListDto>();
         foreach (var proposal in tuple.Item2)
         {
@@ -66,8 +66,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 _objectMapper.Map(voteInfo, proposalDto);
             }
 
-            proposalDto.TagList =
-                _proposalTagOptionsMonitor.CurrentValue.MatchTagList(proposal.TransactionInfo.ContractMethodName);
+            proposalDto.OfTagList(_proposalTagOptionsMonitor.CurrentValue);
             resultList.Add(proposalDto);
         }
 
@@ -87,6 +86,16 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
 
         var proposalDetailDto = _objectMapper.Map<ProposalIndex, ProposalDetailDto>(proposalIndex);
+
+        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId,
+            new List<string> { input.ProposalId });
+
+        if (voteInfos.TryGetValue(input.ProposalId, out var voteInfo))
+        {
+            //of vote info
+            _objectMapper.Map(voteInfo, proposalDetailDto);
+        }
+
         var organizationInfoDict = await _organizationInfoProvider
             .GetOrganizationInfosMemoryAsync(input.ChainId, new List<string> { proposalIndex.OrganizationAddress });
         if (organizationInfoDict.TryGetValue(proposalIndex.OrganizationAddress, out var organizationInfo))
@@ -122,10 +131,5 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         myProposalDto.Symbol = voteStake.AcceptedCurrency;
         return myProposalDto;
-    }
-
-    public Task<List<OrganizationDto>> GetOrganizationListAsyncAsync(GetOrganizationListInput input)
-    {
-        throw new System.NotImplementedException();
     }
 }

@@ -5,16 +5,36 @@ namespace TomorrowDAOServer.Options;
 
 public class ProposalTagOptions
 {
-    //key is methodName, value is tag list.
+    //key is tag ,value is MethodName or GovernanceMechanism
     public Dictionary<string, List<string>> Mapping { get; set; } = new();
 
-    public List<string> MatchTagList(string methodName)
+    public Dictionary<string, string> ReverseMapping { get; set; }
+
+    public string MatchTag(string key)
     {
-        if (methodName == null)
+        if (key == null)
         {
-            return new List<string>();
+            return null;
         }
 
-        return Mapping.FirstOrDefault(pair => pair.Key.Equals(methodName)).Value ?? new List<string>();
+        if (ReverseMapping.IsNullOrEmpty())
+        {
+            ToReverse();
+        }
+
+        return ReverseMapping.TryGetValue(key, out var tag) ? tag : null;
+    }
+
+    private void ToReverse()
+    {
+        foreach (var kvp in Mapping)
+        {
+            var key = kvp.Key;
+            var values = kvp.Value;
+            foreach (var value in values)
+            {
+                ReverseMapping[value] = key;
+            }
+        }
     }
 }
