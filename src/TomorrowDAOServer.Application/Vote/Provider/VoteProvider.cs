@@ -47,9 +47,9 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voteSchemeId,
                         daoId,
                         acceptedCurrency,
-                        approveCount,
-                        rejectCount,
-                        abstainCount,
+                        approvedCount,
+                        rejectionCount,
+                        AbstentionCount,
                         votesAmount,
                         voterCount
                     }
@@ -79,9 +79,9 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voteSchemeId,
                         daoId,
                         acceptedCurrency,
-                        approveCount,
-                        rejectCount,
-                        abstainCount,
+                        approvedCount,
+                        rejectionCount,
+                        AbstentionCount,
                         votesAmount,
                         voterCount
                     }

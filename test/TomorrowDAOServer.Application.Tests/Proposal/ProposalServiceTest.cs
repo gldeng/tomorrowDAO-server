@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Newtonsoft.Json;
 using Shouldly;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Organization.Index;
 using TomorrowDAOServer.Organization.Provider;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Provider;
+using TomorrowDAOServer.Vote.Dto;
 using TomorrowDAOServer.Vote.Index;
 using TomorrowDAOServer.Vote.Provider;
 using Xunit;
@@ -18,6 +21,9 @@ namespace TomorrowDAOServer.Proposal;
 
 public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
 {
+    private const string ProposalId = "99df86594a989227b8e6259f70b08976812537c20486717a3d0158788155b1f0";
+    private const string ChainID = "tDVV";
+    private const string Voter = "voter1";
     private readonly IProposalService _proposalService;
 
     public ProposalServiceTest(ITestOutputHelper output) : base(output)
@@ -39,6 +45,11 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
         mock.Setup(p =>
             p.GetProposalListAsync(It.IsAny<QueryProposalListInput>())).ReturnsAsync(MockProposalList());
 
+        mock.Setup(p => p.GetProposalByIdAsync(It.IsAny<string>(),
+                It.Is<string>(x => x.Equals(ProposalId))))
+            .ReturnsAsync(MockProposalList().Item2.Where(item => item.ProposalId.Equals(ProposalId))
+                .Select(item => item).FirstOrDefault);
+
         return mock.Object;
     }
 
@@ -48,6 +59,13 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
 
         mock.Setup(p =>
             p.GetVoteInfosAsync(It.IsAny<string>(), It.IsAny<List<string>>())).ReturnsAsync(MockVoteInfos());
+
+        mock.Setup(p => p.GetVoteRecordAsync(It.Is<GetVoteRecordInput>(x => x.VotingItemId.Equals(ProposalId))))
+            .ReturnsAsync(MockVoteRecord());
+        
+        mock.Setup(p => p.GetVoteStakeAsync(It.IsAny<string>(),It.Is<string>(x => x.Equals(ProposalId)), 
+                It.IsAny<string>()))
+            .ReturnsAsync(MockVoteStake());
 
         return mock.Object;
     }
@@ -82,7 +100,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
             ""proposalDescription"": ""f5bc4667d8cb512113dc140163c5b3bc4829468f49c01483aa46b21298221774"",
             ""transactionInfo"": {
                 ""toAddress"": ""YeCqKprLBGbZZeRTkN1FaBLXsetY8QFotmVKqo98w9K6jK2PY"",
-                ""contractMethodName"": ""ChangeName"",
+                ""contractMethodName"": ""AddMembers"",
                 ""params"": {}
             },
             ""governanceSchemeId"": ""f16f5443dbfc30be571104872d88101705834ffeea6632858bc8e70608be5e50"",
@@ -117,7 +135,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
             ""proposalDescription"": ""f5bc4667d8cb512113dc140163c5b3bc4829468f49c01483aa46b21298221774"",
             ""transactionInfo"": {
                 ""toAddress"": ""YeCqKprLBGbZZeRTkN1FaBLXsetY8QFotmVKqo98w9K6jK2PY"",
-                ""contractMethodName"": ""ForWord"",
+                ""contractMethodName"": ""HighCouncilConfigSet"",
                 ""params"": {}
             },
             ""governanceSchemeId"": ""f16f5443dbfc30be571104872d88101705834ffeea6632858bc8e70608be5e50"",
@@ -148,20 +166,55 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
             ["99df86594a989227b8e6259f70b08976812537c20486717a3d0158788155b1f0"] = new()
             {
                 AcceptedCurrency = "ELF",
-                ApproveCount = 2,
-                RejectCount = 1,
-                AbstainCount = 1,
+                ApprovedCount = 2,
+                RejectionCount = 1,
+                AbstentionCount = 1,
                 VotesAmount = 4,
                 VoterCount = 4
             },
             ["b97db4a9f43296157fb1a5d38cebdac478d0e91ed7b8dc1ae2effe1e29e64354"] = new()
             {
                 AcceptedCurrency = "ELF",
-                ApproveCount = 3,
-                RejectCount = 2,
-                AbstainCount = 2,
+                ApprovedCount = 3,
+                RejectionCount = 2,
+                AbstentionCount = 2,
                 VotesAmount = 7,
                 VoterCount = 7
+            }
+        };
+    }
+    
+    private static IndexerVoteStake MockVoteStake()
+    {
+        return new IndexerVoteStake
+        {
+            AcceptedCurrency = "ELF",
+            Amount = 99
+        };
+    }
+
+        
+    private static List<IndexerVoteRecord> MockVoteRecord()
+    {
+        return new List<IndexerVoteRecord>
+        { 
+            new ()
+            {
+                Voter = "voter1",
+                Amount = 5,
+                Option = VoteOption.Approved
+            },
+            new()
+            {
+                Voter = "voter2",
+                Amount = 4,
+                Option = VoteOption.Abstained
+            },
+            new()
+            {
+                Voter = "voter3",
+                Amount = 3,
+                Option = VoteOption.Rejected
             }
         };
     }
@@ -193,5 +246,59 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
         result.ShouldNotBeNull();
         result.Items.ShouldNotBeEmpty();
         result.TotalCount.ShouldBe(tuple.Item1);
+
+        foreach (var item in result.Items)
+        {
+            item.TagList.Count.ShouldBe(2);
+            item.VoterCount.ShouldBeGreaterThan(1);
+            item.VotesAmount.ShouldBeGreaterThan(1);
+        }
+    }
+    
+    [Fact]
+    public async void QueryProposalDetailAsync_Test()
+    {
+        // Arrange
+        var input = new QueryProposalDetailInput
+        { 
+            ChainId = ChainID,
+            ProposalId = ProposalId
+        };
+        // Act
+        var result = await _proposalService.QueryProposalDetailAsync(input);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.OrganizationInfo.ShouldNotBeNull();
+        result.OrganizationInfo.OrganizationName.ShouldNotBeNull();
+        result.VoteTopList.ShouldNotBeNull();
+        // Check VoteTopList
+        VoteRecordDto? lastRecord = null;
+        foreach (var record in result.VoteTopList)
+        {
+            lastRecord?.Amount.ShouldBeGreaterThanOrEqualTo(record.Amount);
+            lastRecord = record;
+        }
+    }
+    
+    [Fact]
+    public async void QueryMyInfoAsync_Test()
+    {
+        // Arrange
+        var input = new QueryMyProposalInput
+        { 
+            ChainId = ChainID,
+            ProposalId = ProposalId,
+            Address = Voter
+        };
+        var voteStake = MockVoteStake();
+        // Act
+        var result = await _proposalService.QueryMyInfoAsync(input);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.CanVote.ShouldBeTrue();
+        result.StakeAmount.ShouldBe(voteStake.Amount);
+        result.VotesAmount.ShouldBe(voteStake.Amount);
     }
 }

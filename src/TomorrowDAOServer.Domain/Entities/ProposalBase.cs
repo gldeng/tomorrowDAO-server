@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Nest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;

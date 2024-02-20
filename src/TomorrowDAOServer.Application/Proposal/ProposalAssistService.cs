@@ -59,9 +59,9 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             }
         }
 
-        double rejectionPercentage = GetPercentage(voteInfo.RejectCount, voteInfo.VotesAmount);
-        double abstentionPercentage = GetPercentage(voteInfo.AbstainCount, voteInfo.VotesAmount);
-        double approvalPercentage = GetPercentage(voteInfo.ApproveCount, voteInfo.VotesAmount);
+        double rejectionPercentage = GetPercentage(voteInfo.RejectionCount, voteInfo.VotesAmount);
+        double abstentionPercentage = GetPercentage(voteInfo.AbstentionCount, voteInfo.VotesAmount);
+        double approvalPercentage = GetPercentage(voteInfo.ApprovedCount, voteInfo.VotesAmount);
         _logger.LogInformation(
             "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
             "rejectionPercentage: {rejectionPercentage} MaximalRejectionThreshold: {MaximalRejectionThreshold} " +
