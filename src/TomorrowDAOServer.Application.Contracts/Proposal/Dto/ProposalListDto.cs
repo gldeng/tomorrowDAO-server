@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TomorrowDAOServer.Options;
 
@@ -5,14 +6,19 @@ namespace TomorrowDAOServer.Proposal.Dto;
 
 public class ProposalListDto : ProposalDto
 {
-    public List<string> TagList { get; set; }
+    public List<string> TagList { get; set; } = new();
     
     public void OfTagList(ProposalTagOptions tagOptions)
     {
-        TagList = new List<string>
+        AddTag(tagOptions.MatchTag(TransactionInfo.ContractMethodName));
+        AddTag(tagOptions.MatchTag(GovernanceMechanism?.ToString()));
+    }
+
+    private void AddTag(string tag)
+    {
+        if (!tag.IsNullOrWhiteSpace())
         {
-            tagOptions.MatchTag(TransactionInfo.ContractMethodName),
-            tagOptions.MatchTag(GovernanceMechanism?.ToString())
-        };
+            TagList.Add(tag);
+        }
     }
 }

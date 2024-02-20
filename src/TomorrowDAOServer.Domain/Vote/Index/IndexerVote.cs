@@ -18,11 +18,11 @@ public class IndexerVote : IndexerCommonResult<IndexerVote>
 
     public string AcceptedCurrency { get; set; }
 
-    public int ApproveCounts { get; set; }
+    public int ApproveCount { get; set; }
 
-    public int RejectCounts { get; set; }
+    public int RejectCount { get; set; }
 
-    public int AbstainCounts { get; set; }
+    public int AbstainCount { get; set; }
 
     public int VotesAmount { get; set; }
     

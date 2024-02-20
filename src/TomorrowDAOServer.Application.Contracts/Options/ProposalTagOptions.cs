@@ -8,7 +8,7 @@ public class ProposalTagOptions
     //key is tag ,value is MethodName or GovernanceMechanism
     public Dictionary<string, List<string>> Mapping { get; set; } = new();
 
-    public Dictionary<string, string> ReverseMapping { get; set; }
+    public Dictionary<string, string> ReverseMapping { get; set; } = new();
 
     public string MatchTag(string key)
     {
