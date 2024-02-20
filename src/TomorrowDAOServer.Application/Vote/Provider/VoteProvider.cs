@@ -47,10 +47,11 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voteSchemeId,
                         daoId,
                         acceptedCurrency,
-                        approveCounts,
-                        rejectCounts,
-                        abstainCounts,
-                        votesAmount
+                        approveCount,
+                        rejectCount,
+                        abstainCount,
+                        votesAmount,
+                        voterCount
                     }
                   }",
             Variables = new
@@ -78,10 +79,11 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voteSchemeId,
                         daoId,
                         acceptedCurrency,
-                        approveCounts,
-                        rejectCounts,
-                        abstainCounts,
-                        votesAmount
+                        approveCount,
+                        rejectCount,
+                        abstainCount,
+                        votesAmount,
+                        voterCount
                     }
                   }",
             Variables = new
