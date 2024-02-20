@@ -22,7 +22,8 @@ namespace TomorrowDAOServer.Proposal;
 public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
 {
     private const string ProposalId = "99df86594a989227b8e6259f70b08976812537c20486717a3d0158788155b1f0";
-    private const string ChainID = "tDVV";
+    private const string DAOId = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
+    private const string ProposalIdNotExist = "ProposalId-Not-Exist";
     private const string Voter = "voter1";
     private readonly IProposalService _proposalService;
 
@@ -43,8 +44,12 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
         var mock = new Mock<IProposalProvider>();
 
         mock.Setup(p =>
-            p.GetProposalListAsync(It.IsAny<QueryProposalListInput>())).ReturnsAsync(MockProposalList());
-
+            p.GetProposalListAsync(It.Is<QueryProposalListInput>(x => x.ChainId.Equals(ChainID) && x.DaoId.Equals(DAOId)))).ReturnsAsync(MockProposalList());
+        
+        // use default
+        mock.Setup(p => p.GetProposalListAsync(It.Is<QueryProposalListInput>(x => !x.ChainId.Equals(ChainID) || !x.DaoId.Equals(DAOId))))
+            .ReturnsAsync(new Tuple<long, List<ProposalIndex>>(0, new List<ProposalIndex>()));
+        
         mock.Setup(p => p.GetProposalByIdAsync(It.IsAny<string>(),
                 It.Is<string>(x => x.Equals(ProposalId))))
             .ReturnsAsync(MockProposalList().Item2.Where(item => item.ProposalId.Equals(ProposalId))
@@ -87,7 +92,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
         var jsonString = @"[
         {
             ""id"": ""99df86594a989227b8e6259f70b08976812537c20486717a3d0158788155b1f0"",
-            ""DAOId"": ""a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"",
+            ""daoId"": ""a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"",
             ""proposalId"": ""99df86594a989227b8e6259f70b08976812537c20486717a3d0158788155b1f0"",
             ""proposalTitle"": ""Proposal Title test"",
             ""proposalType"": 1,
@@ -122,7 +127,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
         },
         {
             ""id"": ""b97db4a9f43296157fb1a5d38cebdac478d0e91ed7b8dc1ae2effe1e29e64354"",
-            ""DAOId"": ""a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"",
+            ""daoId"": ""a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"",
             ""proposalId"": ""b97db4a9f43296157fb1a5d38cebdac478d0e91ed7b8dc1ae2effe1e29e64354"",
             ""proposalTitle"": ""Proposal Title test 2"",
             ""proposalType"": 2,
@@ -165,7 +170,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
         {
             ["99df86594a989227b8e6259f70b08976812537c20486717a3d0158788155b1f0"] = new()
             {
-                AcceptedCurrency = "ELF",
+                AcceptedCurrency = ELF,
                 ApprovedCount = 2,
                 RejectionCount = 1,
                 AbstentionCount = 1,
@@ -174,7 +179,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
             },
             ["b97db4a9f43296157fb1a5d38cebdac478d0e91ed7b8dc1ae2effe1e29e64354"] = new()
             {
-                AcceptedCurrency = "ELF",
+                AcceptedCurrency = ELF,
                 ApprovedCount = 3,
                 RejectionCount = 2,
                 AbstentionCount = 2,
@@ -188,7 +193,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
     {
         return new IndexerVoteStake
         {
-            AcceptedCurrency = "ELF",
+            AcceptedCurrency = ELF,
             Amount = 99
         };
     }
@@ -233,12 +238,33 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
     }
 
     [Fact]
+    public async void QueryProposalListAsync_Null_Test()
+    {
+        // Arrange
+        var input = new QueryProposalListInput()
+        {
+            ChainId = "AELF",
+            DaoId = DAOId
+        };
+        // Act
+        var result = await _proposalService.QueryProposalListAsync(input);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.TotalCount.ShouldBe(0);
+        result.Items.ShouldBeEmpty();
+    }
+    
+    [Fact]
     public async void QueryProposalListAsync_Test()
     {
         // Arrange
-        var input = new QueryProposalListInput();
+        var input = new QueryProposalListInput()
+        {
+            ChainId = ChainID,
+            DaoId = DAOId
+        };
         var tuple = MockProposalList();
-
         // Act
         var result = await _proposalService.QueryProposalListAsync(input);
 
@@ -253,6 +279,23 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
             item.VoterCount.ShouldBeGreaterThan(1);
             item.VotesAmount.ShouldBeGreaterThan(1);
         }
+    }
+    
+    [Fact]
+    public async void QueryProposalDetailAsync_Null_Test()
+    {
+        // Arrange
+        var input = new QueryProposalDetailInput
+        { 
+            ChainId = ChainID,
+            ProposalId = ProposalIdNotExist
+        };
+        // Act
+        var result = await _proposalService.QueryProposalDetailAsync(input);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.ProposalId.ShouldBeNull();
     }
     
     [Fact]
@@ -282,6 +325,25 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
     }
     
     [Fact]
+    public async void QueryMyInfoAsync_Null_Test()
+    {
+        // Arrange
+        var input = new QueryMyProposalInput
+        { 
+            ChainId = ChainID,
+            ProposalId = ProposalIdNotExist,
+            Address = Voter
+        };
+        // Act
+        var result = await _proposalService.QueryMyInfoAsync(input);
+
+        // Assert
+        result.ShouldNotBeNull();
+        result.Symbol.ShouldBeNull();
+        result.StakeAmount.ShouldBe(0);
+    }
+    
+    [Fact]
     public async void QueryMyInfoAsync_Test()
     {
         // Arrange
@@ -300,5 +362,6 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
         result.CanVote.ShouldBeTrue();
         result.StakeAmount.ShouldBe(voteStake.Amount);
         result.VotesAmount.ShouldBe(voteStake.Amount);
+        result.Symbol.ShouldBe(ELF);
     }
 }
