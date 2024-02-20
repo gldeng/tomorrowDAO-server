@@ -97,10 +97,11 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
             ""proposalTitle"": ""Proposal Title test"",
             ""proposalType"": 1,
             ""governanceMechanism"": 3,
-            ""proposalStatus"": 1,
+            ""proposalStatus"": 6,
             ""startTime"": ""2024-02-07T10:10:27.3577550Z"",
             ""endTime"": ""2024-02-09T10:10:27.3580530Z"",
             ""expiredTime"": ""2024-02-10T10:10:27.3580960Z"",
+            ""executeTime"": ""2024-02-10T10:05:27.3580960Z"",
             ""executeAddress"": ""aLyxCJvWMQH6UEykTyeWAcYss9baPyXkrMQ37BHnUicxD2LL3"",
             ""proposalDescription"": ""f5bc4667d8cb512113dc140163c5b3bc4829468f49c01483aa46b21298221774"",
             ""transactionInfo"": {
@@ -111,7 +112,7 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
             ""governanceSchemeId"": ""f16f5443dbfc30be571104872d88101705834ffeea6632858bc8e70608be5e50"",
             ""executeByHighCouncil"": false,
             ""deployTime"": ""2024-02-07T10:10:27.3691230Z"",
-            ""voteFinished"": false,
+            ""voteFinished"": true,
             ""voteSchemeId"": ""1"",
             ""organizationAddress"": ""UE6mcinaCFJZmGNgY9fpMnyzwMETJUhqwbnvtjRgX1f12rBQj"",
             ""minimalRequiredThreshold"": 11,
@@ -359,9 +360,10 @@ public class ProposalServiceTest : TomorrowDAOServerApplicationTestBase
 
         // Assert
         result.ShouldNotBeNull();
-        result.CanVote.ShouldBeTrue();
+        result.CanVote.ShouldBeFalse();
         result.StakeAmount.ShouldBe(voteStake.Amount);
         result.VotesAmount.ShouldBe(voteStake.Amount);
+        result.AvailableUnStakeAmount.ShouldBe(result.StakeAmount);
         result.Symbol.ShouldBe(ELF);
     }
 }
