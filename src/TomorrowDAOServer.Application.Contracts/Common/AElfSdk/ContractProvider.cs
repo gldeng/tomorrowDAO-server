@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AElf;
 using AElf.Client;
 using AElf.Client.Dto;
-using AElf.Client.Service;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
@@ -46,29 +45,35 @@ public class ContractProvider : IContractProvider, ISingletonDependency
     private readonly Dictionary<string, Dictionary<string, string>> _contractAddress = new();
     private readonly SenderAccount _callTxSender;
 
-    private readonly ChainOptions _chainOptions;
+    private readonly IOptionsMonitor<ChainOptions> _chainOptions;
     private readonly ILogger<ContractProvider> _logger;
+    
+    public static readonly JsonSerializerSettings DefaultJsonSettings = JsonSettingsBuilder.New()
+        .WithCamelCasePropertyNamesResolver()
+        .WithAElfTypesConverters()
+        .IgnoreNullValue()
+        .Build();
 
-    public ContractProvider(IOptions<ChainOptions> chainOption, ILogger<ContractProvider> logger)
+    public ContractProvider(IOptionsMonitor<ChainOptions> chainOption, ILogger<ContractProvider> logger)
     {
         _logger = logger;
-        _chainOptions = chainOption.Value;
+        _chainOptions = chainOption;
         InitAElfClient();
-        _callTxSender = new SenderAccount(_chainOptions.PrivateKeyForCallTx);
+        _callTxSender = new SenderAccount(_chainOptions.CurrentValue.PrivateKeyForCallTx);
     }
 
 
     private void InitAElfClient()
     {
-        if (_chainOptions.ChainInfos.IsNullOrEmpty())
+        if (_chainOptions.CurrentValue.ChainInfos.IsNullOrEmpty())
         {
             return;
         }
 
-        foreach (var node in _chainOptions.ChainInfos)
+        foreach (var node in _chainOptions.CurrentValue.ChainInfos)
         {
             _clients[node.Key] = new AElfClient(node.Value.BaseUrl);
-            _logger.LogInformation("init AElfClient: {ChainId}, {Node}", node.Key, node.Value);
+            _logger.LogInformation("init AElfClient: {ChainId}, {Node}", node.Key, node.Value.BaseUrl);
         }
     }
 
@@ -81,7 +86,7 @@ public class ContractProvider : IContractProvider, ISingletonDependency
     
     public string ContractAddress(string chainId, string contractName)
     {
-        _ = _chainOptions.ChainInfos.TryGetValue(chainId, out var chainInfo);
+        _ = _chainOptions.CurrentValue.ChainInfos.TryGetValue(chainId, out var chainInfo);
         var contractAddress = _contractAddress.GetOrAdd(chainId, _ => new Dictionary<string, string>());
         return contractAddress.GetOrAdd(contractName, name =>
         {
@@ -108,8 +113,10 @@ public class ContractProvider : IContractProvider, ISingletonDependency
     public async Task<(Hash transactionId, Transaction transaction)> CreateCallTransactionAsync(string chainId,
         string contractName, string methodName, IMessage param)
     {
-        return await CreateTransactionAsync(chainId, _callTxSender.PublicKey.ToHex(), contractName, methodName,
+        var pair = await CreateTransactionAsync(chainId, _callTxSender.PublicKey.ToHex(), contractName, methodName,
             param);
+        pair.transaction.Signature = _callTxSender.GetSignatureWith(pair.transaction.GetHash().ToByteArray());
+        return pair;
     }
 
     public async Task<(Hash transactionId, Transaction transaction)> CreateTransactionAsync(string chainId,
@@ -139,20 +146,18 @@ public class ContractProvider : IContractProvider, ISingletonDependency
     public async Task<T> CallTransactionAsync<T>(string chainId, Transaction transaction) where T : class
     {
         var client = Client(chainId);
-        transaction.From = _callTxSender.Address;
-        transaction.Signature = _callTxSender.GetSignatureWith(transaction.ToByteArray());
+        // call invoke
         var rawTransactionResult = await client.ExecuteRawTransactionAsync(new ExecuteRawTransactionDto()
         {
             RawTransaction = transaction.ToByteArray().ToHex(),
             Signature = transaction.Signature.ToHex()
         });
-
         if (typeof(T) == typeof(string))
         {
             return rawTransactionResult?.Substring(1, rawTransactionResult.Length - 2) as T;
         }
 
-        return (T)JsonConvert.DeserializeObject(rawTransactionResult, typeof(T), _settings);
+        return (T)JsonConvert.DeserializeObject(rawTransactionResult, typeof(T), DefaultJsonSettings);
     }
     
 }

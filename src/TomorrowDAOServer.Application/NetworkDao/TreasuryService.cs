@@ -15,12 +15,13 @@ using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Providers;
 using TomorrowDAOServer.Token;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.DependencyInjection;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.Threading;
 
 namespace TomorrowDAOServer.NetworkDao;
 
-public class TreasuryService : ITreasuryService
+public class TreasuryService : ITreasuryService, ITransientDependency
 {
     private readonly ILogger<TreasuryService> _logger;
     private readonly IClusterClient _clusterClient;

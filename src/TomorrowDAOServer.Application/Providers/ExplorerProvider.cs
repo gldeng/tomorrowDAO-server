@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -40,6 +41,11 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     private readonly IHttpProvider _httpProvider;
     private readonly IOptionsMonitor<ExplorerOptions> _explorerOptions;
 
+    public static readonly JsonSerializerSettings DefaultJsonSettings = JsonSettingsBuilder.New()
+        .WithCamelCasePropertyNamesResolver()
+        .IgnoreNullValue()
+        .Build();
+
 
     public ExplorerProvider(IHttpProvider httpProvider, IOptionsMonitor<ExplorerOptions> explorerOptions)
     {
@@ -64,7 +70,7 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
         ExplorerProposalListRequest request)
     {
         var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<ExplorerProposalResponse>>(BaseUrl(chainId),
-            ExplorerApi.ProposalList);
+            ExplorerApi.ProposalList, param: ToDictionary(request), withInfoLog:false, withDebugLog:false, settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
     }
@@ -78,7 +84,7 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     public async Task<List<ExplorerBalanceOutput>> GetBalancesAsync(string chainId, ExplorerBalanceRequest request)
     {
         var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<List<ExplorerBalanceOutput>>>(BaseUrl(chainId),
-            ExplorerApi.Balances, param: ToDictionary(request));
+            ExplorerApi.Balances, param: ToDictionary(request), settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
     }
@@ -92,7 +98,7 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     public async Task<ExplorerTokenInfoResponse> GetTokenInfoAsync(string chainId, ExplorerTokenInfoRequest request)
     {
         var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<ExplorerTokenInfoResponse>>(BaseUrl(chainId),
-            ExplorerApi.TokenInfo, param: ToDictionary(request));
+            ExplorerApi.TokenInfo, param: ToDictionary(request), settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
     }
@@ -106,7 +112,7 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     {
         var resp = await _httpProvider
             .InvokeAsync<ExplorerBaseResponse<ExplorerPagerResult<ExplorerTransactionResponse>>>(BaseUrl(chainId),
-                ExplorerApi.Transactions, param: ToDictionary(request));
+                ExplorerApi.Transactions, param: ToDictionary(request), settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
     }
@@ -121,7 +127,7 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
         ExplorerTransferRequest request)
     {
         var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<ExplorerPagerResult<ExplorerTransferResult>>>(
-            BaseUrl(chainId), ExplorerApi.TransferList, param: ToDictionary(request));
+            BaseUrl(chainId), ExplorerApi.TransferList, param: ToDictionary(request), settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
     }
@@ -130,7 +136,7 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     {
         if (param == null) return null;
         if (param is Dictionary<string, string>) return param as Dictionary<string, string>;
-        var json = param is string ? param as string : JsonConvert.SerializeObject(param);
+        var json = param is string ? param as string : JsonConvert.SerializeObject(param, DefaultJsonSettings);
         return JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
     }
 }

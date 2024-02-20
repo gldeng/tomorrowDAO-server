@@ -198,6 +198,9 @@ public class HttpProvider : IHttpProvider
             _logger.LogDebug(
                 "Request To {FullUrl}, statusCode={StatusCode}, time={Time}, query={Query}, header={Header}, body={Body}, resp={Content}",
                 fullUrl, response.StatusCode, time, builder.Query, request.Headers.ToString(), body, content);
+        else
+            _logger.LogDebug(
+                "Request To {FullUrl}, statusCode={StatusCode}, time={Time}", fullUrl, response.StatusCode, time);
         return response;
     }
 
