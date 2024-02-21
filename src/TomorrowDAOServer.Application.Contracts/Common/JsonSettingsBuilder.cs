@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using AElf.Types;
 using Google.Protobuf;
 using Newtonsoft.Json;
@@ -69,6 +70,7 @@ public class JsonSettingsBuilder
         _instance.Converters.Add(new ByteStringBase64Converter());
         return this;
     }
+
 
 }
 

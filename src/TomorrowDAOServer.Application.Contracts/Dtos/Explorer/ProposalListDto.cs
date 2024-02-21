@@ -33,8 +33,8 @@ public class ExplorerProposalResponse : ExplorerPagerResult<ExplorerProposalResu
 
 public class ExplorerProposalResult
 {
-    public int Abstentions { get; set; }
-    public int Approvals { get; set; }
+    public string Abstentions { get; set; }
+    public string Approvals { get; set; }
     public bool CanVote { get; set; }
     public string ContractAddress { get; set; }
     public string ContractMethod { get; set; }
@@ -85,9 +85,9 @@ public class ExplorerProposalResult
 
     public class ReleaseThresholdDto
     {
-        public int MinimalApprovalThreshold { get; set; }
-        public int MaximalRejectionThreshold { get; set; }
-        public int MaximalAbstentionThreshold { get; set; }
-        public int MinimalVoteThreshold { get; set; }
+        public string MinimalApprovalThreshold { get; set; }
+        public string MaximalRejectionThreshold { get; set; }
+        public string MaximalAbstentionThreshold { get; set; }
+        public string MinimalVoteThreshold { get; set; }
     }
 }

@@ -1,9 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TomorrowDAOServer.Dtos.NetworkDao;
 
 public class HomePageRequest
 {
     public string ProposalId { get; set; }
-    public string ChainId { get; set; }
+    [Required] public string ChainId { get; set; }
     public string Address { get; set; }
 }
 
