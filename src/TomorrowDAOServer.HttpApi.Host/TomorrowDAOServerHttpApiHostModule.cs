@@ -66,6 +66,7 @@ namespace TomorrowDAOServer
             Configure<AssetsInfoOptions>(configuration.GetSection("AssetsInfoOptions"));
             Configure<ProposalTagOptions>(configuration.GetSection("ProposalTagOptions"));
             Configure<ExplorerOptions>(configuration.GetSection("Explorer"));
+            Configure<AelfApiInfoOptions>(configuration.GetSection("AelfApiInfoOptions"));
     
             ConfigureConventionalControllers();
             ConfigureAuthentication(context, configuration);
