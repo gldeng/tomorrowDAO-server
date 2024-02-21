@@ -36,9 +36,11 @@ public class ElectionProvider : IElectionProvider, ISingletonDependency
                 Query =
                     @"query($skipCount:Int!,maxMaxResultCount:Int!,$chainId:String!,DAOId:String!,highCouncilType:String!,termNumber:Long!){
             data:getHighCouncilListAsync(input: {skipCount:$skipCount,maxMaxResultCount:$maxMaxResultCount,chainId:$chainId,DAOId:$DAOId,highCouncilType:$highCouncilType,termNumber:$termNumber})
-            {
-                id,chainId,DAOId,termNumber,highCouncilType,address
-            }}",
+                dataList{
+                    id,chainId,DAOId,termNumber,highCouncilType,address
+                }
+                ,totalCount
+            }",
                 Variables = new
                 {
                     input.SkipCount,
