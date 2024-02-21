@@ -6,6 +6,9 @@ using AElf.Indexing.Elasticsearch;
 using Nest;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.Common.Provider;
+using TomorrowDAOServer.Election.Dto;
+using TomorrowDAOServer.Election.Provider;
+using TomorrowDAOServer.Enums;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -25,8 +28,11 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private readonly INESTRepository<DAOIndex, string> _daoIndexRepository; 
     private readonly IOptionsMonitor<AelfApiInfoOptions> _aelfApiOptions;
     private readonly IGraphQLProvider _graphQlProvider;
-    private const int GetHoldersSkipCount = 0;
+    private readonly IElectionProvider _electionProvider;
+    private const int ZeroSkipCount = 0;
     private const int GetHoldersMaxResultCount = 1;
+    private const int GetMemberListMaxResultCount = 100;
+    private const int CandidateTermNumber = 0;
 
     public DAOAppService(INESTRepository<DAOIndex, string> daoIndexRepository, IGraphQLProvider graphQlProvider,IOptionsMonitor<AelfApiInfoOptions> aelfApiOptions)
     {
@@ -43,13 +49,34 @@ public class DAOAppService : ApplicationService, IDAOAppService
     public async Task<List<string>> GetMemberListAsync(GetDAOInfoInput input)
     {
         var daoInfo = await GetAsync(input);
-        return daoInfo?.MemberList;
+        var result = await _electionProvider.GetHighCouncilListAsync(new GetHighCouncilListInput
+        {
+            ChainId = input.ChainId,
+            DAOId = input.DAOId,
+            HighCouncilType = HighCouncilType.Member.ToString(),
+            TermNumber = daoInfo?.HighCouncilTermNumber ?? 0,
+            MaxResultCount = GetMemberListMaxResultCount,
+            SkipCount = ZeroSkipCount
+        });
+        return result?.Items?.Select(x => x.Address).ToList() ?? new List<string>();
     }
     
-    public async Task<List<string>> GetCandidateListAsync(GetDAOInfoInput input)
+    public async Task<PagedResultDto<string>> GetCandidateListAsync(GetHcCandidatesInput input)
     {
-        var daoInfo = await GetAsync(input);
-        return daoInfo?.CandidateList;
+        var result = await _electionProvider.GetHighCouncilListAsync(new GetHighCouncilListInput
+        {
+            ChainId = input.ChainId,
+            DAOId = input.DAOId,
+            HighCouncilType = HighCouncilType.Candidate.ToString(),
+            TermNumber = CandidateTermNumber,
+            MaxResultCount = input.MaxResultCount,
+            SkipCount = input.SkipCount
+        });
+        return new PagedResultDto<string>
+        {
+            TotalCount = result?.TotalCount ?? 0,
+            Items = result?.Items?.Select(x => x.Address).ToList() ?? new List<string>()
+        };
     }
 
     private async Task<DAOInfoDto> GetAsync(GetDAOInfoInput info)
@@ -77,7 +104,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
         var items = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>(list);
         foreach (var dto in items.Where(x => !x.Symbol.IsNullOrEmpty()).ToList())
         {
-            dto.SymbolHoldersNum = await _graphQlProvider.GetHoldersAsync(dto.Symbol.ToUpper(), chainId, GetHoldersSkipCount, GetHoldersMaxResultCount);
+            dto.SymbolHoldersNum = await _graphQlProvider.GetHoldersAsync(dto.Symbol.ToUpper(), chainId, ZeroSkipCount, GetHoldersMaxResultCount);
         }
         return new PagedResultDto<DAOListDto>
         {

@@ -43,7 +43,7 @@ public class DaoController
     }
     
     [HttpGet("hc-candidate-list")]
-    public async Task<List<string>> GetCandidateListAsync(GetDAOInfoInput input)
+    public async Task<PagedResultDto<string>> GetCandidateListAsync(GetHcCandidatesInput input)
     {
         return await _daoAppService.GetCandidateListAsync(input);
     }
