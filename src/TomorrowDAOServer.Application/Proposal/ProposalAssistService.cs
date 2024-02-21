@@ -69,11 +69,11 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             "approvalPercentage:{approvalPercentage} MinimalApproveThreshold:{MinimalApproveThreshold}",
             proposal.ProposalId, proposal.GovernanceMechanism, rejectionPercentage, proposal.MaximalRejectionThreshold,
             abstentionPercentage, proposal.MaximalAbstentionThreshold, approvalPercentage, proposal.MinimalApproveThreshold);
-        if (rejectionPercentage >= proposal.MaximalRejectionThreshold)
+        if (rejectionPercentage > proposal.MaximalRejectionThreshold)
         {
             targetStatus = ProposalStatus.Rejected;
         }
-        else if (abstentionPercentage >= proposal.MaximalAbstentionThreshold)
+        else if (abstentionPercentage > proposal.MaximalAbstentionThreshold)
         {
             targetStatus = ProposalStatus.Abstained;
         }
@@ -87,6 +87,6 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     
     private double GetPercentage(int count, int totalCount)
     {
-        return Math.Round((double)count / totalCount * 100, 2);
+        return Math.Round((double)count / totalCount * 10000, 2);
     }
 }
