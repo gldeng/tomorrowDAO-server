@@ -159,7 +159,7 @@ public class KLineItem
     public static KLineItem FromArray(List<string> data)
     {
         AssertHelper.NotEmpty(data, "Binance k-line data empty");
-        AssertHelper.IsTrue(data.Count >= 7, "Iinvalic Binance k-line data: {Data}", string.Join(",", data));
+        AssertHelper.IsTrue(data.Count >= 7, "Iinvalic Binance k-line data: {List}", string.Join(",", data));
 
         return new KLineItem
         {

@@ -15,7 +15,8 @@ public class TokenDto
     public string TotalSupply { get; set; }
     public string Supply { get; set; }
     public string Name { get; set; }
-    public string Decimals { get; set; }
+    public int Decimals { get; set; }
     public string ChainId { get; set; }
     public bool IsNFT => Symbol.NotNullOrEmpty() && Symbol.Contains('-');
+    public string ImageUrl { get; set; }
 }

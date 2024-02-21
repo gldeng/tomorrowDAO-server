@@ -34,7 +34,7 @@ public class TomorrowDAOServerDomainTestModule : AbpModule
             options.NumberOfReplicas = 1;
             options.NumberOfShards = 1;
             options.Refresh = Refresh.True;
-            options.IndexPrefix = "TomorrowDAOServertest";
+            options.IndexPrefix = "tomorrowdaoservertest";
         });
     }
     
@@ -49,7 +49,7 @@ public class TomorrowDAOServerDomainTestModule : AbpModule
             foreach (var t in types)
             {
                 AsyncHelper.RunSync(async () =>
-                    await elasticIndexService.DeleteIndexAsync("TomorrowDAOServertest." + t.Name.ToLower()));
+                    await elasticIndexService.DeleteIndexAsync("tomorrowdaoservertest." + t.Name.ToLower()));
             }
         });
     }

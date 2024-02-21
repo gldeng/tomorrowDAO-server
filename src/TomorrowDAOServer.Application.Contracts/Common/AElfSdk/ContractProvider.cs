@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AElf;
 using AElf.Client;
 using AElf.Client.Dto;
+using AElf.Client.Service;
 using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;

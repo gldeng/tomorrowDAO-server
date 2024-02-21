@@ -1,15 +1,20 @@
 using System;
-using AutoResponseWrapper.Response;
 using JetBrains.Annotations;
 using Volo.Abp;
 
 namespace TomorrowDAOServer.Common.Dtos;
 
-public class CommonResponseDto<T> : ResponseDto
+public class CommonResponseDto<T>
 {
     private const string SuccessCode = "20000";
     private const string CommonErrorCode = "50000";
 
+    
+    public string Code { get; set; }
+    public T Data { get; set; }
+    public string Message { get; set; }
+
+    
     public bool Success => Code == SuccessCode;
 
 
@@ -24,6 +29,12 @@ public class CommonResponseDto<T> : ResponseDto
         Data = data;
     }
     
+    public CommonResponseDto<T> Error(string message)
+    {
+        Code = CommonErrorCode;
+        Message = message;
+        return this;
+    }
     public CommonResponseDto<T> Error(string code, string message)
     {
         Code = code;
@@ -31,11 +42,11 @@ public class CommonResponseDto<T> : ResponseDto
         return this;
     }
     
-    public CommonResponseDto<T> Error(Exception e, [CanBeNull] string message = null)
+    public CommonResponseDto<T> Error(Exception e, [CanBeNull] string message = null, [CanBeNull] string code = null)
     {
         return e is UserFriendlyException ufe
-            ? Error(ufe.Code, message ?? ufe.Message)
-            : Error(CommonErrorCode, message ?? e.Message);
+            ? Error(code ?? ufe.Code, message ?? ufe.Message)
+            : Error(code ?? CommonErrorCode, message ?? e.Message);
     }
 
 

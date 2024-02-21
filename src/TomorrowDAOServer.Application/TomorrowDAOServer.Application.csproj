@@ -34,5 +34,4 @@
     <PackageReference Include="AElf.Contracts.Association" Version="1.6.0" />
     <PackageReference Include="AElf.Contracts.Referendum" Version="1.6.0" />
   </ItemGroup>
-
 </Project>

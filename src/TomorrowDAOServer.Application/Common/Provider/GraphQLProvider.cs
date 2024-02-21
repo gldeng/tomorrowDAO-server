@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
 using GraphQL.Client.Abstractions;
@@ -16,6 +17,7 @@ public interface IGraphQLProvider
     public Task<long> GetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType);
     public Task SetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType, long height);
     public Task<long> GetIndexBlockHeightAsync(string chainId);
+    public Task<long> GetHoldersAsync(string symbol, string chainId, int skipCount, int maxResultCount);
 }
 
 public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
@@ -23,13 +25,14 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
     private readonly IGraphQLClient _graphQLClient;
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<GraphQLProvider> _logger;
-
+    private readonly IGraphQlClientFactory _graphQlClientFactory;
 
     public GraphQLProvider(IGraphQLClient graphQLClient, ILogger<GraphQLProvider> logger,
-        IClusterClient clusterClient)
+        IClusterClient clusterClient, IGraphQlClientFactory graphQlClientFactory)
     {
         _logger = logger;
         _clusterClient = clusterClient;
+        _graphQlClientFactory = graphQlClientFactory;
         _graphQLClient = graphQLClient;
     }
     
@@ -77,6 +80,33 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
         });
 
         return graphQlResponse.Data.SyncState.ConfirmedBlockHeight;
+    }
+
+    public async Task<long> GetHoldersAsync(string symbol, string chainId, int skipCount, int maxResultCount)
+    {
+        try
+        {
+            var response = await _graphQlClientFactory.GetClient(GraphQLClientEnum.ModuleClient)
+                .SendQueryAsync<HolderResult>(new GraphQLRequest
+                {
+                    Query = @"
+                    query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$symbol:String!){
+                        data:tokenInfo(input:{chainId: $chainId,skipCount: $skipCount,maxResultCount: $maxResultCount,symbol: $symbol})
+                        {
+                            holderCount
+                        }}",
+                    Variables = new
+                    {
+                        chainId, skipCount, maxResultCount, symbol
+                    }
+                }); 
+            return response.Data?.Data?.First().HolderCount ?? 0;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetHoldersAsyncException chainId={chainId}, symbol={symbol}", chainId, symbol);
+        }
+        return 0;
     }
 
     public async Task<long> GetProjectIdAsync(string chainId, string projectId)

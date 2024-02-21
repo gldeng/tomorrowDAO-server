@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TomorrowDAOServer.Dtos.DAO;
+using TomorrowDAOServer.DAO.Dtos;
+using Volo.Abp.Application.Dtos;
 
 namespace TomorrowDAOServer.DAO;
 
 public interface IDAOAppService
 {
-    Task<DAODto> GetDAOByIdAsync(GetDAORequestDto request);
-    Task<List<string>> GetMemberListAsync(GetDAORequestDto request);
-    Task<List<string>> GetCandidateListAsync(GetDAORequestDto request);
     Task<List<string>> GetContractInfoAsync(string chainId, string address);
+    Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input);
+    Task<List<string>> GetMemberListAsync(GetDAOInfoInput input);
+    Task<List<string>> GetCandidateListAsync(GetDAOInfoInput input);
+    Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput request);
 }

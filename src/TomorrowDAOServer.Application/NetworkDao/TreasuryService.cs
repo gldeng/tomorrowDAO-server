@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CAServer.Commons;
@@ -7,11 +8,14 @@ using Orleans;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.AElfSdk;
 using TomorrowDAOServer.Common.AElfSdk.Dtos;
+using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Providers;
 using TomorrowDAOServer.Token;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.ObjectMapping;
 using Volo.Abp.Threading;
 
 namespace TomorrowDAOServer.NetworkDao;
@@ -25,10 +29,12 @@ public class TreasuryService : ITreasuryService
     private readonly ITokenService _tokenService;
     private readonly IContractProvider _contractProvider;
     private readonly IExplorerProvider _explorerProvider;
+    private readonly IObjectMapper _objectMapper;
 
     public TreasuryService(ILogger<TreasuryService> logger, IContractProvider contractProvider,
         IExplorerProvider explorerProvider, ITokenService tokenService, IClusterClient clusterClient,
-        IOptionsMonitor<NetworkDaoOptions> networkDaoOptions, IOptionsMonitor<TokenInfoOptions> tokenOptions)
+        IOptionsMonitor<NetworkDaoOptions> networkDaoOptions, IOptionsMonitor<TokenInfoOptions> tokenOptions,
+        IObjectMapper objectMapper)
     {
         _logger = logger;
         _contractProvider = contractProvider;
@@ -37,6 +43,7 @@ public class TreasuryService : ITreasuryService
         _clusterClient = clusterClient;
         _networkDaoOptions = networkDaoOptions;
         _tokenOptions = tokenOptions;
+        _objectMapper = objectMapper;
     }
 
 
@@ -59,7 +66,7 @@ public class TreasuryService : ITreasuryService
             {
                 TotalCount = b.Balance,
                 DollarValue = exchange == null ? null : (b.Balance.SafeToDecimal() * exchange.Price).ToString(2),
-                Token = new TreasuryBalanceResponse.TokenItem
+                Token = new TokenDto
                 {
                     Symbol = b.Symbol,
                     Name = token.TokenName,
@@ -77,4 +84,28 @@ public class TreasuryService : ITreasuryService
             Items = balanceItems
         };
     }
+
+
+    public async Task<PagedResultDto<TreasuryTransactionDto>> GetTreasuryTransactionAsync(
+        TreasuryTransactionRequest request)
+    {
+        var treasuryContractAddress =
+            _contractProvider.ContractAddress(request.ChainId, SystemContractName.TreasuryContract);
+        AssertHelper.NotEmpty(treasuryContractAddress, "Treasury contract address empty");
+        
+        var explorerResult = await _explorerProvider.GetTransferListAsync(request.ChainId,
+            new ExplorerTransferRequest(request)
+            {
+                Address = treasuryContractAddress
+            });
+        var items =
+            _objectMapper.Map<List<ExplorerTransferResult>, List<TreasuryTransactionDto>>(explorerResult.List);
+        
+        return new PagedResultDto<TreasuryTransactionDto>
+        {
+            TotalCount = explorerResult.Total,
+            Items = items
+        };
+    }
+    
 }
