@@ -6,7 +6,7 @@ namespace TomorrowDAOServer.Election.Dto;
 public class GetHighCouncilListInput : PagedResultRequestDto
 {
     [Required] public string ChainId { get; set; }
-    public string DAOId { get; set; }
+    [Required] public string DAOId { get; set; }
     public string HighCouncilType { get; set; }
     public long TermNumber { get; set; }
 }
