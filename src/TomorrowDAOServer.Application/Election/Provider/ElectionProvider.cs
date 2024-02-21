@@ -60,6 +60,6 @@ public class ElectionProvider : IElectionProvider, ISingletonDependency
             _logger.LogError(e, "GetHighCouncilListAsyncError input {input}", input);
         }
 
-        return new PagedResultDto<IndexerElection>();
+        return new PagedResultDto<IndexerElection>(0, new List<IndexerElection>());
     }
 }
