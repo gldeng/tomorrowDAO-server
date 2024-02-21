@@ -108,18 +108,4 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
         }
         return 0;
     }
-
-    public async Task<long> GetProjectIdAsync(string chainId, string projectId)
-    {
-        try
-        {
-            var grain = _clusterClient.GetGrain<IContractServiceGraphQLGrain>(projectId + "-" + chainId);
-            return await grain.GetStateAsync();
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "GetProjectIdAsync on chain-projectId {id}-{projectId} error", chainId, projectId);
-            return CommonConstant.LongError;
-        }
-    }
 }
