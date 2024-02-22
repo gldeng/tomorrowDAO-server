@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Entities;
-using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Organization.Dto;
 using TomorrowDAOServer.Organization.Index;
