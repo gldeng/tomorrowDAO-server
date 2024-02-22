@@ -5,7 +5,7 @@ using TomorrowDAOServer.Common;
 
 namespace TomorrowDAOServer.Contract.Dto;
 
-public class QueryContractsInfoInput
+public class QueryContractsInfoInput : IValidatableObject
 {
     [Required]
     public string ChainId { get; set; }
