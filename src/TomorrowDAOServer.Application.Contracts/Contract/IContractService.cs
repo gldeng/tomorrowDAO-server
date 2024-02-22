@@ -5,6 +5,6 @@ namespace TomorrowDAOServer.Contract;
 
 public interface IContractService
 {
-    List<FunctionInfoDto> GetFunctionList(string chainId, string contractAddress);
-    List<ContractInfoDto> GetContractInfo(string chainId);
+    FunctionDetail GetFunctionList(string chainId, string contractAddress);
+    ContractDetail GetContractInfo(string chainId);
 }
