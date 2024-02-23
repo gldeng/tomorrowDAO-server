@@ -105,7 +105,7 @@ public class ProposalSyncDataService : ScheduleSyncDataService
     {
         //get server index before
         var preProposalDict = await _proposalProvider
-            .GetProposalListByIds(indexers.Select(p => p.ProposalId).ToList());
+            .GetProposalListByIds(chainId, indexers.Select(p => p.ProposalId).ToList());
         var voteFinishedProposalIds = indexers.Where(index => index.VoteFinished)
             .Select(index => index.ProposalId).ToList();
         var voteDict = await _voteProvider.GetVoteInfosMemoryAsync(chainId, voteFinishedProposalIds);

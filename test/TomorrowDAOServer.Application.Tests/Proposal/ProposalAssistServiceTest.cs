@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace TomorrowDAOServer.Proposal;
 
-public class ProposalAssistServiceTest: TomorrowDAOServerApplicationTestBase
+public sealed class ProposalAssistServiceTest : TomorrowDAOServerApplicationTestBase
 {
     private readonly IProposalAssistService _proposalAssistService;
 
