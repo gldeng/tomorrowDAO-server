@@ -35,7 +35,7 @@ public class ProposalExpiredService : ScheduleSyncDataService
         List<ProposalIndex> queryList;
         do
         {
-            queryList = await _proposalProvider.GetExpiredProposalListAsync(skipCount,new List<ProposalStatus>
+            queryList = await _proposalProvider.GetExpiredProposalListAsync(skipCount, new List<ProposalStatus>
                 { ProposalStatus.Approved });
             _logger.LogInformation(
                 "ExpiredProposal queryList skipCount {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
