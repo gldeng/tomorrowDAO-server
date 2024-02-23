@@ -103,7 +103,10 @@ public class ProposalService : IProposalService, ISingletonDependency
         };
 
         // wait async result and get
-        var proposals = (await Task.WhenAll(proposalTask)).SelectMany(dict => dict.Values).ToList();
+        var proposals = (await Task.WhenAll(proposalTask))
+            .SelectMany(dict => dict.Values)
+            .OrderByDescending(p => p.ExpiredTime)
+            .ToList();
         var proposal = proposals.MaxBy(k => k.CreateAt);
         var currentTermMiningReward = await currentTermMiningRewardTask;
         var voteCount = proposals

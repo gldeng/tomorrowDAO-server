@@ -24,6 +24,7 @@ public class TokenService : TomorrowDAOServerAppService, ITokenService
     private readonly IExplorerProvider _explorerProvider;
     private readonly IObjectMapper _objectMapper;
     
+    
     public TokenService(IClusterClient clusterClient, ILogger<TokenService> logger, IExplorerProvider explorerProvider, IObjectMapper objectMapper)
     {
         _clusterClient = clusterClient;
@@ -50,11 +51,14 @@ public class TokenService : TomorrowDAOServerAppService, ITokenService
 
     public async Task<TokenDto> GetTokenByExplorerAsync(string chainId, string symbol)
     {
+        var tokenGrain = await GetTokenAsync(chainId, symbol);
         var tokenInfo = await _explorerProvider.GetTokenInfoAsync(chainId, new ExplorerTokenInfoRequest()
         {
             Symbol = symbol
         });
-        return _objectMapper.Map<ExplorerTokenInfoResponse, TokenDto>(tokenInfo);
+        var tokenResult = _objectMapper.Map<ExplorerTokenInfoResponse, TokenDto>(tokenInfo);
+        tokenResult.ImageUrl = tokenGrain.ImageUrl;
+        return tokenResult;
     }
     
     public async Task<TokenPriceDto> GetTokenPriceAsync(string baseCoin, string quoteCoin)

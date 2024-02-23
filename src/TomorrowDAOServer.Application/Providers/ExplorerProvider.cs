@@ -56,8 +56,8 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     public string BaseUrl(string chainId)
     {
         var urlExists = _explorerOptions.CurrentValue.BaseUrl.TryGetValue(chainId, out var baseUrl);
-        AssertHelper.IsTrue(urlExists, "Explorer url not found of chainId {}", chainId);
-        return baseUrl;
+        AssertHelper.IsTrue(urlExists && baseUrl.NotNullOrEmpty(), "Explorer url not found of chainId {}", chainId);
+        return baseUrl!.TrimEnd('/');
     }
 
     /// <summary>

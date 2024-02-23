@@ -25,15 +25,17 @@ public class AwsS3Client : IAwsS3Client, ITransientDependency
 {
     private readonly ILogger<AwsS3Client> _logger;
     private readonly IOptionsMonitor<AwsS3Option> _awsS3Option;
+    private readonly IOptionsMonitor<SecurityServerOptions> _securityServerOption;
     private readonly ISecretProvider _secretProvider;
     private AmazonS3Client _amazonS3Client;
 
     public AwsS3Client(IOptionsMonitor<AwsS3Option> awsS3Option, ISecretProvider secretProvider,
-        ILogger<AwsS3Client> logger)
+        ILogger<AwsS3Client> logger, IOptionsMonitor<SecurityServerOptions> securityServerOption)
     {
         _awsS3Option = awsS3Option;
         _secretProvider = secretProvider;
         _logger = logger;
+        _securityServerOption = securityServerOption;
         InitAmazonS3Client();
     }
 
@@ -42,7 +44,7 @@ public class AwsS3Client : IAwsS3Client, ITransientDependency
         try
         {
             var identityPoolId = AsyncHelper.RunSync(() =>
-                _secretProvider.GetSecretWithCacheAsync(_awsS3Option.CurrentValue.SecurityKeyId));
+                _secretProvider.GetSecretWithCacheAsync(_securityServerOption.CurrentValue.KeyIds.AwsS3IdentityPool));
             var cognitoCredentials = new CognitoAWSCredentials(identityPoolId, RegionEndpoint.APNortheast1);
             _amazonS3Client = new AmazonS3Client(cognitoCredentials, RegionEndpoint.APNortheast1);
         }
@@ -56,8 +58,10 @@ public class AwsS3Client : IAwsS3Client, ITransientDependency
 
     public async Task<string> UpLoadBase64FileAsync(string base64Image, string fileName)
     {
-        base64Image = base64Image.TrimStart("data:image/png;base64,".ToCharArray());
-        var imageBytes = Convert.FromBase64String(base64Image);
+        // base64Image = base64Image.TrimStart("data:image/png;base64".ToCharArray());
+        var vals = base64Image.Split(CommonConstant.Comma);
+        AssertHelper.NotEmpty(vals, "Invalid image base64");
+        var imageBytes = Convert.FromBase64String(vals[vals.Length - 1]);
         using var ms = new MemoryStream(imageBytes);
         return await UpLoadFileAsync(ms, fileName);
     }
@@ -68,7 +72,7 @@ public class AwsS3Client : IAwsS3Client, ITransientDependency
         {
             InputStream = steam,
             BucketName = _awsS3Option.CurrentValue.BucketName,
-            Key = _awsS3Option.CurrentValue.Path + "/images/svg/" + fileName,
+            Key = _awsS3Option.CurrentValue.Path + "/images/token/" + fileName,
             CannedACL = S3CannedACL.PublicRead,
         };
         var putObjectResponse = await _amazonS3Client.PutObjectAsync(putObjectRequest);

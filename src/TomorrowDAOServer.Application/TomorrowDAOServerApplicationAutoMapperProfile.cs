@@ -3,6 +3,7 @@ using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.DAO.Indexer;
+using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Entities;
@@ -94,5 +95,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.Creator, opt => opt.MapFrom(src => src.Creator))
             .ForMember(des => des.Symbol, opt => opt.MapFrom(src => src.GovernanceToken))
             ;
+
+        CreateMap<ExplorerTokenInfoResponse, TokenDto>().ReverseMap();
     }
 }
