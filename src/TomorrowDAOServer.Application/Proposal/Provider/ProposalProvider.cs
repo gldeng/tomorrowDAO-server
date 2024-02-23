@@ -24,11 +24,11 @@ public interface IProposalProvider
     
     public Task<ProposalIndex> GetProposalByIdAsync(string chainId, string proposalId);
     
-    public Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(List<string> ids);
+    public Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(string chainId, List<string> ids);
 
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
 
-    public Task<List<ProposalIndex>> GetExpiredProposalListAsync(List<ProposalStatus> statusList);
+    public Task<List<ProposalIndex>> GetExpiredProposalListAsync(int skipCount, List<ProposalStatus> statusList);
 }
 
 public class ProposalProvider : IProposalProvider, ISingletonDependency
@@ -111,15 +111,18 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         return await _proposalIndexRepository.GetAsync(Filter);
     }
 
-    public async Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(List<string> proposalIds)
+    public async Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(string chainId, List<string> proposalIds)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
         
-        QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
-            f.Bool(b => b.Must(mustQuery));
+        mustQuery.Add(q => q.Term(i =>
+            i.Field(f => f.ChainId).Value(chainId)));
         
         mustQuery.Add(q => q.Terms(i =>
             i.Field(f => f.ProposalId).Terms(proposalIds)));
+        
+        QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
+            f.Bool(b => b.Must(mustQuery));
         
         var tuple = await _proposalIndexRepository.GetListAsync(Filter);
 
@@ -131,7 +134,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
        await _proposalIndexRepository.BulkAddOrUpdateAsync(list);
     }
 
-    public async Task<List<ProposalIndex>> GetExpiredProposalListAsync(List<ProposalStatus> statusList)
+    public async Task<List<ProposalIndex>> GetExpiredProposalListAsync(int skipCount, List<ProposalStatus> statusList)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
 
@@ -145,7 +148,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
             f.Bool(b => b.Must(mustQuery));
 
-        var tuple = await _proposalIndexRepository.GetListAsync(Filter);
+        var tuple = await _proposalIndexRepository.GetListAsync(Filter, skip: skipCount);
         return tuple.Item2;
     }
     

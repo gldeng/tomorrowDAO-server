@@ -7,7 +7,7 @@ namespace TomorrowDAOServer.Proposal.Index;
 public class IndexerProposalSync : IndexerCommonResult<IndexerProposalSync>
 {
     public long TotalRecordCount { get; set; }
-    public List<IndexerProposal> DataList { get; set; }
+    public List<IndexerProposal>? DataList { get; set; }
 }
 
 public class IndexerProposal : ProposalBase

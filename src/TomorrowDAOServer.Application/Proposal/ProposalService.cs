@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Entities;
-using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Organization.Dto;
 using TomorrowDAOServer.Organization.Index;
@@ -122,14 +121,15 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             return new MyProposalDto();
         }
         var myProposalDto = _objectMapper.Map<ProposalIndex, MyProposalDto>(proposalIndex);
-        if (proposalIndex.ProposalStatus == ProposalStatus.Active)
-        {
-            myProposalDto.CanVote = true;
-        }
         var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
         myProposalDto.StakeAmount = voteStake.Amount;
         myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         myProposalDto.Symbol = voteStake.AcceptedCurrency;
+        myProposalDto.CanVote = !proposalIndex.IsFinalStatus();
+        if (proposalIndex.IsFinalStatus())
+        {
+            myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
+        }
         return myProposalDto;
     }
 }

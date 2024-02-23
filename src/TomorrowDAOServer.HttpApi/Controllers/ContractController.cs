@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.Contract;
 using TomorrowDAOServer.Contract.Dto;
@@ -21,14 +20,14 @@ public class ContractController
     
     [HttpGet]
     [Route("contract/function-list")]
-    public List<FunctionInfoDto> FunctionList(QueryFunctionListInput input)
+    public FunctionDetail FunctionList(QueryFunctionListInput input)
     {
         return _contractService.GetFunctionList(input.ChainId, input.ContractAddress);
     }
     
     [HttpGet]
     [Route("contracts-info")]
-    public List<ContractInfoDto> ContractsInfo(QueryContractsInfoInput input)
+    public ContractDetail ContractsInfo(QueryContractsInfoInput input)
     {
         return _contractService.GetContractInfo(input.ChainId);
     }

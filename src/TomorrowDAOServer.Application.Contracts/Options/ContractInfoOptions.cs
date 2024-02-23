@@ -9,12 +9,7 @@ public class ContractInfoOptions
 
 public class ContractInfo
 {
+    public string ContractAddress { get; set; }
     public string ContractName { get; set; }
-    public List<FunctionInfo> FunctionList { get; set; }
-}
-
-public class FunctionInfo
-{
-    public string FunctionName { get; set; }
-    public List<string> FunctionParams { get; set; }
+    public List<string> FunctionList { get; set; }
 }

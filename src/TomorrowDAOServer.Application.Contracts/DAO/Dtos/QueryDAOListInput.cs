@@ -5,7 +5,7 @@ using TomorrowDAOServer.Common;
 
 namespace TomorrowDAOServer.DAO.Dtos;
 
-public class QueryDAOListInput
+public class QueryDAOListInput : IValidatableObject
 {
     [Required] public string ChainId { get; set; }
     

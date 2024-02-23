@@ -1,12 +1,16 @@
 using AutoMapper;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Common;
+using TomorrowDAOServer.Contract.Dto;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.DAO.Indexer;
 using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Governance;
+using TomorrowDAOServer.Governance.Dto;
+using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Organization.Dto;
 using TomorrowDAOServer.Organization.Index;
 using TomorrowDAOServer.Proposal.Dto;
@@ -94,6 +98,11 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.Description, opt => opt.MapFrom(src => src.Metadata.Description))
             .ForMember(des => des.Creator, opt => opt.MapFrom(src => src.Creator))
             .ForMember(des => des.Symbol, opt => opt.MapFrom(src => src.GovernanceToken))
+            ;
+        CreateMap<ContractInfo, ContractInfoDto>();
+        CreateMap<IndexerGovernanceMechanism, GovernanceMechanismInfo>()
+            .ForMember(des => des.GovernanceSchemeId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(des => des.Name, opt => opt.MapFrom(src => src.GovernanceMechanism.ToString()))
             ;
 
         CreateMap<ExplorerTokenInfoResponse, TokenDto>().ReverseMap();
