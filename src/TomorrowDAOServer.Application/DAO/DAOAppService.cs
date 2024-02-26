@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AElf.Indexing.Elasticsearch;
-using Nest;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Election.Dto;
 using TomorrowDAOServer.Election.Provider;
 using TomorrowDAOServer.Enums;
+using TomorrowDAOServer.DAO.Provider;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -16,8 +15,9 @@ using Volo.Abp.Auditing;
 using AElf.Client;
 using Google.Protobuf.Reflection;
 using Microsoft.Extensions.Options;
+using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Options;
-using System.Linq;
+using TomorrowDAOServer.Proposal.Provider;
 
 namespace TomorrowDAOServer.DAO;
 
@@ -25,87 +25,77 @@ namespace TomorrowDAOServer.DAO;
 [DisableAuditing]
 public class DAOAppService : ApplicationService, IDAOAppService
 {
-    private readonly INESTRepository<DAOIndex, string> _daoIndexRepository; 
-    private readonly IOptionsMonitor<AelfApiInfoOptions> _aelfApiOptions;
-    private readonly IGraphQLProvider _graphQlProvider;
+    private readonly IDAOProvider _daoProvider;
     private readonly IElectionProvider _electionProvider;
+    private readonly IProposalProvider _proposalProvider;
+    private readonly IGraphQLProvider _graphQlProvider;
+    private readonly IOptionsMonitor<AelfApiInfoOptions> _aelfApiOptions;
     private const int ZeroSkipCount = 0;
     private const int GetHoldersMaxResultCount = 1;
     private const int GetMemberListMaxResultCount = 100;
     private const int CandidateTermNumber = 0;
-
-    public DAOAppService(INESTRepository<DAOIndex, string> daoIndexRepository, IGraphQLProvider graphQlProvider,IOptionsMonitor<AelfApiInfoOptions> aelfApiOptions)
+    
+    public DAOAppService(IDAOProvider daoProvider,
+        IElectionProvider electionProvider,
+        IProposalProvider proposalProvider,
+        IGraphQLProvider graphQlProvider,
+        IOptionsMonitor<AelfApiInfoOptions> aelfApiOptions)
     {
-        _daoIndexRepository = daoIndexRepository;
+        _daoProvider = daoProvider;
+        _electionProvider = electionProvider;
+        _proposalProvider = proposalProvider;
         _graphQlProvider = graphQlProvider;
         _aelfApiOptions = aelfApiOptions;
     }
 
     public async Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input)
     {
-        return await GetAsync(input);
+        var daoIndex = await _daoProvider.GetAsync(input);
+        return ObjectMapper.Map<DAOIndex, DAOInfoDto>(daoIndex);
     }
 
-    public async Task<List<string>> GetMemberListAsync(GetDAOInfoInput input)
+    public async Task<PagedResultDto<HcMemberDto>> GetMemberListAsync(GetHcMemberInput input)
     {
-        var daoInfo = await GetAsync(input);
+        var type = input.Type.IsNullOrWhiteSpace() ? HighCouncilType.Member.ToString() : input.Type;
+        var daoInfo = await _daoProvider.GetAsync(input);
         var result = await _electionProvider.GetHighCouncilListAsync(new GetHighCouncilListInput
         {
             ChainId = input.ChainId,
             DAOId = input.DAOId,
-            HighCouncilType = HighCouncilType.Member.ToString(),
-            TermNumber = daoInfo?.HighCouncilTermNumber ?? 0,
-            MaxResultCount = GetMemberListMaxResultCount,
-            SkipCount = ZeroSkipCount
+            HighCouncilType = type,
+            TermNumber = type == HighCouncilType.Member.ToString()
+                ? daoInfo?.HighCouncilTermNumber ?? 0
+                : CandidateTermNumber,
+            MaxResultCount = type == HighCouncilType.Member.ToString()
+                ? daoInfo?.HighCouncilConfig?.MaxHighCouncilMemberCount ?? GetMemberListMaxResultCount
+                : input.MaxResultCount,
+            SkipCount = type == HighCouncilType.Member.ToString() ? ZeroSkipCount : input.SkipCount,
+            Sorting = input.Sorting
         });
-        return result?.Items?.Select(x => x.Address).ToList() ?? new List<string>();
-    }
-    
-    public async Task<PagedResultDto<string>> GetCandidateListAsync(GetHcCandidatesInput input)
-    {
-        var result = await _electionProvider.GetHighCouncilListAsync(new GetHighCouncilListInput
-        {
-            ChainId = input.ChainId,
-            DAOId = input.DAOId,
-            HighCouncilType = HighCouncilType.Candidate.ToString(),
-            TermNumber = CandidateTermNumber,
-            MaxResultCount = input.MaxResultCount,
-            SkipCount = input.SkipCount
-        });
-        return new PagedResultDto<string>
+        return new PagedResultDto<HcMemberDto>
         {
             TotalCount = result?.TotalCount ?? 0,
-            Items = result?.Items?.Select(x => x.Address).ToList() ?? new List<string>()
+            Items = result?.Items?.Select(x => new HcMemberDto
+            {
+                Type = type,
+                Address = AddressHelper.ToFullAddress(x.ChainId, x.Address),
+                VotesAmount = x.VotesAmount.ToString(),
+                StakeAmount = x.StakeAmount.ToString()
+            }).ToList() ?? new List<HcMemberDto>()
         };
     }
 
-    private async Task<DAOInfoDto> GetAsync(GetDAOInfoInput info)
+    public async Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput input)
     {
-        var mustQuery = new List<Func<QueryContainerDescriptor<DAOIndex>, QueryContainer>>();
-        mustQuery.Add(q => q.Term(i => i.Field(t => t.ChainId).Value(info.ChainId)));
-        mustQuery.Add(q => q.Term(i => i.Field(t => t.Id).Value(info.DAOId)));
-
-        QueryContainer Filter(QueryContainerDescriptor<DAOIndex> f) => f.Bool(b => b.Must(mustQuery));
-        var dao = await _daoIndexRepository.GetAsync(Filter);
-        return ObjectMapper.Map<DAOIndex, DAOInfoDto>(dao);
-    }
-    
-    public async Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput request)
-    {
-        var chainId = request.ChainId;
-        var mustQuery = new List<Func<QueryContainerDescriptor<DAOIndex>, QueryContainer>>
-        {
-            q => 
-                q.Term(i => i.Field(t => t.ChainId).Value(chainId))
-        };
-        QueryContainer Filter(QueryContainerDescriptor<DAOIndex> f) => f.Bool(b => b.Must(mustQuery));
-        var (item1, list) = await _daoIndexRepository.GetSortListAsync(Filter, skip: request.SkipCount, limit: request.MaxResultCount, 
-            sortFunc: _ => new SortDescriptor<DAOIndex>().Descending(index => index.CreateTime));
-        var items = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>(list);
+        var (item1, daoList) = await _daoProvider.GetDAOListAsync(input);
+        var items = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>(daoList);
         foreach (var dto in items.Where(x => !x.Symbol.IsNullOrEmpty()).ToList())
         {
-            dto.SymbolHoldersNum = await _graphQlProvider.GetHoldersAsync(dto.Symbol.ToUpper(), chainId, ZeroSkipCount, GetHoldersMaxResultCount);
+            dto.SymbolHoldersNum = await _graphQlProvider.GetHoldersAsync(dto.Symbol.ToUpper(), input.ChainId,
+                ZeroSkipCount, GetHoldersMaxResultCount);
+            dto.ProposalsNum = await _proposalProvider.GetProposalCountByDAOIds(input.ChainId, dto.DaoId);
         }
+
         return new PagedResultDto<DAOListDto>
         {
             TotalCount = item1,
@@ -127,14 +117,12 @@ public class DAOAppService : ApplicationService, IDAOAppService
         return methods;
     }
     
-    public string BuildDomainUrl(string chainId)
+    private string BuildDomainUrl(string chainId)
     {
         if (chainId.IsNullOrWhiteSpace())
         {
             return string.Empty;
         }
-
-        var temp = _aelfApiOptions.CurrentValue.AelfApiInfos;
 
         if (_aelfApiOptions.CurrentValue.AelfApiInfos.TryGetValue(chainId, out var info))
         {

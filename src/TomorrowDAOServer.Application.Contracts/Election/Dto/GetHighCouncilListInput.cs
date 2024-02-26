@@ -9,4 +9,5 @@ public class GetHighCouncilListInput : PagedResultRequestDto
     [Required] public string DAOId { get; set; }
     public string HighCouncilType { get; set; }
     public long TermNumber { get; set; }
+    public string Sorting {get; set; }
 }

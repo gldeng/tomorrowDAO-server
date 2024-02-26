@@ -9,7 +9,6 @@ using Volo.Abp.Application.Dtos;
 
 namespace TomorrowDAOServer.Controllers.Dao;
 
-
 [RemoteService]
 [Area("app")]
 [ControllerName("Dao")]
@@ -22,13 +21,6 @@ public class DaoController
     {
         _daoAppService = daoAppService;
     }
-
-    [HttpGet]
-    [Route("contract-info")]
-    public async Task<List<string>> GetContractInfoAsync(GetContractInfoInput input)
-    {
-        return await _daoAppService.GetContractInfoAsync(input.ChainId, input.ContractAddress);
-    }
     
     [HttpGet("dao-info")]
     public async Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input)
@@ -37,20 +29,20 @@ public class DaoController
     }
     
     [HttpGet("hc-member-list")]
-    public async Task<List<string>> GetMemberListAsync(GetDAOInfoInput input)
+    public async Task<PagedResultDto<HcMemberDto>> GetMemberListAsync(GetHcMemberInput input)
     {
         return await _daoAppService.GetMemberListAsync(input);
-    }
-    
-    [HttpGet("hc-candidate-list")]
-    public async Task<PagedResultDto<string>> GetCandidateListAsync(GetHcCandidatesInput input)
-    {
-        return await _daoAppService.GetCandidateListAsync(input);
     }
     
     [HttpGet("dao-list")]
     public async Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput request)
     {
         return await _daoAppService.GetDAOListAsync(request);
+    }
+    
+    [HttpGet("contract-info")]
+    public async Task<List<string>> GetContractInfoAsync(GetContractInfoInput input)
+    {
+        return await _daoAppService.GetContractInfoAsync(input.ChainId, input.ContractAddress);
     }
 }

@@ -26,6 +26,8 @@ public interface IProposalProvider
     
     public Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(string chainId, List<string> ids);
 
+    public Task<long> GetProposalCountByDAOIds(string chainId, string DAOId);
+
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
 
     public Task<List<ProposalIndex>> GetExpiredProposalListAsync(int skipCount, List<ProposalStatus> statusList);
@@ -127,6 +129,21 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         var tuple = await _proposalIndexRepository.GetListAsync(Filter);
 
         return tuple.Item2.ToDictionary(p => p.ProposalId, p => p);
+    }
+
+    public async Task<long> GetProposalCountByDAOIds(string chainId, string DAOId)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+
+        mustQuery.Add(q => q.Terms(i =>
+            i.Field(f => f.ChainId).Terms(chainId)));
+        mustQuery.Add(q => q.Terms(i =>
+            i.Field(f => f.DAOId).Terms(DAOId)));
+        
+        QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
+            f.Bool(b => b.Must(mustQuery));
+        
+        return (await _proposalIndexRepository.CountAsync(Filter)).Count;
     }
 
     public async Task BulkAddOrUpdateAsync(List<ProposalIndex> list)

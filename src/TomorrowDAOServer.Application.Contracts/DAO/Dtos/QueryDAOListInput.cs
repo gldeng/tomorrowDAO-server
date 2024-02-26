@@ -8,9 +8,9 @@ namespace TomorrowDAOServer.DAO.Dtos;
 public class QueryDAOListInput : IValidatableObject
 {
     [Required] public string ChainId { get; set; }
-    
-    [Range(0, int.MaxValue)]
-    public virtual int SkipCount { get; set; }
+
+    [Range(0, int.MaxValue)] 
+    public virtual int SkipCount { get; set; } = 0;
     
     [Range(1, int.MaxValue)]
     public int MaxResultCount { get; set; } = 6;

@@ -21,4 +21,6 @@ public class IndexerElection
     [JsonConverter(typeof(StringEnumConverter))]
     public HighCouncilType HighCouncilType { get; set; }
     public string Address { get; set; }
+    public long VotesAmount { get; set; }
+    public long StakeAmount { get; set; }
 }

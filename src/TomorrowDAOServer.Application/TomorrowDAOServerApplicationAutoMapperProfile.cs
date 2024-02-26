@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AutoMapper;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Common;
@@ -44,7 +45,11 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<IndexerVoteRecord, VoteRecordDto>();
 
         CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
-        CreateMap<IndexerDAOInfo, DAOIndex>().ReverseMap();
+        CreateMap<IndexerDAOInfo, DAOIndex>()
+            .ForMember(des => des.FileInfoList, opt
+                => opt.MapFrom(src => MapHelper.MapJsonConvert<List<FileInfo>>(src.FileInfoList)))
+            .ForMember(des => des.PermissionInfoList, opt
+                => opt.MapFrom(src => MapHelper.MapJsonConvert<List<PermissionInfo>>(src.PermissionInfoList)));
         CreateMap<Metadata, MetadataDto>().ReverseMap();
         CreateMap<IndexerMetadata, Metadata>().ReverseMap();
         
