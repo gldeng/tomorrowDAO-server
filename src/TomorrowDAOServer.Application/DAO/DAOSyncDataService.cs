@@ -53,7 +53,7 @@ public class DAOSyncDataService : ScheduleSyncDataService
                 StartBlockHeight = lastEndHeight,
                 EndBlockHeight = newIndexHeight
             };
-            queryList = await _daoProvider.GetDAOListAsync(input);
+            queryList = await _daoProvider.GetSyncDAOListAsync(input);
             _logger.LogInformation(
                 "SyncDAOInfos queryList chainId: {chainId} skipCount: {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
                 chainId, skipCount, lastEndHeight, newIndexHeight, queryList?.Count);

@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.Modularity;
-using Volo.Abp.Threading;
 
 namespace TomorrowDAOServer;
 
@@ -40,7 +39,7 @@ public class TomorrowDAOServerDomainTestModule : AbpModule
     
     public override void OnApplicationShutdown(ApplicationShutdownContext context)
     {
-        var elasticIndexService = context.ServiceProvider.GetRequiredService<IElasticIndexService>();
+        // var elasticIndexService = context.ServiceProvider.GetRequiredService<IElasticIndexService>();
         var modules = context.ServiceProvider.GetRequiredService<IOptions<IndexCreateOption>>().Value.Modules;
 
         modules.ForEach(m =>
@@ -48,8 +47,8 @@ public class TomorrowDAOServerDomainTestModule : AbpModule
             var types = GetTypesAssignableFrom<IIndexBuild>(m.Assembly);
             foreach (var t in types)
             {
-                AsyncHelper.RunSync(async () =>
-                    await elasticIndexService.DeleteIndexAsync("tomorrowdaoservertest." + t.Name.ToLower()));
+                // AsyncHelper.RunSync(async () =>
+                //     await elasticIndexService.DeleteIndexAsync("tomorrowdaoservertest." + t.Name.ToLower()));
             }
         });
     }
