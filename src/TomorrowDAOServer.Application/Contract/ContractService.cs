@@ -22,19 +22,19 @@ public class ContractService : TomorrowDAOServerAppService, IContractService
         _contractProvider = contractProvider;
     }
 
-    public FunctionDetail GetFunctionList(string chainId, string contractAddress)
+    public FunctionDetailDto GetFunctionList(string chainId, string contractAddress)
     {
         var contractInfo = _contractProvider.GetContractInfo(chainId, contractAddress).FirstOrDefault();
-        return new FunctionDetail
+        return new FunctionDetailDto
         {
             FunctionList = contractInfo?.FunctionList ?? new List<string>()
         };
     }
 
-    public ContractDetail GetContractInfo(string chainId)
+    public ContractDetailDto GetContractInfo(string chainId)
     {
         var contractInfos = _contractProvider.GetContractInfo(chainId, string.Empty);
-        return new ContractDetail
+        return new ContractDetailDto
         {
             ContractInfoList = _objectMapper.Map<List<ContractInfo>, List<ContractInfoDto>>(contractInfos)
         };

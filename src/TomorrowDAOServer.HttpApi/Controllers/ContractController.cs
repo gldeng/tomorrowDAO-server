@@ -20,14 +20,14 @@ public class ContractController
     
     [HttpGet]
     [Route("contract/function-list")]
-    public FunctionDetail FunctionList(QueryFunctionListInput input)
+    public FunctionDetailDto FunctionList(QueryFunctionListInput input)
     {
         return _contractService.GetFunctionList(input.ChainId, input.ContractAddress);
     }
     
     [HttpGet]
     [Route("contracts-info")]
-    public ContractDetail ContractsInfo(QueryContractsInfoInput input)
+    public ContractDetailDto ContractsInfo(QueryContractsInfoInput input)
     {
         return _contractService.GetContractInfo(input.ChainId);
     }
