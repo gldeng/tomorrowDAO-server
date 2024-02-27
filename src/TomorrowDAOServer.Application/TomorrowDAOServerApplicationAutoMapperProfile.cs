@@ -109,7 +109,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.GovernanceSchemeId, opt => opt.MapFrom(src => src.Id))
             .ForMember(des => des.Name, opt => opt.MapFrom(src => src.GovernanceMechanism.ToString()))
             ;
-
+        CreateMap<IndexerVoteSchemeInfo, VoteSchemeInfoDto>();
         CreateMap<ExplorerTokenInfoResponse, TokenDto>().ReverseMap();
     }
 }

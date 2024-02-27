@@ -20,6 +20,8 @@ public interface IVoteProvider
     Task<IndexerVoteStake> GetVoteStakeAsync(string chainId, string votingItemId, string voter);
     
     Task<List<IndexerVoteRecord>> GetVoteRecordAsync(GetVoteRecordInput input);
+    
+    Task<List<IndexerVoteSchemeInfo>> GetVoteSchemeAsync(GetVoteSchemeInput input);
 }
 
 public class VoteProvider : IVoteProvider, ISingletonDependency
@@ -144,5 +146,24 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
             }
         });
         return result?.Data?.DataList ?? new List<IndexerVoteRecord>();
+    }
+
+    public async Task<List<IndexerVoteSchemeInfo>> GetVoteSchemeAsync(GetVoteSchemeInput input)
+    {
+        var graphQlResponse = await _graphQlHelper.QueryAsync<IndexerVoteSchemeResult>(new GraphQLRequest
+        {
+            Query =
+                @"query($chainId:String,$types:[Int!]){
+            data:getVoteSchemeInfo(input: {chainId:$chainId,types:$types})
+            {
+                id,chainId,blockHeight,voteSchemeId,voteMechanism,isLockToken,isQuadratic,ticketCost,createTime
+            }}",
+            Variables = new
+            {
+                input.ChainId,
+                input.Types
+            }
+        });
+        return graphQlResponse?.DataList ?? new List<IndexerVoteSchemeInfo>();
     }
 }
