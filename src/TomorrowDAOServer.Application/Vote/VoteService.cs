@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Vote.Dto;
 using TomorrowDAOServer.Vote.Index;
 using TomorrowDAOServer.Vote.Provider;
