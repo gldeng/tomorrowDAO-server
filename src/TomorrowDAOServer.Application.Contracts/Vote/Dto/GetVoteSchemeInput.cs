@@ -9,6 +9,7 @@ public class GetVoteSchemeInput : IValidatableObject
 {
     [Required] public string ChainId { get; set; }
     public List<int> Types { get; set; }
+    
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (ChainId.IsNullOrEmpty() || !ChainId.MatchesChainId())
