@@ -15,4 +15,5 @@ public class VoteSchemeInfoDto
     public string VoteSchemeId { get; set; }
     [JsonConverter(typeof(StringEnumConverter))]
     public VoteMechanism VoteMechanism { get; set; }
+    public string VoteMechanismName { get; set; }
 }
