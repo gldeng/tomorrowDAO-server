@@ -2,10 +2,14 @@ namespace TomorrowDAOServer.Enums;
 
 public enum ProposalStatus
 {
-    Active = 1,
+    Empty = 0,
+    PendingVote = 1,
     Approved = 2,
     Rejected = 3,
     Abstained = 4,
-    Expired = 5,
-    Executed = 6
+    BelowThreshold = 5,
+    Challenged = 6,
+    Vetoed = 7,
+    Expired = 8,
+    Executed = 9
 }

@@ -9,8 +9,7 @@ namespace TomorrowDAOServer.Proposal;
 
 public interface IProposalAssistService
 {
-    public ProposalStatus ToProposalResult(ProposalIndex proposal, IndexerVote voteInfo,
-        IndexerOrganizationInfo organizationInfo);
+    public ProposalStatus ToProposalResult(ProposalIndex proposal, IndexerVote voteInfo);
 }
 
 public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssistService
@@ -22,8 +21,11 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         _logger = logger;
     }
     
-    public ProposalStatus ToProposalResult(ProposalIndex proposal, IndexerVote voteInfo, IndexerOrganizationInfo organizationInfo)
+    public ProposalStatus ToProposalResult(ProposalIndex proposal, IndexerVote voteInfo)
     {
+        //todo change later
+        return proposal.ActiveEndTime < DateTime.UtcNow ? ProposalStatus.Expired : ProposalStatus.PendingVote;
+
         var targetStatus = proposal.ProposalStatus;
         // VotesAmount not enough
         if (proposal.MinimalVoteThreshold > 0 && voteInfo.VotesAmount < proposal.MinimalVoteThreshold)
@@ -34,30 +36,30 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             return ProposalStatus.Expired;
         }
 
-        if (proposal.GovernanceMechanism is GovernanceMechanism.Customize or GovernanceMechanism.Referendum)
-        {
-            _logger.LogInformation(
-                "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
-                "VoterCount: {VoterCount} MinimalRequiredThreshold:{MinimalRequiredThreshold}",
-                proposal.ProposalId, proposal.GovernanceMechanism, voteInfo.VoterCount, proposal.MinimalRequiredThreshold);
-            if (proposal.MinimalRequiredThreshold > 0 && voteInfo.VoterCount < proposal.MinimalRequiredThreshold)
-            {
-                return ProposalStatus.Expired;
-            }
-        }
-
-        if (proposal.GovernanceMechanism is GovernanceMechanism.Parliament or GovernanceMechanism.Association)
-        {
-            double voterPercentage = GetPercentage(voteInfo.VoterCount, organizationInfo.OrganizationMemberCount);
-            _logger.LogInformation(
-                "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
-                "voterPercentage: {voterPercentage} MinimalRequiredThreshold:{MinimalRequiredThreshold}",
-                proposal.ProposalId, proposal.GovernanceMechanism, voterPercentage, proposal.MinimalRequiredThreshold);
-            if (voterPercentage < proposal.MinimalRequiredThreshold)
-            {
-                return ProposalStatus.Expired;
-            }
-        }
+        // if (proposal.GovernanceMechanism is GovernanceMechanism.Customize or GovernanceMechanism.Referendum)
+        // {
+        //     _logger.LogInformation(
+        //         "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
+        //         "VoterCount: {VoterCount} MinimalRequiredThreshold:{MinimalRequiredThreshold}",
+        //         proposal.ProposalId, proposal.GovernanceMechanism, voteInfo.VoterCount, proposal.MinimalRequiredThreshold);
+        //     if (proposal.MinimalRequiredThreshold > 0 && voteInfo.VoterCount < proposal.MinimalRequiredThreshold)
+        //     {
+        //         return ProposalStatus.Expired;
+        //     }
+        // }
+        //
+        // if (proposal.GovernanceMechanism is GovernanceMechanism.Parliament or GovernanceMechanism.Association)
+        // {
+        //     double voterPercentage = GetPercentage(voteInfo.VoterCount, organizationInfo.OrganizationMemberCount);
+        //     _logger.LogInformation(
+        //         "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
+        //         "voterPercentage: {voterPercentage} MinimalRequiredThreshold:{MinimalRequiredThreshold}",
+        //         proposal.ProposalId, proposal.GovernanceMechanism, voterPercentage, proposal.MinimalRequiredThreshold);
+        //     if (voterPercentage < proposal.MinimalRequiredThreshold)
+        //     {
+        //         return ProposalStatus.Expired;
+        //     }
+        // }
 
         double rejectionPercentage = GetPercentage(voteInfo.RejectionCount, voteInfo.VotesAmount);
         double abstentionPercentage = GetPercentage(voteInfo.AbstentionCount, voteInfo.VotesAmount);

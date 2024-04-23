@@ -17,7 +17,7 @@ namespace TomorrowDAOServer.Worker
             var backgroundWorkerManger = context.ServiceProvider.GetRequiredService<IBackgroundWorkerManager>();
             backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<ProposalSyncWorker>());
             backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<ProposalExpiredWorker>());
-            backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<DAOSyncWorker>());
+            // backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<DAOSyncWorker>());
         }
     }
 }

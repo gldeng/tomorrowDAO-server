@@ -159,7 +159,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             i.Field(f => f.ProposalStatus).Terms(statusList)));
 
         mustQuery.Add(q => q.TermRange(i
-            => i.Field(index => index.ExpiredTime.ToUtcMilliSeconds())
+            => i.Field(index => index.ExecuteEndTime.ToUtcMilliSeconds())
                 .LessThanOrEquals(DateTime.UtcNow.ToString("O"))));
 
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>

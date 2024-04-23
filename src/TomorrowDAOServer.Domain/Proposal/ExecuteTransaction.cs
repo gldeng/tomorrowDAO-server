@@ -3,7 +3,7 @@ using Nest;
 
 namespace TomorrowDAOServer.Proposal;
 
-public class CallTransactionInfo
+public class ExecuteTransaction
 {
     // The address of the target contract.
     [Keyword] public string ToAddress { get; set; }

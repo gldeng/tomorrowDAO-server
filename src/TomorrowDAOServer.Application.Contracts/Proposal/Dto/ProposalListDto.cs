@@ -10,7 +10,7 @@ public class ProposalListDto : ProposalDto
     
     public void OfTagList(ProposalTagOptions tagOptions)
     {
-        AddTag(tagOptions.MatchTag(TransactionInfo.ContractMethodName));
+        AddTag(tagOptions.MatchTag(Transaction.ContractMethodName));
         AddTag(tagOptions.MatchTag(GovernanceMechanism?.ToString()));
     }
 
