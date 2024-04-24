@@ -21,7 +21,7 @@ public class ProposalController
     }
     
     [HttpGet]
-    [Route("query-list")]
+    [Route("list")]
     public async Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input)
     {
          return await _proposalService.QueryProposalListAsync(input);

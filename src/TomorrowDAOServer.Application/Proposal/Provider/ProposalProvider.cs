@@ -51,14 +51,25 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         var graphQlResponse = await _graphQlHelper.QueryAsync<IndexerProposalSync>(new GraphQLRequest
         {
             Query =
-                @"query($skipCount:Int!,$chainId:String,$startBlockHeight:Long!,$endBlockHeight:Long!){
+                @"query($skipCount:Int!,$chainId:String!,$startBlockHeight:Long!,$endBlockHeight:Long!){
             dataList:getSyncProposalInfos(input: {skipCount:$skipCount,chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight})
             {
-                id,chainId,blockHeight,blockHash
-                DAOId,proposalId,proposalTitle,proposalType,governanceType,proposalStatus,startTime,endTime,expiredTime,
-                organizationAddress,executeAddress,proposalDescription,transaction{toAddress,contractMethodName,params{key,value}},
-                governanceSchemeId,voteSchemeId,executeByHighCouncil,deployTime,executeTime,
-                minimalRequiredThreshold,minimalVoteThreshold,minimalApproveThreshold,maximalRejectionThreshold,maximalAbstentionThreshold
+                id,chainId,blockHeight,
+                DAOId,proposalId,proposalTitle,proposalDescription,forumUrl,proposalType,
+                activeStartTime,activeEndTime,executeStartTime,executeEndTime,
+                proposalStatus,proposalStage,proposer,schemeAddress,
+                transaction {
+                    toAddress,contractMethodName,
+                    params {
+                        key,
+                        value
+                    }
+                },            
+                voteSchemeId,vetoProposalId,deployTime,executeTime,
+                governanceMechanism,
+                minimalRequiredThreshold,minimalVoteThreshold,minimalApproveThreshold,
+                maximalRejectionThreshold,maximalAbstentionThreshold,
+                activeTimePeriod,vetoActiveTimePeriod,pendingTimePeriod,executeTimePeriod,vetoExecuteTimePeriod
             }}",
             Variables = new
             {

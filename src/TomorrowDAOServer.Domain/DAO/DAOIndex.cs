@@ -15,6 +15,7 @@ public class DAOIndex : AbstractEntity<string>, IIndexBuild
     public Metadata Metadata { get; set; }
     [Keyword] public string GovernanceToken { get; set; }
     public bool IsHighCouncilEnabled { get; set; }
+    [Keyword] public string HighCouncilAddress { get; set; }
     public HighCouncilConfig HighCouncilConfig { get; set; }
     public long HighCouncilTermNumber { get; set; }
     public List<FileInfo> FileInfoList { get; set; }
@@ -28,7 +29,10 @@ public class DAOIndex : AbstractEntity<string>, IIndexBuild
     [Keyword] public string ElectionContractAddress { get; set; }
     [Keyword] public string GovernanceContractAddress { get; set; }
     [Keyword] public string TimelockContractAddress { get; set; }
-    [Keyword] public string PermissionAddress { get; set; }
-    public List<PermissionInfo> PermissionInfoList { get; set; }
+    public long ActiveTimePeriod { get; set; }
+    public long VetoActiveTimePeriod { get; set; }
+    public long PendingTimePeriod { get; set; }
+    public long ExecuteTimePeriod { get; set; }
+    public long VetoExecuteTimePeriod { get; set; }
     public DateTime CreateTime { get; set; }
 }
