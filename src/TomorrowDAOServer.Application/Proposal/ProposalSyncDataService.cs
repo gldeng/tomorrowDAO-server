@@ -10,7 +10,6 @@ using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
-using TomorrowDAOServer.Organization.Provider;
 using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Proposal.Provider;
 using TomorrowDAOServer.Vote.Provider;

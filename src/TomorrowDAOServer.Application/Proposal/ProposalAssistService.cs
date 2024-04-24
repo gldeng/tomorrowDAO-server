@@ -2,7 +2,6 @@ using System;
 using Microsoft.Extensions.Logging;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
-using TomorrowDAOServer.Organization.Index;
 using TomorrowDAOServer.Vote.Index;
 
 namespace TomorrowDAOServer.Proposal;

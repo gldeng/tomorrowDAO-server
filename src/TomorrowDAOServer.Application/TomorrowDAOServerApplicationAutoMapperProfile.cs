@@ -12,8 +12,6 @@ using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Governance;
 using TomorrowDAOServer.Governance.Dto;
 using TomorrowDAOServer.Options;
-using TomorrowDAOServer.Organization.Dto;
-using TomorrowDAOServer.Organization.Index;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Token;
@@ -36,7 +34,6 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
                 => opt.MapFrom(source => source.TokenName))
             .ReverseMap();
         CreateMap<IndexerProposal, ProposalIndex>();
-        CreateMap<IndexerOrganizationInfo, OrganizationDto>();
         CreateMap<ProposalIndex, ProposalListDto>();
         CreateMap<ProposalIndex, ProposalDetailDto>();
         CreateMap<ProposalIndex, MyProposalDto>();

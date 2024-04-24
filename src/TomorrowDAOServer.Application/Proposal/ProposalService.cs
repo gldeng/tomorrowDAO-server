@@ -4,9 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Options;
-using TomorrowDAOServer.Organization.Dto;
-using TomorrowDAOServer.Organization.Index;
-using TomorrowDAOServer.Organization.Provider;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Provider;
 using TomorrowDAOServer.Vote.Dto;
@@ -28,18 +25,15 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     private readonly IOptionsMonitor<ProposalTagOptions> _proposalTagOptionsMonitor;
     private readonly IProposalProvider _proposalProvider;
     private readonly IVoteProvider _voteProvider;
-    private readonly IOrganizationInfoProvider _organizationInfoProvider;
 
 
     public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider,
-        IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor,
-        IOrganizationInfoProvider organizationInfoProvider)
+        IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor)
     {
         _objectMapper = objectMapper;
         _proposalProvider = proposalProvider;
         _voteProvider = voteProvider;
         _proposalTagOptionsMonitor = proposalTagOptionsMonitor;
-        _organizationInfoProvider = organizationInfoProvider;
     }
 
     public async Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input)
