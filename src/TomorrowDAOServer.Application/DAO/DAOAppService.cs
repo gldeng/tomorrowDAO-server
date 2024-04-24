@@ -29,7 +29,6 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private readonly IElectionProvider _electionProvider;
     private readonly IProposalProvider _proposalProvider;
     private readonly IGraphQLProvider _graphQlProvider;
-    private readonly IOptionsMonitor<AelfApiInfoOptions> _aelfApiOptions;
     private const int ZeroSkipCount = 0;
     private const int GetHoldersMaxResultCount = 1;
     private const int GetMemberListMaxResultCount = 100;
@@ -38,14 +37,12 @@ public class DAOAppService : ApplicationService, IDAOAppService
     public DAOAppService(IDAOProvider daoProvider,
         IElectionProvider electionProvider,
         IProposalProvider proposalProvider,
-        IGraphQLProvider graphQlProvider,
-        IOptionsMonitor<AelfApiInfoOptions> aelfApiOptions)
+        IGraphQLProvider graphQlProvider)
     {
         _daoProvider = daoProvider;
         _electionProvider = electionProvider;
         _proposalProvider = proposalProvider;
         _graphQlProvider = graphQlProvider;
-        _aelfApiOptions = aelfApiOptions;
     }
 
     public async Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input)
@@ -66,9 +63,9 @@ public class DAOAppService : ApplicationService, IDAOAppService
             TermNumber = type == HighCouncilType.Member.ToString()
                 ? daoInfo?.HighCouncilTermNumber ?? 0
                 : CandidateTermNumber,
-            MaxResultCount = type == HighCouncilType.Member.ToString()
+            MaxResultCount = (int)(type == HighCouncilType.Member.ToString()
                 ? daoInfo?.HighCouncilConfig?.MaxHighCouncilMemberCount ?? GetMemberListMaxResultCount
-                : input.MaxResultCount,
+                : input.MaxResultCount),
             SkipCount = type == HighCouncilType.Member.ToString() ? ZeroSkipCount : input.SkipCount,
             Sorting = input.Sorting
         });

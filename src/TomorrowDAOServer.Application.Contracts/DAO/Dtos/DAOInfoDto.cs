@@ -12,12 +12,10 @@ public class DAOInfoDto
     public string Creator { get; set; }
     public MetadataDto Metadata { get; set; }
     public string GovernanceToken { get; set; }
-    public string GovernanceSchemeId { get; set; }
     public bool IsHighCouncilEnabled { get; set; }
+    public string HighCouncilAddress { get; set; }
     public HighCouncilConfigDto HighCouncilConfig { get; set; }
     public long HighCouncilTermNumber { get; set; }
-    public long MemberCount { get; set; }
-    public long CandidateCount { get; set; }
     public List<FileInfoDto> FileInfoList { get; set; }
     public bool IsTreasuryContractNeeded { get; set; }
     public bool SubsistStatus { get; set; }
@@ -29,8 +27,11 @@ public class DAOInfoDto
     public string ElectionContractAddress { get; set; }
     public string GovernanceContractAddress { get; set; }
     public string TimelockContractAddress { get; set; }
-    public string PermissionAddress { get; set; }
-    public List<PermissionInfoDto> PermissionInfoList { get; set; }
+    public long ActiveTimePeriod { get; set; }
+    public long VetoActiveTimePeriod { get; set; }
+    public long PendingTimePeriod { get; set; }
+    public long ExecuteTimePeriod { get; set; }
+    public long VetoExecuteTimePeriod { get; set; }
     public DateTime CreateTime { get; set; }
 }
 
@@ -43,6 +44,13 @@ public class MetadataDto
 }
 
 public class FileInfoDto
+{
+    public FileDto File { get; set; }
+    public string Uploader { get; set; }
+    public DateTime UploadTime { get; set; }
+}
+
+public class FileDto
 {
     public string Name { get; set; }
     public string Cid { get; set; }
@@ -60,10 +68,10 @@ public class GovernanceSchemeThresholdDto
 
 public class HighCouncilConfigDto
 {
-    public int MaxHighCouncilMemberCount { get; set; }
-    public int MaxHighCouncilCandidateCount { get; set; }
-    public int ElectionPeriod { get; set; }
-    public bool IsRequireHighCouncilForExecution { get; set; }
+    public long MaxHighCouncilMemberCount { get; set; }
+    public long MaxHighCouncilCandidateCount { get; set; }
+    public long ElectionPeriod { get; set; }
+    public long StakingAmount { get; set; }
 }
 
 public class PermissionInfoDto

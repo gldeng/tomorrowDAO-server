@@ -41,11 +41,11 @@ public class DAOSyncDataService : ScheduleSyncDataService
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
     {
         var skipCount = 0;
-        var blockHeight = -1l;
+        var blockHeight = -1L;
         List<IndexerDAOInfo> queryList;
         do
         {
-            var input = new GetChainBlockHeightInput()
+            var input = new GetChainBlockHeightInput
             {
                 ChainId = chainId,
                 SkipCount = skipCount,
@@ -54,19 +54,15 @@ public class DAOSyncDataService : ScheduleSyncDataService
                 EndBlockHeight = newIndexHeight
             };
             queryList = await _daoProvider.GetSyncDAOListAsync(input);
-            _logger.LogInformation(
-                "SyncDAOInfos queryList chainId: {chainId} skipCount: {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
+            _logger.LogInformation("SyncDAOInfos queryList chainId: {chainId} skipCount: {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
                 chainId, skipCount, lastEndHeight, newIndexHeight, queryList?.Count);
-            if (queryList.IsNullOrEmpty())
+            if (queryList == null || queryList.IsNullOrEmpty())
             {
                 break;
             }
 
             blockHeight = Math.Max(blockHeight, queryList.Select(t => t.BlockHeight).Max());
-
-            await _daoIndexRepository.BulkAddOrUpdateAsync(
-                _objectMapper.Map<List<IndexerDAOInfo>, List<DAOIndex>>(queryList));
-
+            await _daoIndexRepository.BulkAddOrUpdateAsync(_objectMapper.Map<List<IndexerDAOInfo>, List<DAOIndex>>(queryList));
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 

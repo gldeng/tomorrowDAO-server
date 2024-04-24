@@ -44,9 +44,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
         CreateMap<IndexerDAOInfo, DAOIndex>()
             .ForMember(des => des.FileInfoList, opt
-                => opt.MapFrom(src => MapHelper.MapJsonConvert<List<FileInfo>>(src.FileInfoList)))
-            .ForMember(des => des.PermissionInfoList, opt
-                => opt.MapFrom(src => MapHelper.MapJsonConvert<List<PermissionInfo>>(src.PermissionInfoList)));
+                => opt.MapFrom(src => MapHelper.MapJsonConvert<List<FileInfo>>(src.FileInfoList)));
         CreateMap<Metadata, MetadataDto>().ReverseMap();
         CreateMap<IndexerMetadata, Metadata>().ReverseMap();
         

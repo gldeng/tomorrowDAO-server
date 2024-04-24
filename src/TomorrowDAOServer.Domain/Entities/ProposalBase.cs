@@ -10,7 +10,10 @@ namespace TomorrowDAOServer.Entities;
 public class ProposalBase : BlockInfoBase
 {
     [Keyword] public override string Id { get; set; }
-
+    [Keyword] public string ChainId { get; set; }
+    
+    public long BlockHeight { get; set; }
+    
     [PropertyName("DAOId")]
     [Keyword] public string DAOId { get; set; }
 

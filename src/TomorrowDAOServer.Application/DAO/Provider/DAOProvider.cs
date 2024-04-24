@@ -44,7 +44,7 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
                         chainId,
                         blockHeight,
                         creator,
-                        metadata: {
+                        metadata {
                             name,
                             logoUrl,
                             description,
@@ -52,11 +52,12 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
                         },
                         governanceToken,
                         isHighCouncilEnabled,
-                        highCouncilConfig: {
+                        highCouncilAddress,
+                        highCouncilConfig {
                             maxHighCouncilMemberCount,
                             maxHighCouncilCandidateCount,
                             electionPeriod,
-                            isRequireHighCouncilForExecution
+                            stakingAmount
                         },
                         highCouncilTermNumber,
                         fileInfoList,
@@ -70,8 +71,11 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
                         electionContractAddress,
                         governanceContractAddress,
                         timelockContractAddress,
-                        permissionAddress,
-                        permissionInfoList,
+                        activeTimePeriod,
+                        vetoActiveTimePeriod,
+                        pendingTimePeriod,
+                        executeTimePeriod,
+                        vetoExecuteTimePeriod,
                         createTime
                     }
                 }",
