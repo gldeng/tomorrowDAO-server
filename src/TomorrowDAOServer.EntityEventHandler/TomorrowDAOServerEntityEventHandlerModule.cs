@@ -31,6 +31,7 @@ using Hangfire.Mongo.Migration.Strategies.Backup;
 using Volo.Abp.BackgroundJobs.Hangfire;
 using TomorrowDAOServer.Common.Enum;
 using MongoDB.Driver;
+using TomorrowDAOServer.Options;
 
 namespace TomorrowDAOServer.EntityEventHandler;
 
@@ -39,7 +40,7 @@ namespace TomorrowDAOServer.EntityEventHandler;
     typeof(AbpAspNetCoreSerilogModule),
     typeof(TomorrowDAOServerEntityEventHandlerCoreModule),
     typeof(AbpAspNetCoreSerilogModule),
-    typeof(AbpEventBusRabbitMqModule),
+    //typeof(AbpEventBusRabbitMqModule),
     typeof(TomorrowDAOServerWorkerModule),
     typeof(AbpBackgroundJobsHangfireModule)
     // typeof(AbpBackgroundJobsRabbitMqModule)
@@ -52,6 +53,7 @@ public class TomorrowDAOServerEntityEventHandlerModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         Configure<WorkerOptions>(configuration);
         Configure<TmrwdaoOption>(configuration.GetSection("TmrwdaoOption"));
+        Configure<SyncDataOptions>(configuration.GetSection("SyncData"));
         ConfigureHangfire(context, configuration);
         // Configure<AbpRabbitMqBackgroundJobOptions>(configuration.GetSection("AbpRabbitMqBackgroundJob"));
         context.Services.AddHostedService<TomorrowDAOServerHostedService>();
