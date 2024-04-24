@@ -102,33 +102,4 @@ public class DAOAppService : ApplicationService, IDAOAppService
             Items = items
         };
     }
-    
-    public async Task<List<string>> GetContractInfoAsync(string chainId, string contractAddress)
-    {
-        var client = new AElfClientBuilder().UseEndpoint(BuildDomainUrl(chainId)).Build();
-        var bytes = client.GetContractFileDescriptorSetAsync(contractAddress).Result;
-        var fileDescriptorSet = FileDescriptorSet.Parser.ParseFrom(bytes);
-        var methods =
-            (from file in fileDescriptorSet.File
-                from service in file.Service
-                from method in service.Method
-                select method.Name).ToList();
-
-        return methods;
-    }
-    
-    private string BuildDomainUrl(string chainId)
-    {
-        if (chainId.IsNullOrWhiteSpace())
-        {
-            return string.Empty;
-        }
-
-        if (_aelfApiOptions.CurrentValue.AelfApiInfos.TryGetValue(chainId, out var info))
-        {
-            return info.Domain;
-        }
-
-        return string.Empty;
-    }
 }

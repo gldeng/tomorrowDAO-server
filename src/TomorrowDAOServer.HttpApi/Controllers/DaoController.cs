@@ -1,13 +1,11 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.DAO;
-using Volo.Abp;
-using TomorrowDAOServer.Dao.Dto;
 using TomorrowDAOServer.DAO.Dtos;
+using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 
-namespace TomorrowDAOServer.Controllers.Dao;
+namespace TomorrowDAOServer.Controllers;
 
 [RemoteService]
 [Area("app")]
@@ -38,11 +36,5 @@ public class DaoController
     public async Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput request)
     {
         return await _daoAppService.GetDAOListAsync(request);
-    }
-    
-    [HttpGet("contract-info")]
-    public async Task<List<string>> GetContractInfoAsync(GetContractInfoInput input)
-    {
-        return await _daoAppService.GetContractInfoAsync(input.ChainId, input.ContractAddress);
     }
 }
