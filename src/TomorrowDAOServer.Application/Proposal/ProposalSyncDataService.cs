@@ -28,6 +28,7 @@ public class ProposalSyncDataService : ScheduleSyncDataService
     private readonly IDistributedCache<List<string>> _distributedCache;
     private readonly IOptionsMonitor<SyncDataOptions> _syncDataOptionsMonitor;
     private readonly IProposalAssistService _proposalAssistService;
+    private const int MaxResultCount = 500;
 
     public ProposalSyncDataService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
@@ -56,7 +57,7 @@ public class ProposalSyncDataService : ScheduleSyncDataService
         List<IndexerProposal> queryList;
         do
         {
-            queryList = await _proposalProvider.GetSyncProposalDataAsync(skipCount, chainId, lastEndHeight, 0);
+            queryList = await _proposalProvider.GetSyncProposalDataAsync(skipCount, chainId, lastEndHeight, 0, MaxResultCount);
             _logger.LogInformation("SyncProposalData queryList skipCount {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
                 skipCount, lastEndHeight, newIndexHeight, queryList?.Count);
             if (queryList == null || queryList.IsNullOrEmpty())
@@ -64,7 +65,8 @@ public class ProposalSyncDataService : ScheduleSyncDataService
                 break;
             }
             blockHeight = Math.Max(blockHeight, queryList.Select(t => t.BlockHeight).Max());
-            await _proposalProvider.BulkAddOrUpdateAsync(await _proposalAssistService.ConvertProposalList(chainId, queryList));
+            var convertProposalList = await _proposalAssistService.ConvertProposalList(chainId, queryList);
+            await _proposalProvider.BulkAddOrUpdateAsync(convertProposalList);
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 

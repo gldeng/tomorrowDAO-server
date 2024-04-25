@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AutoMapper;
+using Newtonsoft.Json;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Contract.Dto;
@@ -12,6 +13,7 @@ using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Governance;
 using TomorrowDAOServer.Governance.Dto;
 using TomorrowDAOServer.Options;
+using TomorrowDAOServer.Proposal;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Token;
@@ -34,6 +36,9 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
                 => opt.MapFrom(source => source.TokenName))
             .ReverseMap();
         CreateMap<IndexerProposal, ProposalIndex>();
+        CreateMap<ExecuteTransactionDto, ExecuteTransaction>()
+            .ForMember(des => des.Params, opt
+                => opt.MapFrom(source => JsonConvert.DeserializeObject<Dictionary<string, object>>(source.Params)));
         CreateMap<ProposalIndex, ProposalListDto>();
         CreateMap<ProposalIndex, ProposalDetailDto>();
         CreateMap<ProposalIndex, MyProposalDto>();
@@ -46,7 +51,9 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
             .ForMember(des => des.FileInfoList, opt
                 => opt.MapFrom(src => MapHelper.MapJsonConvert<List<FileInfo>>(src.FileInfoList)));
         CreateMap<Metadata, MetadataDto>().ReverseMap();
-        CreateMap<IndexerMetadata, Metadata>().ReverseMap();
+        CreateMap<IndexerMetadata, Metadata>()
+            .ForMember(des => des.SocialMedia, opt
+                => opt.MapFrom(src => MapHelper.MapJsonConvert<Dictionary<string, string>>(src.SocialMedia)));
         
         CreateMap<GovernanceSchemeThreshold, GovernanceSchemeThresholdDto>().ReverseMap();
         CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
