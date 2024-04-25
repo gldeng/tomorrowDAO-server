@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using GraphQL;
 using TomorrowDAOServer.Common.GraphQL;
+using TomorrowDAOServer.Governance.Dto;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.Governance.Provider;
 
 public interface IGovernanceProvider
 {
-    Task<List<IndexerGovernanceMechanism>> GetGovernanceMechanismAsync(string chainId);
+    Task<GovernanceSchemeDto> GetGovernanceSchemeAsync(string chainId, string daoId);
 }
 
 public class GovernanceProvider : IGovernanceProvider, ISingletonDependency
@@ -20,21 +21,36 @@ public class GovernanceProvider : IGovernanceProvider, ISingletonDependency
         _graphQlHelper = graphQlHelper;
     }
 
-    public async Task<List<IndexerGovernanceMechanism>> GetGovernanceMechanismAsync(string chainId)
+    public async Task<GovernanceSchemeDto> GetGovernanceSchemeAsync(string chainId, string daoId)
     {
-        var graphQlResponse = await _graphQlHelper.QueryAsync<IndexerGovernanceMechanismResult>(new GraphQLRequest
+        var graphQlResponse = await _graphQlHelper.QueryAsync<GovernanceSchemeDto>(new GraphQLRequest
         {
             Query =
-                @"query($chainId:String){
-            data:getGovernanceModesAsync(input: {chainId:$chainId})
+                @"query($chainId:String, $daoId:String){
+            data:getGovernanceSchemeIndex(input: {chainId:$chainId,dAOId:$daoId})
             {
-                id,governanceMechanism
+                id,
+                dAOId,
+                schemeId,
+                schemeAddress,
+                chainId,
+                governanceMechanism,
+                governanceToken,
+                createTime,
+                schemeThresholdDto {
+                    minimalRequiredThreshold,
+                    minimalVoteThreshold,
+                    minimalApproveThreshold,
+                    maximalRejectionThreshold,
+                    maximalAbstentionThreshold
+                }
             }}",
             Variables = new
             {
-                chainId
+                chainId = chainId,
+                daoId = daoId
             }
         });
-        return graphQlResponse?.DataList ?? new List<IndexerGovernanceMechanism>();
+        return graphQlResponse ?? new GovernanceSchemeDto();
     }
 }

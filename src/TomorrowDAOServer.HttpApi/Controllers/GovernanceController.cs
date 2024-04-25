@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using TomorrowDAOServer.Contract.Dto;
 using TomorrowDAOServer.Governance;
 using TomorrowDAOServer.Governance.Dto;
 using Volo.Abp;
@@ -10,7 +9,7 @@ namespace TomorrowDAOServer.Controllers;
 [RemoteService]
 [Area("app")]
 [ControllerName("Governance")]
-[Route("api/")]
+[Route("api/app/governance/")]
 public class GovernanceController
 {
     private readonly IGovernanceService _governanceService;
@@ -20,10 +19,9 @@ public class GovernanceController
         _governanceService = governanceService;
     }
     
-    [HttpGet]
-    [Route("governance-model-list")]
-    public async Task<GovernanceMechanismDto> GovernanceModelList(QueryFunctionListInput input)
+    [HttpGet("list")]
+    public async Task<GovernanceSchemeDto> GovernanceModelList(GetGovernanceSchemeListInput input)
     {
-        return await _governanceService.GetGovernanceMechanismAsync(input.ChainId);
+        return await _governanceService.GetGovernanceSchemeAsync(input);
     }
 }

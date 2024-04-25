@@ -12,7 +12,7 @@ public class GovernanceProviderTest
     [Fact]
     public async void GetGovernanceMechanismAsync_Test()
     {
-        var result = await _governanceProvider.GetGovernanceMechanismAsync("AELF");
+        var result = await _governanceProvider.GetGovernanceSchemeAsync("AELF", "aaa");
         result.ShouldNotBeNull();
     }
 }

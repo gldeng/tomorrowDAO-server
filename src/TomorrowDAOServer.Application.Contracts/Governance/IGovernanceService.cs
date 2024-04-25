@@ -5,5 +5,5 @@ namespace TomorrowDAOServer.Governance;
 
 public interface IGovernanceService
 {
-    Task<GovernanceMechanismDto> GetGovernanceMechanismAsync(string chainId);
+    Task<GovernanceSchemeDto> GetGovernanceSchemeAsync(GetGovernanceSchemeListInput input);
 }

@@ -8,7 +8,7 @@ namespace TomorrowDAOServer.Controllers;
 [RemoteService]
 [Area("app")]
 [ControllerName("Contract")]
-[Route("api/")]
+[Route("api/app/contract/")]
 public class ContractController
 {
     private readonly IContractService _contractService;
@@ -18,15 +18,13 @@ public class ContractController
         _contractService = contractService;
     }
     
-    [HttpGet]
-    [Route("contract/function-list")]
+    [HttpGet("function-list")]
     public FunctionDetailDto FunctionList(QueryFunctionListInput input)
     {
         return _contractService.GetFunctionList(input.ChainId, input.ContractAddress);
     }
     
-    [HttpGet]
-    [Route("contracts-info")]
+    [HttpGet("contracts-info")]
     public ContractDetailDto ContractsInfo(QueryContractsInfoInput input)
     {
         return _contractService.GetContractInfo(input.ChainId);
