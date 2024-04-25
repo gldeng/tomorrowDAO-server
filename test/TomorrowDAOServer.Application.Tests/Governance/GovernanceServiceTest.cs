@@ -1,5 +1,6 @@
 using NSubstitute;
 using Shouldly;
+using TomorrowDAOServer.Governance.Dto;
 using TomorrowDAOServer.Governance.Provider;
 using Volo.Abp.ObjectMapping;
 using Xunit;
@@ -13,7 +14,12 @@ public class GovernanceServiceTest
     [Fact]
     public async void GetGovernanceMechanismAsync_Test()
     {
-        var result = await _governanceService.GetGovernanceMechanismAsync("AELF");
+        var input = new GetGovernanceSchemeListInput
+        {
+            ChainId = "AELF",
+            DaoId = "aa"
+        };
+        var result = await _governanceService.GetGovernanceSchemeAsync(input);
         result.ShouldNotBeNull();
     }
 }

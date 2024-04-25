@@ -22,13 +22,8 @@ public class GovernanceService : TomorrowDAOServerAppService, IGovernanceService
         _objectMapper = objectMapper;
     }
 
-    public async Task<GovernanceMechanismDto> GetGovernanceMechanismAsync(string chainId)
+    public async Task<GovernanceSchemeDto> GetGovernanceSchemeAsync(GetGovernanceSchemeListInput input)
     {
-        var result = await _governanceProvider.GetGovernanceMechanismAsync(chainId);
-        return new GovernanceMechanismDto
-        {
-            ChainId = chainId,
-            GovernanceMechanismList = _objectMapper.Map<List<IndexerGovernanceMechanism>, List<GovernanceMechanismInfo>>(result)
-        };
+        return await _governanceProvider.GetGovernanceSchemeAsync(input.ChainId, input.DaoId);
     }
 }
