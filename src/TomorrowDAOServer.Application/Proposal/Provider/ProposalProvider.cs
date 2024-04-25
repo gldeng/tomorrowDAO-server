@@ -18,7 +18,7 @@ namespace TomorrowDAOServer.Proposal.Provider;
 public interface IProposalProvider
 {
     Task<List<IndexerProposal>> GetSyncProposalDataAsync(int skipCount, string chainId, long startBlockHeight,
-        long endBlockHeight);
+        long endBlockHeight, int maxResultCount);
 
     public Task<Tuple<long, List<ProposalIndex>>> GetProposalListAsync(QueryProposalListInput input);
     
@@ -46,24 +46,20 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
     }
 
     public async Task<List<IndexerProposal>> GetSyncProposalDataAsync(int skipCount, string chainId,
-        long startBlockHeight, long endBlockHeight)
+        long startBlockHeight, long endBlockHeight, int maxResultCount)
     {
         var graphQlResponse = await _graphQlHelper.QueryAsync<IndexerProposalSync>(new GraphQLRequest
         {
             Query =
-                @"query($skipCount:Int!,$chainId:String!,$startBlockHeight:Long!,$endBlockHeight:Long!){
-            dataList:getSyncProposalInfos(input: {skipCount:$skipCount,chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight})
+                @"query($skipCount:Int!,$chainId:String!,$startBlockHeight:Long!,$endBlockHeight:Long!,$maxResultCount:Int!){
+            dataList:getSyncProposalInfos(input: {skipCount:$skipCount,chainId:$chainId,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight,maxResultCount:$maxResultCount})
             {
                 id,chainId,blockHeight,
-                DAOId,proposalId,proposalTitle,proposalDescription,forumUrl,proposalType,
+                dAOId,proposalId,proposalTitle,proposalDescription,forumUrl,proposalType,
                 activeStartTime,activeEndTime,executeStartTime,executeEndTime,
                 proposalStatus,proposalStage,proposer,schemeAddress,
                 transaction {
-                    toAddress,contractMethodName,
-                    params {
-                        key,
-                        value
-                    }
+                    toAddress,contractMethodName,params
                 },            
                 voteSchemeId,vetoProposalId,deployTime,executeTime,
                 governanceMechanism,
@@ -76,7 +72,8 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
                 skipCount,
                 chainId,
                 startBlockHeight,
-                endBlockHeight
+                endBlockHeight,
+                maxResultCount
             }
         });
         return graphQlResponse?.DataList ?? new List<IndexerProposal>();
