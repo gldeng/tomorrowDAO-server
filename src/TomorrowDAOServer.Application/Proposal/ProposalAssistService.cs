@@ -1,93 +1,171 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
+using TomorrowDAOServer.Proposal.Index;
+using TomorrowDAOServer.Proposal.Provider;
 using TomorrowDAOServer.Vote.Index;
+using TomorrowDAOServer.Vote.Provider;
+using Volo.Abp.ObjectMapping;
 
 namespace TomorrowDAOServer.Proposal;
 
 public interface IProposalAssistService
 {
-    public ProposalStatus ToProposalResult(ProposalIndex proposal, IndexerVote voteInfo);
+    public Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> list);
+    public Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<ProposalIndex> list);
 }
 
 public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssistService
 {
     private readonly ILogger<ProposalAssistService> _logger;
+    private readonly IObjectMapper _objectMapper;
+    private readonly IVoteProvider _voteProvider;
+    private readonly IProposalProvider _proposalProvider;
+    private const int AbstractVoteTotal = 10000;
 
-    public ProposalAssistService(ILogger<ProposalAssistService> logger)
+    public ProposalAssistService(ILogger<ProposalAssistService> logger, IObjectMapper objectMapper, IVoteProvider voteProvider,
+        IProposalProvider proposalProvider)
     {
         _logger = logger;
+        _objectMapper = objectMapper;
+        _voteProvider = voteProvider;
+        _proposalProvider = proposalProvider;
+    }
+
+    public async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> list)
+    {
+        return await ConvertProposalList(chainId, _objectMapper.Map<List<IndexerProposal>, List<ProposalIndex>>(list));
+    }
+
+    public async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<ProposalIndex> list)
+    {
+        var proposalIds = list.Select(x => x.ProposalId).ToList();
+        //todo query real vote result, mock now
+        // var voteInfos = await _voteProvider.GetVoteInfosAsync(chainId, proposalIds);
+        var voteInfos = new Dictionary<string, IndexerVote>();
+        
+        foreach (var proposal in list)
+        {
+            var proposalId = proposal.ProposalId;
+            var vetoProposalId = proposal.VetoProposalId;
+            var proposalType = proposal.ProposalType;
+            var proposalStage = proposal.ProposalStage;
+            var executeStartTime = proposal.ExecuteStartTime;
+
+            voteInfos.TryGetValue(proposalId, out var voteInfo);
+            
+            switch (proposalType)
+            {
+                case ProposalType.Governance:
+                    switch (proposalStage)
+                    {
+                        case ProposalStage.Active:
+                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo), proposal);
+                            break;
+                        case ProposalStage.Pending:
+                            if (!vetoProposalId.IsNullOrEmpty())
+                            {
+                                var vetoProposal = await _proposalProvider.GetProposalByIdAsync(chainId, vetoProposalId);
+                                var vetoProposalStatus = vetoProposal?.ProposalStatus?? ProposalStatus.Empty;
+                                proposal.ProposalStatus = vetoProposalStatus == ProposalStatus.Executed ? ProposalStatus.Vetoed : ProposalStatus.Challenged;
+                                proposal.ProposalStage = vetoProposalStatus == ProposalStatus.Executed ? ProposalStage.Finished : ProposalStage.Execute;
+                            }
+                            else if (TimeEnd(executeStartTime))
+                            {
+                                proposal.ProposalStatus = ProposalStatus.Approved;
+                                proposal.ProposalStage = ProposalStage.Execute;
+                            }
+                            break;
+                        case ProposalStage.Execute:
+                            _objectMapper.Map(ProcessExecuteProposalStage(proposal), proposal);
+                            break;
+                    }
+                    break;
+                case ProposalType.Veto:
+                    switch (proposalStage)
+                    {
+                        case ProposalStage.Active:
+                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo), proposal);
+                            break;
+                        case ProposalStage.Execute:
+                            _objectMapper.Map(ProcessExecuteProposalStage(proposal), proposal);
+                            break;
+                    }
+                    break;
+                case ProposalType.Advisory:
+                    switch (proposalStage)
+                    {
+                        case ProposalStage.Active:
+                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo), proposal);
+                            break;
+                    }
+                    break;
+            }
+        }
+        
+        return list;
     }
     
-    public ProposalStatus ToProposalResult(ProposalIndex proposal, IndexerVote voteInfo)
+    private ProposalIndex ProcessActiveProposalStage(ProposalIndex proposal, IndexerVote voteInfo)
     {
-        //todo change later
-        return proposal.ActiveEndTime < DateTime.UtcNow ? ProposalStatus.Abstained : ProposalStatus.PendingVote;
+        var governanceMechanism = proposal.GovernanceMechanism;
+        var activeEndTime = proposal.ActiveEndTime;
+        var totalVote = voteInfo?.VotesAmount ?? 0;
+        var totalVoter = voteInfo?.VoterCount ?? 0;
+        var rejectVote = voteInfo?.RejectionCount ?? 0;
+        var abstainVote = voteInfo?.AbstentionCount ?? 0;
+        var approveVote = voteInfo?.ApprovedCount ?? 0;
 
-        var targetStatus = proposal.ProposalStatus;
-        // VotesAmount not enough
-        if (proposal.MinimalVoteThreshold > 0 && voteInfo.VotesAmount < proposal.MinimalVoteThreshold)
+        var enoughVoter = totalVoter >= proposal.MinimalApproveThreshold;
+        var enoughVote = rejectVote + abstainVote + approveVote >= proposal.MinimalVoteThreshold;
+        var isReject = rejectVote / (double)totalVote * AbstractVoteTotal > proposal.MaximalRejectionThreshold;
+        var isAbstained = abstainVote / (double)totalVote * AbstractVoteTotal > proposal.MaximalAbstentionThreshold;
+        var isApproved = approveVote / (double)totalVote * AbstractVoteTotal > proposal.MaximalAbstentionThreshold;
+
+        if (!TimeEnd(activeEndTime))
         {
-            _logger.LogInformation(
-                "[VoteFinishedStatus] proposalId:{proposalId}, VotesAmount: {VotesAmount} < MinimalVoteThreshold:{MinimalVoteThreshold}",
-                proposal.ProposalId, voteInfo.VotesAmount, proposal.MinimalVoteThreshold);
-            return ProposalStatus.Expired;
+            return proposal;
         }
 
-        // if (proposal.GovernanceMechanism is GovernanceMechanism.Customize or GovernanceMechanism.Referendum)
-        // {
-        //     _logger.LogInformation(
-        //         "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
-        //         "VoterCount: {VoterCount} MinimalRequiredThreshold:{MinimalRequiredThreshold}",
-        //         proposal.ProposalId, proposal.GovernanceMechanism, voteInfo.VoterCount, proposal.MinimalRequiredThreshold);
-        //     if (proposal.MinimalRequiredThreshold > 0 && voteInfo.VoterCount < proposal.MinimalRequiredThreshold)
-        //     {
-        //         return ProposalStatus.Expired;
-        //     }
-        // }
-        //
-        // if (proposal.GovernanceMechanism is GovernanceMechanism.Parliament or GovernanceMechanism.Association)
-        // {
-        //     double voterPercentage = GetPercentage(voteInfo.VoterCount, organizationInfo.OrganizationMemberCount);
-        //     _logger.LogInformation(
-        //         "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
-        //         "voterPercentage: {voterPercentage} MinimalRequiredThreshold:{MinimalRequiredThreshold}",
-        //         proposal.ProposalId, proposal.GovernanceMechanism, voterPercentage, proposal.MinimalRequiredThreshold);
-        //     if (voterPercentage < proposal.MinimalRequiredThreshold)
-        //     {
-        //         return ProposalStatus.Expired;
-        //     }
-        // }
+        if (enoughVoter && enoughVote)
+        {
+            if (isApproved)
+            {
+                proposal.ProposalStage = governanceMechanism == GovernanceMechanism.Referendum ? ProposalStage.Execute : ProposalStage.Pending;
+                proposal.ProposalStatus = ProposalStatus.Approved;
+            }
+            else
+            {
+                proposal.ProposalStage = ProposalStage.Finished;
+                proposal.ProposalStatus = isReject ? ProposalStatus.Rejected : ProposalStatus.Abstained;
+            }
+        }
+        else
+        {
+            proposal.ProposalStatus = ProposalStatus.BelowThreshold;
+            proposal.ProposalStage = ProposalStage.Finished;
+        }
 
-        double rejectionPercentage = GetPercentage(voteInfo.RejectionCount, voteInfo.VotesAmount);
-        double abstentionPercentage = GetPercentage(voteInfo.AbstentionCount, voteInfo.VotesAmount);
-        double approvalPercentage = GetPercentage(voteInfo.ApprovedCount, voteInfo.VotesAmount);
-        _logger.LogInformation(
-            "[VoteFinishedStatus] proposalId:{proposalId}, GovernanceMechanism:{GovernanceMechanism} " +
-            "rejectionPercentage: {rejectionPercentage} MaximalRejectionThreshold: {MaximalRejectionThreshold} " +
-            "abstentionPercentage:{abstentionPercentage} MaximalAbstentionThreshold:{MaximalAbstentionThreshold} " +
-            "approvalPercentage:{approvalPercentage} MinimalApproveThreshold:{MinimalApproveThreshold}",
-            proposal.ProposalId, proposal.GovernanceMechanism, rejectionPercentage, proposal.MaximalRejectionThreshold,
-            abstentionPercentage, proposal.MaximalAbstentionThreshold, approvalPercentage, proposal.MinimalApproveThreshold);
-        if (rejectionPercentage > proposal.MaximalRejectionThreshold)
-        {
-            targetStatus = ProposalStatus.Rejected;
-        }
-        else if (abstentionPercentage > proposal.MaximalAbstentionThreshold)
-        {
-            targetStatus = ProposalStatus.Abstained;
-        }
-        else if (approvalPercentage >= proposal.MinimalApproveThreshold)
-        {
-            targetStatus = ProposalStatus.Approved;
-        }
-        _logger.LogInformation("[VoteFinishedStatus] end targetStatus:{}", targetStatus);
-        return targetStatus;
+        return proposal;
     }
-    
-    private double GetPercentage(int count, int totalCount)
+
+    private ProposalIndex ProcessExecuteProposalStage(ProposalIndex proposal)
     {
-        return Math.Round((double)count / totalCount * 10000, 2);
+        var executeEndTime = proposal.ExecuteEndTime;
+        var executeTime = proposal.ExecuteTime;
+        if (!TimeEnd(executeEndTime))
+        {
+            return proposal;
+        }
+
+        proposal.ProposalStatus = executeTime == null ? ProposalStatus.Expired : ProposalStatus.Executed;
+        proposal.ProposalStage = ProposalStage.Finished;
+        return proposal;
     }
+
+    private bool TimeEnd(DateTime time) => DateTime.UtcNow < time;
 }

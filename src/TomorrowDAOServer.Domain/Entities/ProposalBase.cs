@@ -54,7 +54,7 @@ public class ProposalBase : BlockInfoBase
     public DateTime? ExecuteTime { get; set; }   
     
     [JsonConverter(typeof(StringEnumConverter))]
-    public GovernanceMechanism? GovernanceMechanism { get; set; }
+    public GovernanceMechanism GovernanceMechanism { get; set; }
     
     public int MinimalRequiredThreshold { get; set; }
     

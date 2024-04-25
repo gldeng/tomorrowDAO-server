@@ -11,7 +11,7 @@ public class ProposalListDto : ProposalDto
     public void OfTagList(ProposalTagOptions tagOptions)
     {
         AddTag(tagOptions.MatchTag(Transaction.ContractMethodName));
-        AddTag(tagOptions.MatchTag(GovernanceMechanism?.ToString()));
+        AddTag(tagOptions.MatchTag(GovernanceMechanism.ToString()));
     }
 
     private void AddTag(string tag)

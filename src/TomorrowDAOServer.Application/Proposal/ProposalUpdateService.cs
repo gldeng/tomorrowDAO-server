@@ -16,16 +16,19 @@ public class ProposalUpdateService : ScheduleSyncDataService
     private readonly ILogger<ScheduleSyncDataService> _logger;
     private readonly IProposalProvider _proposalProvider;
     private readonly IChainAppService _chainAppService;
+    private readonly IProposalAssistService _proposalAssistService;
 
     public ProposalUpdateService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
         IProposalProvider proposalProvider,
-        IChainAppService chainAppService)
+        IChainAppService chainAppService,
+        IProposalAssistService proposalAssistService)
         : base(logger, graphQlProvider)
     {
         _logger = logger;
         _proposalProvider = proposalProvider;
         _chainAppService = chainAppService;
+        _proposalAssistService = proposalAssistService;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
@@ -42,59 +45,12 @@ public class ProposalUpdateService : ScheduleSyncDataService
             {
                 break;
             }
-            var resultList = await ConvertProposalList(queryList);
+            var resultList = await _proposalAssistService.ConvertProposalList(chainId, queryList);
             await _proposalProvider.BulkAddOrUpdateAsync(resultList);
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 
         return blockHeight;
-    }
-
-    private async Task<List<ProposalIndex>> ConvertProposalList(List<ProposalIndex> proposalList)
-    {
-        //todo code later
-        foreach (var proposalIndex in proposalList)
-        {
-            proposalIndex.ProposalStage = proposalIndex.ActiveEndTime > DateTime.UtcNow
-                ? ProposalStage.Finished
-                : ProposalStage.Active;
-            proposalIndex.ProposalStatus = proposalIndex.ActiveEndTime > DateTime.UtcNow
-                ? ProposalStatus.Abstained
-                : ProposalStatus.PendingVote;
-        }
-
-        return proposalList;
-        // foreach (var proposalIndex in proposalList)
-        // {
-        //     var proposalType = proposalIndex.ProposalType;
-        //     var proposalStage = proposalIndex.ProposalStage;
-        //     var proposalStatus = proposalIndex.ProposalStatus;
-        //     var activeStartTime = proposalIndex.ActiveStartTime;
-        //     var activeEndTime = proposalIndex.ActiveEndTime;
-        //     var executeStartTime = proposalIndex.ExecuteStartTime;
-        //     var executeEndTime = proposalIndex.ExecuteEndTime;
-        //     switch (proposalType)
-        //     {
-        //         case ProposalType.Governance:
-        //             switch (proposalStage)
-        //             {
-        //                 case ProposalStage.Active:
-        //                     
-        //             }
-        //         case ProposalType.Veto:
-        //             switch (proposalStage)
-        //             {
-        //                 case ProposalStage.Active:
-        //             }
-        //         case ProposalType.Advisory:
-        //             switch (proposalStage)
-        //             {
-        //                 case ProposalStage.Active:
-        //             }
-        //     }
-        // }
-        //
-        // return null;
     }
 
     public override async Task<List<string>> GetChainIdsAsync()
