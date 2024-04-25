@@ -60,7 +60,6 @@ public class DAOSyncDataService : ScheduleSyncDataService
             {
                 break;
             }
-
             blockHeight = Math.Max(blockHeight, queryList.Select(t => t.BlockHeight).Max());
             await _daoIndexRepository.BulkAddOrUpdateAsync(_objectMapper.Map<List<IndexerDAOInfo>, List<DAOIndex>>(queryList));
             skipCount += queryList.Count;

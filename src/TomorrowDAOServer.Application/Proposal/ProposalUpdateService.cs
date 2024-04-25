@@ -11,21 +11,24 @@ using TomorrowDAOServer.Proposal.Provider;
 
 namespace TomorrowDAOServer.Proposal;
 
-public class ProposalExpiredService : ScheduleSyncDataService
+public class ProposalUpdateService : ScheduleSyncDataService
 {
     private readonly ILogger<ScheduleSyncDataService> _logger;
     private readonly IProposalProvider _proposalProvider;
     private readonly IChainAppService _chainAppService;
+    private readonly IProposalAssistService _proposalAssistService;
 
-    public ProposalExpiredService(ILogger<ProposalSyncDataService> logger,
+    public ProposalUpdateService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
         IProposalProvider proposalProvider,
-        IChainAppService chainAppService)
+        IChainAppService chainAppService,
+        IProposalAssistService proposalAssistService)
         : base(logger, graphQlProvider)
     {
         _logger = logger;
         _proposalProvider = proposalProvider;
         _chainAppService = chainAppService;
+        _proposalAssistService = proposalAssistService;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
@@ -35,24 +38,14 @@ public class ProposalExpiredService : ScheduleSyncDataService
         List<ProposalIndex> queryList;
         do
         {
-            queryList = await _proposalProvider.GetExpiredProposalListAsync(skipCount, new List<ProposalStatus>
-                { ProposalStatus.Approved });
+            queryList = await _proposalProvider.GetNonFinishedProposalListAsync(skipCount, new List<ProposalStage> { ProposalStage.Finished });
             _logger.LogInformation(
-                "ExpiredProposal queryList skipCount {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
-                skipCount, lastEndHeight, newIndexHeight, queryList?.Count);
-            if (queryList.IsNullOrEmpty())
+                "ExpiredProposal queryList skipCount {skipCount} count: {count}", skipCount, queryList?.Count);
+            if (queryList== null || queryList.IsNullOrEmpty())
             {
                 break;
             }
-
-            var resultList = new List<ProposalIndex>();
-            foreach (var info in queryList)
-            {
-                blockHeight = Math.Max(blockHeight, info.BlockHeight);
-                info.ProposalStatus = ProposalStatus.Expired;
-                resultList.Add(info);
-            }
-
+            var resultList = await _proposalAssistService.ConvertProposalList(chainId, queryList);
             await _proposalProvider.BulkAddOrUpdateAsync(resultList);
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());

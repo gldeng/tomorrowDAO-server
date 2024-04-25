@@ -10,9 +10,6 @@ namespace TomorrowDAOServer.Entities;
 public class ProposalBase : BlockInfoBase
 {
     [Keyword] public override string Id { get; set; }
-    [Keyword] public string ChainId { get; set; }
-    
-    public long BlockHeight { get; set; }
     
     [PropertyName("DAOId")]
     [Keyword] public string DAOId { get; set; }
@@ -28,11 +25,11 @@ public class ProposalBase : BlockInfoBase
     [JsonConverter(typeof(StringEnumConverter))]
     public ProposalType ProposalType { get; set; }
     
-    public DateTime? ActiveStartTime { get; set; }
+    public DateTime ActiveStartTime { get; set; }
    
-    public DateTime? ActiveEndTime { get; set; }
+    public DateTime ActiveEndTime { get; set; }
     
-    public DateTime? ExecuteStartTime { get; set; }
+    public DateTime ExecuteStartTime { get; set; }
 
     public DateTime ExecuteEndTime { get; set; }
     
@@ -57,7 +54,7 @@ public class ProposalBase : BlockInfoBase
     public DateTime? ExecuteTime { get; set; }   
     
     [JsonConverter(typeof(StringEnumConverter))]
-    public GovernanceMechanism? GovernanceMechanism { get; set; }
+    public GovernanceMechanism GovernanceMechanism { get; set; }
     
     public int MinimalRequiredThreshold { get; set; }
     

@@ -33,7 +33,7 @@ public class TomorrowDAOServerApplicationModule : AbpModule
         Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TomorrowDAOServerApplicationModule>(); });
         context.Services.AddTransient<IScheduleSyncDataService, ProposalSyncDataService>();
-        context.Services.AddTransient<IScheduleSyncDataService, ProposalExpiredService>();
+        context.Services.AddTransient<IScheduleSyncDataService, ProposalUpdateService>();
         context.Services.AddHttpClient();
         context.Services.AddMemoryCache();
         context.Services.AddSingleton(typeof(ILocalMemoryCache<>), typeof(LocalMemoryCache<>));
