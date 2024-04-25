@@ -35,6 +35,8 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
 
     public async Task<Dictionary<string, IndexerVote>> GetVoteInfosMemoryAsync(string chainId, List<string> votingItemIds)
     {
+        //todo query graphql later
+        return new Dictionary<string, IndexerVote>();
         if (votingItemIds.IsNullOrEmpty())
         {
             return new();

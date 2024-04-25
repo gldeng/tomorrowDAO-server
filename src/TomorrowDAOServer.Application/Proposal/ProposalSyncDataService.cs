@@ -63,84 +63,76 @@ public class ProposalSyncDataService : ScheduleSyncDataService
             {
                 break;
             }
-            var proposalList = await _distributedCache.GetAsync(GetProposalSyncHeightCacheKey(lastEndHeight));
-            var filterProposals = new List<IndexerProposal>();
-            foreach (var info in queryList)
-            {
-                if (proposalList != null && proposalList.Contains(info.ProposalId))
-                {
-                    continue;
-                }
-                blockHeight = Math.Max(blockHeight, info.BlockHeight);
-                filterProposals.Add(info);
-            }
-            
-            var resultList = await ConvertProposalList(chainId, filterProposals);
-            
-            await _proposalProvider.BulkAddOrUpdateAsync(resultList);
-            
-            proposalList = queryList.Where(obj => obj.BlockHeight == lastEndHeight)
-                .Select(obj => obj.ProposalId)
-                .ToList();
-            
-            await _distributedCache.SetAsync(GetProposalSyncHeightCacheKey(lastEndHeight), proposalList,
-                new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpiration =
-                        DateTimeOffset.Now.AddSeconds(_syncDataOptionsMonitor.CurrentValue.CacheSeconds)
-                });
-
+            blockHeight = Math.Max(blockHeight, queryList.Select(t => t.BlockHeight).Max());
+            await _proposalProvider.BulkAddOrUpdateAsync(await ConvertProposalList(queryList));
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 
         return blockHeight;
     }
 
-    private async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> indexers)
+    private async Task<List<ProposalIndex>> ConvertProposalList(List<IndexerProposal> proposalList)
     {
-        //get server index before
-        var preProposalDict = await _proposalProvider
-            .GetProposalListByIds(chainId, indexers.Select(p => p.ProposalId).ToList());
-        var voteFinishedProposalIds = indexers.Where(index => index.VoteFinished)
-            .Select(index => index.ProposalId).ToList();
-        var voteDict = await _voteProvider.GetVoteInfosMemoryAsync(chainId, voteFinishedProposalIds);
-        return indexers.Select(indexer =>
+        //todo code later
+        var list = _objectMapper.Map<List<IndexerProposal>, List<ProposalIndex>>(proposalList);
+        foreach (var proposalIndex in list)
         {
-            var proposal = _objectMapper.Map<IndexerProposal, ProposalIndex>(indexer);
-            if (proposal.ProposalStatus == ProposalStatus.Executed)
-            {
-                return proposal;
-            }
+            proposalIndex.ProposalStage = proposalIndex.ActiveEndTime > DateTime.UtcNow
+                ? ProposalStage.Finished
+                : ProposalStage.Active;
+            proposalIndex.ProposalStatus = proposalIndex.ActiveEndTime > DateTime.UtcNow
+                ? ProposalStatus.Abstained
+                : ProposalStatus.PendingVote;
+        }
 
-            if (preProposalDict.TryGetValue(proposal.ProposalId, out var preProposal) && preProposal.IsFinalStatus())
-            {
-                proposal.ProposalStatus = preProposal.ProposalStatus;
-            }
-            else if (preProposal?.ProposalStatus == ProposalStatus.Approved && proposal.ExecuteEndTime <= DateTime.UtcNow)
-            {
-                proposal.ProposalStatus = ProposalStatus.Expired;
-            }
-            else if (!proposal.IsFinalStatus())
-            {
-                if (proposal.ActiveEndTime > DateTime.UtcNow)
-                {
-                    proposal.ProposalStatus = ProposalStatus.PendingVote;
-                }
-                else if (proposal.VoteFinished && voteDict.TryGetValue(proposal.ProposalId, out var voteInfo))
-                {
-                    _logger.LogInformation(
-                        "[VoteFinishedStatus] start proposalId:{proposalId} proposalStatus:{proposalStatus}",
-                        proposal.ProposalId, proposal.ProposalStatus);
-                    proposal.ProposalStatus = _proposalAssistService.ToProposalResult(proposal, voteInfo);
-                    _logger.LogInformation(
-                        "[VoteFinishedStatus] end proposalId:{proposalId} proposalStatus:{proposalStatus}",
-                        proposal.ProposalId, proposal.ProposalStatus);
-                }
-            }
-
-            return proposal;
-        }).ToList();
+        return list;
     }
+
+    // private async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> indexers)
+    // {
+    //     //get server index before
+    //     var preProposalDict = await _proposalProvider
+    //         .GetProposalListByIds(chainId, indexers.Select(p => p.ProposalId).ToList());
+    //     var voteFinishedProposalIds = indexers.Where(index => index.VoteFinished)
+    //         .Select(index => index.ProposalId).ToList();
+    //     var voteDict = await _voteProvider.GetVoteInfosMemoryAsync(chainId, voteFinishedProposalIds);
+    //     return indexers.Select(indexer =>
+    //     {
+    //         var proposal = _objectMapper.Map<IndexerProposal, ProposalIndex>(indexer);
+    //         if (proposal.ProposalStatus == ProposalStatus.Executed)
+    //         {
+    //             return proposal;
+    //         }
+    //
+    //         if (preProposalDict.TryGetValue(proposal.ProposalId, out var preProposal) && preProposal.IsFinalStatus())
+    //         {
+    //             proposal.ProposalStatus = preProposal.ProposalStatus;
+    //         }
+    //         else if (preProposal?.ProposalStatus == ProposalStatus.Approved && proposal.ExecuteEndTime <= DateTime.UtcNow)
+    //         {
+    //             proposal.ProposalStatus = ProposalStatus.Expired;
+    //         }
+    //         else if (!proposal.IsFinalStatus())
+    //         {
+    //             if (proposal.ActiveEndTime > DateTime.UtcNow)
+    //             {
+    //                 proposal.ProposalStatus = ProposalStatus.PendingVote;
+    //             }
+    //             else if (proposal.VoteFinished && voteDict.TryGetValue(proposal.ProposalId, out var voteInfo))
+    //             {
+    //                 _logger.LogInformation(
+    //                     "[VoteFinishedStatus] start proposalId:{proposalId} proposalStatus:{proposalStatus}",
+    //                     proposal.ProposalId, proposal.ProposalStatus);
+    //                 proposal.ProposalStatus = _proposalAssistService.ToProposalResult(proposal, voteInfo);
+    //                 _logger.LogInformation(
+    //                     "[VoteFinishedStatus] end proposalId:{proposalId} proposalStatus:{proposalStatus}",
+    //                     proposal.ProposalId, proposal.ProposalStatus);
+    //             }
+    //         }
+    //
+    //         return proposal;
+    //     }).ToList();
+    // }
 
     public override async Task<List<string>> GetChainIdsAsync()
     {

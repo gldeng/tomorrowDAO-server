@@ -30,7 +30,7 @@ public interface IProposalProvider
 
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
 
-    public Task<List<ProposalIndex>> GetExpiredProposalListAsync(int skipCount, List<ProposalStatus> statusList);
+    public Task<List<ProposalIndex>> GetNonFinishedProposalListAsync(int skipCount, List<ProposalStage> stageList);
 }
 
 public class ProposalProvider : IProposalProvider, ISingletonDependency
@@ -162,21 +162,18 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
        await _proposalIndexRepository.BulkAddOrUpdateAsync(list);
     }
 
-    public async Task<List<ProposalIndex>> GetExpiredProposalListAsync(int skipCount, List<ProposalStatus> statusList)
+    public async Task<List<ProposalIndex>> GetNonFinishedProposalListAsync(int skipCount, List<ProposalStage> stageList)
     {
-        var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-
-        mustQuery.Add(q => q.Terms(i =>
-            i.Field(f => f.ProposalStatus).Terms(statusList)));
-
-        mustQuery.Add(q => q.TermRange(i
-            => i.Field(index => index.ExecuteEndTime.ToUtcMilliSeconds())
-                .LessThanOrEquals(DateTime.UtcNow.ToString("O"))));
+        var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>
+        {
+            q => !q.Terms(i =>
+                i.Field(f => f.ProposalStage).Terms(stageList))
+        };
 
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
             f.Bool(b => b.Must(mustQuery));
 
-        var tuple = await _proposalIndexRepository.GetListAsync(Filter, skip: skipCount);
+        var tuple = await _proposalIndexRepository.GetListAsync(Filter, skip: skipCount, sortType: SortOrder.Ascending, sortExp: o => o.BlockHeight);
         return tuple.Item2;
     }
     

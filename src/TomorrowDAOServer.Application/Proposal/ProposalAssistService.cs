@@ -23,7 +23,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     public ProposalStatus ToProposalResult(ProposalIndex proposal, IndexerVote voteInfo)
     {
         //todo change later
-        return proposal.ActiveEndTime < DateTime.UtcNow ? ProposalStatus.Expired : ProposalStatus.PendingVote;
+        return proposal.ActiveEndTime < DateTime.UtcNow ? ProposalStatus.Abstained : ProposalStatus.PendingVote;
 
         var targetStatus = proposal.ProposalStatus;
         // VotesAmount not enough
