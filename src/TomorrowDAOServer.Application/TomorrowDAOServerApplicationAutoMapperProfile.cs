@@ -39,7 +39,16 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<ExecuteTransactionDto, ExecuteTransaction>()
             .ForMember(des => des.Params, opt
                 => opt.MapFrom(source => JsonConvert.DeserializeObject<Dictionary<string, object>>(source.Params)));
-        CreateMap<ProposalIndex, ProposalListDto>();
+        CreateMap<ProposalIndex, ProposalListDto>()
+            .ForMember(des => des.ProposalType, opt
+                => opt.MapFrom(source => source.ProposalType.ToString()))
+            .ForMember(des => des.ProposalStatus, opt
+                => opt.MapFrom(source => source.ProposalStatus.ToString()))
+            .ForMember(des => des.ProposalStage, opt
+                => opt.MapFrom(source => source.ProposalStage.ToString()))
+            .ForMember(des => des.GovernanceMechanism, opt
+                => opt.MapFrom(source => source.GovernanceMechanism.ToString()))
+            ;
         CreateMap<ProposalIndex, ProposalDetailDto>();
         CreateMap<ProposalIndex, MyProposalDto>();
         CreateMap<IndexerVote, ProposalListDto>();
@@ -59,6 +68,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
         CreateMap<IndexerHighCouncilConfig, HighCouncilConfig>().ReverseMap();
         CreateMap<FileInfo, FileInfoDto>().ReverseMap();
+        CreateMap<File, FileDto>().ReverseMap();
         CreateMap<PermissionInfo, PermissionInfoDto>().ReverseMap();
 
         CreateMap<ExplorerProposalResult, ProposalListResponse>()

@@ -12,7 +12,7 @@ namespace TomorrowDAOServer.Controllers;
 [RemoteService]
 [Area("app")]
 [ControllerName("Network dao")]
-[Route("api/app")]
+[Route("api/app/networkdao")]
 public class NetworkDaoController
 {
     private ILogger<NetworkDaoController> _logger;
