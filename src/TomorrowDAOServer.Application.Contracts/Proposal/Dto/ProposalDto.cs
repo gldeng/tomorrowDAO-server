@@ -6,7 +6,6 @@ namespace TomorrowDAOServer.Proposal.Dto;
 public class ProposalDto
 {
     public string ChainId { get; set; }
-    public string BlockHash { get; set; }
     public long BlockHeight { get; set; }
     public string Id { get; set; }
     
@@ -26,9 +25,9 @@ public class ProposalDto
    
     public DateTime ActiveEndTime { get; set; }
     
-    public DateTime ExecuteStartTime { get; set; }
+    public DateTime? ExecuteStartTime { get; set; }
 
-    public DateTime ExecuteEndTime { get; set; }
+    public DateTime? ExecuteEndTime { get; set; }
     
     public string ProposalStatus { get; set; }
     
@@ -46,7 +45,7 @@ public class ProposalDto
     
     public DateTime DeployTime { get; set; }
 
-    public DateTime ExecuteTime { get; set; }   
+    public DateTime? ExecuteTime { get; set; }   
     
     
     public string GovernanceMechanism { get; set; }
@@ -74,7 +73,6 @@ public class ProposalDto
     
     public long VetoExecuteTimePeriod { get; set; }
 
-    public bool VoteFinished { get; set; }
     //vote count info
     public int VoterCount { get; set; }
     

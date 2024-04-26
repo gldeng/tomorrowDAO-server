@@ -72,7 +72,15 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             // proposalDto.OfTagList(_proposalTagOptionsMonitor.CurrentValue);
             resultList.Add(proposalDto);
         }
-
+        foreach (var listDto in resultList.Where(listDto => listDto.ProposalType == ProposalType.Advisory.ToString()))
+        {
+            listDto.ExecuteStartTime = null;
+            listDto.ExecuteEndTime = null;
+        }
+        foreach (var listDto in resultList.Where(listDto => listDto.ProposalStatus != ProposalStatus.Executed.ToString()))
+        {
+            listDto.ExecuteTime = null;
+        }
         return new PagedResultDto<ProposalListDto>
         {
             Items = resultList,
