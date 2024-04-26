@@ -47,7 +47,9 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
         //query proposal vote infos
         var proposalIds = tuple.Item2.Select(item => item.ProposalId).ToList();
-        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, proposalIds);
+        //todo query real vote result, mock now
+        // var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, proposalIds);
+        var voteInfos = new Dictionary<string, IndexerVote>();
         var resultList = new List<ProposalListDto>();
         foreach (var proposal in tuple.Item2)
         {

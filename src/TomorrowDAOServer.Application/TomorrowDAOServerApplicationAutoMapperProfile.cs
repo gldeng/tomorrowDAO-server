@@ -59,6 +59,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
         CreateMap<IndexerHighCouncilConfig, HighCouncilConfig>().ReverseMap();
         CreateMap<FileInfo, FileInfoDto>().ReverseMap();
+        CreateMap<File, FileDto>().ReverseMap();
         CreateMap<PermissionInfo, PermissionInfoDto>().ReverseMap();
 
         CreateMap<ExplorerProposalResult, ProposalListResponse>()
