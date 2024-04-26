@@ -30,9 +30,10 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     private readonly IProposalProvider _proposalProvider;
     private readonly IVoteProvider _voteProvider;
     private readonly IDAOProvider _DAOProvider;
+    private readonly IProposalAssistService _proposalAssistService;
 
-
-    public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider,
+    public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider, 
+        IProposalAssistService proposalAssistService,
         IDAOProvider DAOProvider, IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor)
     {
         _objectMapper = objectMapper;
@@ -40,6 +41,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _voteProvider = voteProvider;
         _proposalTagOptionsMonitor = proposalTagOptionsMonitor;
         _DAOProvider = DAOProvider;
+        _proposalAssistService = proposalAssistService;
     }
 
     public async Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input)
@@ -87,7 +89,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
 
         var proposalDetailDto = _objectMapper.Map<ProposalIndex, ProposalDetailDto>(proposalIndex);
-
+        proposalDetailDto.ProposalLifeList = _proposalAssistService.ConvertProposalLifeList(proposalIndex);
         //todo query graphql later
         // var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId,
         //     new List<string> { input.ProposalId });

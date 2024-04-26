@@ -9,5 +9,6 @@ public class HolderResult : IndexerCommonResult<HolderResult>
 
 public class HolderDto
 {
+    public string Symbol { get; set; }
     public long HolderCount { get; set; }
 }

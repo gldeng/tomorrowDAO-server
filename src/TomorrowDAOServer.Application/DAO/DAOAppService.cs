@@ -86,10 +86,12 @@ public class DAOAppService : ApplicationService, IDAOAppService
     {
         var (item1, daoList) = await _daoProvider.GetDAOListAsync(input);
         var items = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>(daoList);
+        var symbols = items.Select(x => x.Symbol.ToUpper()).ToList();
+        var holders = await _graphQlProvider.GetHoldersAsync(symbols, input.ChainId,
+            ZeroSkipCount, GetHoldersMaxResultCount);
         foreach (var dto in items.Where(x => !x.Symbol.IsNullOrEmpty()).ToList())
         {
-            dto.SymbolHoldersNum = await _graphQlProvider.GetHoldersAsync(dto.Symbol.ToUpper(), input.ChainId,
-                ZeroSkipCount, GetHoldersMaxResultCount);
+            dto.SymbolHoldersNum = holders.GetValueOrDefault(dto.Symbol.ToUpper());
             dto.ProposalsNum = await _proposalProvider.GetProposalCountByDAOIds(input.ChainId, dto.DaoId);
         }
 

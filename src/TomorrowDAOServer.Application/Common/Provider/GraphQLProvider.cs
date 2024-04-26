@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
@@ -17,7 +18,7 @@ public interface IGraphQLProvider
     public Task<long> GetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType);
     public Task SetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType, long height);
     public Task<long> GetIndexBlockHeightAsync(string chainId);
-    public Task<long> GetHoldersAsync(string symbol, string chainId, int skipCount, int maxResultCount);
+    public Task<Dictionary<string, long>> GetHoldersAsync(List<string> symbols, string chainId, int skipCount, int maxResultCount);
 }
 
 public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
@@ -40,7 +41,7 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
     {
         try
         {
-            var grain = _clusterClient.GetGrain<IContractServiceGraphQLGrain>(queryChainType.ToString() + chainId);
+            var grain = _clusterClient.GetGrain<IContractServiceGraphQLGrain>(queryChainType + chainId);
             return await grain.GetStateAsync();
         }
         catch (Exception e)
@@ -82,7 +83,7 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
         return graphQlResponse.Data.SyncState.ConfirmedBlockHeight;
     }
 
-    public async Task<long> GetHoldersAsync(string symbol, string chainId, int skipCount, int maxResultCount)
+    public async Task<Dictionary<string, long>> GetHoldersAsync(List<string> symbols, string chainId, int skipCount, int maxResultCount)
     {
         try
         {
@@ -90,22 +91,23 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
                 .SendQueryAsync<HolderResult>(new GraphQLRequest
                 {
                     Query = @"
-                    query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$symbol:String!){
-                        data:tokenInfo(input:{chainId: $chainId,skipCount: $skipCount,maxResultCount: $maxResultCount,symbol: $symbol})
+                    query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$symbols:[String!]){
+                        data:tokenInfo(input:{chainId: $chainId,skipCount: $skipCount,maxResultCount: $maxResultCount,symbol: $symbols})
                         {
+                            symbol,
                             holderCount
                         }}",
                     Variables = new
                     {
-                        chainId, skipCount, maxResultCount, symbol
+                        chainId, skipCount, maxResultCount, symbols
                     }
-                }); 
-            return response.Data?.Data?.First().HolderCount ?? 0;
+                });
+            return response.Data?.Data?.ToDictionary(x => x.Symbol, x => x.HolderCount) ?? new Dictionary<string, long>();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "GetHoldersAsyncException chainId={chainId}, symbol={symbol}", chainId, symbol);
+            _logger.LogError(e, "GetHoldersAsyncException chainId={chainId}, symbol={symbol}", chainId, symbols);
         }
-        return 0;
+        return new Dictionary<string, long>();
     }
 }
