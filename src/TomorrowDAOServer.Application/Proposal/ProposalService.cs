@@ -1,8 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using TomorrowDAOServer.DAO.Dtos;
+using TomorrowDAOServer.DAO.Provider;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Provider;
@@ -25,15 +29,17 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     private readonly IOptionsMonitor<ProposalTagOptions> _proposalTagOptionsMonitor;
     private readonly IProposalProvider _proposalProvider;
     private readonly IVoteProvider _voteProvider;
+    private readonly IDAOProvider _DAOProvider;
 
 
     public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider,
-        IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor)
+        IDAOProvider DAOProvider, IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor)
     {
         _objectMapper = objectMapper;
         _proposalProvider = proposalProvider;
         _voteProvider = voteProvider;
         _proposalTagOptionsMonitor = proposalTagOptionsMonitor;
+        _DAOProvider = DAOProvider;
     }
 
     public async Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input)
@@ -61,7 +67,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 _objectMapper.Map(voteInfo, proposalDto);
             }
 
-            proposalDto.OfTagList(_proposalTagOptionsMonitor.CurrentValue);
+            // proposalDto.OfTagList(_proposalTagOptionsMonitor.CurrentValue);
             resultList.Add(proposalDto);
         }
 
@@ -117,12 +123,20 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             return new MyProposalDto();
         }
         var myProposalDto = _objectMapper.Map<ProposalIndex, MyProposalDto>(proposalIndex);
-        var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
+        var daoIndex = await _DAOProvider.GetAsync(new GetDAOInfoInput
+        {
+            ChainId = input.ChainId,
+            DAOId = proposalIndex.DAOId
+        });
+        myProposalDto.Symbol = daoIndex.GovernanceToken;
+        //todo query real vote result, mock now
+        // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
+        var voteStake = new IndexerVoteStake();
         myProposalDto.StakeAmount = voteStake.Amount;
         myProposalDto.VotesAmount = myProposalDto.StakeAmount;
-        myProposalDto.Symbol = voteStake.AcceptedCurrency;
-        myProposalDto.CanVote = !proposalIndex.IsFinalStatus();
-        if (proposalIndex.IsFinalStatus())
+        myProposalDto.Symbol = voteStake.AcceptedCurrency.IsNullOrEmpty() ? daoIndex.GovernanceToken : voteStake.AcceptedCurrency;
+        myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
+        if (proposalIndex.ProposalStage == ProposalStage.Active)
         {
             myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
         }
