@@ -37,13 +37,11 @@ public class GovernanceProvider : IGovernanceProvider, ISingletonDependency
                 governanceMechanism,
                 governanceToken,
                 createTime,
-                schemeThresholdDto {
-                    minimalRequiredThreshold,
-                    minimalVoteThreshold,
-                    minimalApproveThreshold,
-                    maximalRejectionThreshold,
-                    maximalAbstentionThreshold
-                }
+                minimalRequiredThreshold,
+                minimalVoteThreshold,
+                minimalApproveThreshold,
+                maximalRejectionThreshold,
+                maximalAbstentionThreshold
             }}",
             Variables = new
             {
