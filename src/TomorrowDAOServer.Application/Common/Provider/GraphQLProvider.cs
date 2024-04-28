@@ -87,22 +87,27 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
     {
         try
         {
+            //todo change chainId
+            chainId = "tDVV";
             var response = await _graphQlClientFactory.GetClient(GraphQLClientEnum.ModuleClient)
-                .SendQueryAsync<HolderResult>(new GraphQLRequest
+                .SendQueryAsync<IndexerTokenInfosDto>(new GraphQLRequest
                 {
-                    Query = @"
-                    query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$symbols:[String!]){
-                        data:tokenInfo(input:{chainId: $chainId,skipCount: $skipCount,maxResultCount: $maxResultCount,symbol: $symbols})
+                    Query = @"query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$symbols:[String!]){
+                        tokenInfo(input:{chainId: $chainId,skipCount: $skipCount,maxResultCount: $maxResultCount,symbols: $symbols})
                         {
-                            symbol,
-                            holderCount
+                            totalCount,
+                            items
+                            {
+                                symbol,
+                                holderCount
+                            } 
                         }}",
                     Variables = new
                     {
                         chainId, skipCount, maxResultCount, symbols
                     }
                 });
-            return response.Data?.Data?.ToDictionary(x => x.Symbol, x => x.HolderCount) ?? new Dictionary<string, long>();
+            return response.Data?.TokenInfo?.Items?.ToDictionary(x => x.Symbol, x => x.HolderCount) ?? new Dictionary<string, long>();
         }
         catch (Exception e)
         {

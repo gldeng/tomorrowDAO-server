@@ -30,7 +30,6 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private readonly IProposalProvider _proposalProvider;
     private readonly IGraphQLProvider _graphQlProvider;
     private const int ZeroSkipCount = 0;
-    private const int GetHoldersMaxResultCount = 1;
     private const int GetMemberListMaxResultCount = 100;
     private const int CandidateTermNumber = 0;
     
@@ -86,9 +85,9 @@ public class DAOAppService : ApplicationService, IDAOAppService
     {
         var (item1, daoList) = await _daoProvider.GetDAOListAsync(input);
         var items = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>(daoList);
-        var symbols = items.Select(x => x.Symbol.ToUpper()).ToList();
-        var holders = await _graphQlProvider.GetHoldersAsync(symbols, input.ChainId,
-            ZeroSkipCount, GetHoldersMaxResultCount);
+        var symbols = items.Select(x => x.Symbol.ToUpper()).Distinct().ToList();
+        var holders = symbols.IsNullOrEmpty() ? new Dictionary<string, long>() 
+            : await _graphQlProvider.GetHoldersAsync(symbols, input.ChainId, ZeroSkipCount, symbols.Count);
         foreach (var dto in items.Where(x => !x.Symbol.IsNullOrEmpty()).ToList())
         {
             dto.SymbolHoldersNum = holders.GetValueOrDefault(dto.Symbol.ToUpper());
