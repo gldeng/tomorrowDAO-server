@@ -56,6 +56,16 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<IndexerVoteRecord, VoteRecordDto>();
 
         CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
+        CreateMap<IndexerDAOInfo, HighCouncilConfig>()
+            .ForMember(des => des.MaxHighCouncilCandidateCount, opt
+                => opt.MapFrom(src => src.MaxHighCouncilCandidateCount))
+            .ForMember(des => des.MaxHighCouncilMemberCount, opt
+            => opt.MapFrom(src => src.MaxHighCouncilMemberCount))
+            .ForMember(des => des.ElectionPeriod, opt
+                => opt.MapFrom(src => src.ElectionPeriod))
+            .ForMember(des => des.StakingAmount, opt
+                => opt.MapFrom(src => src.StakingAmount))
+            ;
         CreateMap<IndexerDAOInfo, DAOIndex>()
             .ForMember(des => des.FileInfoList, opt
                 => opt.MapFrom(src => MapHelper.MapJsonConvert<List<FileInfo>>(src.FileInfoList)));
@@ -66,7 +76,6 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         
         CreateMap<GovernanceSchemeThreshold, GovernanceSchemeThresholdDto>().ReverseMap();
         CreateMap<HighCouncilConfig, HighCouncilConfigDto>().ReverseMap();
-        CreateMap<IndexerHighCouncilConfig, HighCouncilConfig>().ReverseMap();
         CreateMap<FileInfo, FileInfoDto>().ReverseMap();
         CreateMap<File, FileDto>().ReverseMap();
         CreateMap<PermissionInfo, PermissionInfoDto>().ReverseMap();

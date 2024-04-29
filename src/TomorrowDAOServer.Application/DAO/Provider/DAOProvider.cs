@@ -53,12 +53,10 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
                         governanceToken,
                         isHighCouncilEnabled,
                         highCouncilAddress,
-                        highCouncilConfig {
-                            maxHighCouncilMemberCount,
-                            maxHighCouncilCandidateCount,
-                            electionPeriod,
-                            stakingAmount
-                        },
+                        maxHighCouncilMemberCount,
+                        maxHighCouncilCandidateCount,
+                        electionPeriod,
+                        stakingAmount,
                         highCouncilTermNumber,
                         fileInfoList,
                         isTreasuryContractNeeded,

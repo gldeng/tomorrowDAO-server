@@ -61,7 +61,26 @@ public class DAOSyncDataService : ScheduleSyncDataService
                 break;
             }
             blockHeight = Math.Max(blockHeight, queryList.Select(t => t.BlockHeight).Max());
-            await _daoIndexRepository.BulkAddOrUpdateAsync(_objectMapper.Map<List<IndexerDAOInfo>, List<DAOIndex>>(queryList));
+            var indexerDaoInfos = queryList.ToDictionary(x => x.Id);
+            var daoIndices = _objectMapper.Map<List<IndexerDAOInfo>, List<DAOIndex>>(queryList);
+            foreach (var daoIndex in daoIndices)
+            {
+                if (indexerDaoInfos.TryGetValue(daoIndex.Id, out var indexerDaoInfo))
+                {
+                    daoIndex.HighCouncilConfig = new HighCouncilConfig
+                    {
+                        MaxHighCouncilCandidateCount = indexerDaoInfo.MaxHighCouncilCandidateCount,
+                        MaxHighCouncilMemberCount = indexerDaoInfo.MaxHighCouncilMemberCount,
+                        ElectionPeriod = indexerDaoInfo.ElectionPeriod,
+                        StakingAmount = indexerDaoInfo.StakingAmount
+                    };
+                }
+                else
+                {
+                    daoIndex.HighCouncilConfig = new HighCouncilConfig();
+                }
+            }
+            await _daoIndexRepository.BulkAddOrUpdateAsync(daoIndices);
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 
