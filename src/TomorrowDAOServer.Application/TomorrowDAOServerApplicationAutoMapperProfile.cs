@@ -24,7 +24,7 @@ using TomorrowDAOServer.Vote.Index;
 
 namespace TomorrowDAOServer;
 
-public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
+public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
 {
     public TomorrowDAOServerApplicationAutoMapperProfile()
     {
@@ -38,7 +38,8 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : Profile
         CreateMap<IndexerProposal, ProposalIndex>();
         CreateMap<ExecuteTransactionDto, ExecuteTransaction>()
             .ForMember(des => des.Params, opt
-                => opt.MapFrom(source => JsonConvert.DeserializeObject<Dictionary<string, object>>(source.Params)));
+                => opt.MapFrom(source => MapTransactionParams(source.Params)))
+            ;
         CreateMap<ProposalIndex, ProposalListDto>()
             .ForMember(des => des.ProposalType, opt
                 => opt.MapFrom(source => source.ProposalType.ToString()))
