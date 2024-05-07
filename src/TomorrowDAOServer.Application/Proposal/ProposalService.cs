@@ -125,6 +125,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
     public async Task<MyProposalDto> QueryMyInfoAsync(QueryMyProposalInput input)
     {
+        return string.IsNullOrEmpty(input.ProposalId)
+            ? await QueryDaoMyInfoAsync(input)
+            : await QueryProposalMyInfoAsync(input);
+    }
+    
+    private async Task<MyProposalDto> QueryProposalMyInfoAsync(QueryMyProposalInput input)
+    {
         var proposalIndex = await _proposalProvider.GetProposalByIdAsync(input.ChainId, input.ProposalId);
         if (proposalIndex == null)
         {
@@ -146,6 +153,39 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         if (proposalIndex.ProposalStage == ProposalStage.Active)
         {
             myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
+        }
+        return myProposalDto;
+    }
+
+    private async Task<MyProposalDto> QueryDaoMyInfoAsync(QueryMyProposalInput input)
+    {
+        var proposalList = await _proposalProvider.GetProposalByDAOIdAsync(input.ChainId, input.DAOId);
+        var myProposalDto = new MyProposalDto
+        {
+            ChainId = input.ChainId
+        };
+        if (proposalList.IsNullOrEmpty())
+        {
+            return myProposalDto;
+        }
+        var daoIndex = await _DAOProvider.GetAsync(new GetDAOInfoInput
+        {
+            ChainId = input.ChainId,
+            DAOId = input.DAOId
+        });
+        myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
+        myProposalDto.CanVote = false;
+        foreach (var proposalIndex in proposalList)
+        {
+            //todo query real vote result, mock now
+            // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
+            var voteStake = new IndexerVoteStake();
+            myProposalDto.StakeAmount += voteStake.Amount;
+            myProposalDto.VotesAmount += myProposalDto.StakeAmount;
+            if (proposalIndex.ProposalStage == ProposalStage.Active)
+            {
+                myProposalDto.AvailableUnStakeAmount += myProposalDto.StakeAmount;
+            }
         }
         return myProposalDto;
     }
