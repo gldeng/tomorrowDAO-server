@@ -139,7 +139,6 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
         //todo query real vote result, mock now
         // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
-        myProposalDto.ExecuteTime = null;
         var voteStake = new IndexerVoteStake();
         myProposalDto.StakeAmount = voteStake.Amount;
         myProposalDto.VotesAmount = myProposalDto.StakeAmount;
