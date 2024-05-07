@@ -16,11 +16,13 @@ public class MyProposalDto
     
     public bool CanVote { get; set; }
     
-    public DateTime StartTime { get; set; }
+    public DateTime ActiveStartTime { get; set; }
+   
+    public DateTime ActiveEndTime { get; set; }
+    
+    public DateTime? ExecuteStartTime { get; set; }
 
-    public DateTime EndTime { get; set; }
-
-    public DateTime ExpiredTime { get; set; }
+    public DateTime? ExecuteEndTime { get; set; }
     
     public DateTime? ExecuteTime { get; set; }
 }

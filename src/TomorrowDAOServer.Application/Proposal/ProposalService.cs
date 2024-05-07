@@ -136,13 +136,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             ChainId = input.ChainId,
             DAOId = proposalIndex.DAOId
         });
-        myProposalDto.Symbol = daoIndex.GovernanceToken;
+        myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
         //todo query real vote result, mock now
         // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
+        myProposalDto.ExecuteTime = null;
         var voteStake = new IndexerVoteStake();
         myProposalDto.StakeAmount = voteStake.Amount;
         myProposalDto.VotesAmount = myProposalDto.StakeAmount;
-        myProposalDto.Symbol = voteStake.AcceptedCurrency.IsNullOrEmpty() ? daoIndex.GovernanceToken : voteStake.AcceptedCurrency;
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
         if (proposalIndex.ProposalStage == ProposalStage.Active)
         {
