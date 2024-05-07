@@ -102,10 +102,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         // var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId,
         //     new List<string> { input.ProposalId });
 
-        var voteInfos = new Dictionary<string, IndexerVote>
-        {
-            [input.ProposalId] = new()
-        };
+        var voteInfos = new Dictionary<string, IndexerVote>();
 
         if (voteInfos.TryGetValue(input.ProposalId, out var voteInfo))
         {
@@ -121,6 +118,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         //     Sorting = VoteTopSorting
         // });
         // proposalDetailDto.VoteTopList = _objectMapper.Map<List<IndexerVoteRecord>, List<VoteRecordDto>>(voteRecords);
+        proposalDetailDto.ExecuteTime = null;
         proposalDetailDto.VoteTopList = new List<VoteRecordDto>();
         return proposalDetailDto;
     }
