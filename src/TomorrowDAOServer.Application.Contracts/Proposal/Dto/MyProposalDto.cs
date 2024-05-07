@@ -15,14 +15,4 @@ public class MyProposalDto
     public long VotesAmount { get; set; }
     
     public bool CanVote { get; set; }
-    
-    public DateTime ActiveStartTime { get; set; }
-   
-    public DateTime ActiveEndTime { get; set; }
-    
-    public DateTime? ExecuteStartTime { get; set; }
-
-    public DateTime? ExecuteEndTime { get; set; }
-    
-    public DateTime? ExecuteTime { get; set; }
 }
