@@ -143,15 +143,26 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         });
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
         //todo query real vote result, mock now
+        var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
+        {
+            ChainId = input.ChainId,
+            VotingItemId = input.ProposalId,
+            Sorting = VoteTopSorting
+        });
         // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
         var voteStake = new IndexerVoteStake();
-        myProposalDto.StakeAmount = voteStake.Amount;
-        myProposalDto.VotesAmount = myProposalDto.StakeAmount;
+        if (voteRecords.Count > 0)
+        {
+            myProposalDto.StakeAmount = voteStake.Amount;
+            myProposalDto.VotesAmount = myProposalDto.StakeAmount;
+        }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
         if (proposalIndex.ProposalStage == ProposalStage.Active)
         {
             myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
         }
+
+        myProposalDto.ProposalIdList.Add(input.ProposalId);
         return myProposalDto;
     }
 
@@ -175,11 +186,21 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         myProposalDto.CanVote = false;
         foreach (var proposalIndex in proposalList)
         {
+            var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
+            {
+                ChainId = input.ChainId,
+                VotingItemId = proposalIndex.ProposalId,
+                Sorting = VoteTopSorting
+            });
+            if (voteRecords.Count > 0)
+            {
+                myProposalDto.StakeAmount += voteRecords[0].Amount;
+                myProposalDto.VotesAmount += myProposalDto.StakeAmount;
+            }
+            myProposalDto.ProposalIdList.Add(proposalIndex.ProposalId);
             //todo query real vote result, mock now
             // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
             var voteStake = new IndexerVoteStake();
-            myProposalDto.StakeAmount += voteStake.Amount;
-            myProposalDto.VotesAmount += myProposalDto.StakeAmount;
             if (proposalIndex.ProposalStage == ProposalStage.Active)
             {
                 myProposalDto.AvailableUnStakeAmount += myProposalDto.StakeAmount;
