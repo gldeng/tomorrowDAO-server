@@ -155,14 +155,13 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
         {
             Query =
                 @"query($chainId:String,$types:[Int!]){
-            data:getVoteSchemeInfo(input: {chainId:$chainId,types:$types})
+            data:getVoteSchemeInfo(input: {chainId:$chainId})
             {
-                id,chainId,blockHeight,voteSchemeId,voteMechanism,isLockToken,isQuadratic,ticketCost,createTime
+                id,chainId,voteSchemeId,voteMechanism
             }}",
             Variables = new
             {
                 input.ChainId,
-                input.Types
             }
         });
         return graphQlResponse?.DataList ?? new List<IndexerVoteSchemeInfo>();

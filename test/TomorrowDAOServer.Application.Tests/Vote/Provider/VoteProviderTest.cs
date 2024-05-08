@@ -70,8 +70,7 @@ public class VoteProviderTest
     {
         var result = await _voteProvider.GetVoteSchemeAsync(new GetVoteSchemeInput
         {
-            ChainId = "AELF",
-            Types = new List<int>{1}
+            ChainId = "AELF", 
         });
         result.ShouldNotBeNull();
     }
