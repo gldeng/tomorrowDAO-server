@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
+using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Index;
 using TomorrowDAOServer.Proposal.Provider;
 using TomorrowDAOServer.Vote.Index;
@@ -17,6 +18,7 @@ public interface IProposalAssistService
 {
     public Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> list);
     public Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<ProposalIndex> list);
+    public List<ProposalLifeDto> ConvertProposalLifeList(ProposalIndex proposalIndex);
 }
 
 public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssistService
@@ -109,7 +111,64 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         
         return list;
     }
-    
+
+    public List<ProposalLifeDto> ConvertProposalLifeList(ProposalIndex proposalIndex)
+    {
+        var result = new List<ProposalLifeDto>();
+        AddProposalLife(ref result, ProposalStage.Active, ProposalStatus.PendingVote);
+
+        ProposalStatus proposalStatus = proposalIndex.ProposalStatus;
+        var isVetoed = proposalIndex.VetoProposalId.IsNullOrEmpty();
+        switch (proposalIndex.ProposalStage)
+            {
+                case ProposalStage.Active:
+                    break;
+                case ProposalStage.Pending:
+                    AddProposalLife(ref result, ProposalStage.Pending, proposalStatus);
+                    break;
+                case ProposalStage.Execute:
+                    if (GovernanceMechanism.HighCouncil == proposalIndex.GovernanceMechanism)
+                    {
+                        AddProposalLife(ref result, ProposalStage.Pending, isVetoed ? ProposalStatus.Challenged : ProposalStatus.Approved);
+                    }
+                    AddProposalLife(ref result, ProposalStage.Execute, ProposalStatus.Approved);
+                    break;
+                case ProposalStage.Finished:
+                    switch (proposalStatus)
+                    {
+                        case ProposalStatus.Rejected:
+                        case ProposalStatus.Abstained:
+                        case ProposalStatus.BelowThreshold:    
+                            break;
+                        case ProposalStatus.Vetoed:
+                            AddProposalLife(ref result, ProposalStage.Pending, ProposalStatus.Challenged);
+                            break;
+                        case ProposalStatus.Executed:
+                        case ProposalStatus.Expired:
+                            if (GovernanceMechanism.HighCouncil == proposalIndex.GovernanceMechanism)
+                            {
+                                AddProposalLife(ref result, ProposalStage.Pending, isVetoed ? ProposalStatus.Challenged : ProposalStatus.Approved);
+                            }
+                            AddProposalLife(ref result, ProposalStage.Execute, ProposalStatus.Approved);
+                            break;
+                    }
+                    
+                    AddProposalLife(ref result, ProposalStage.Finished, proposalStatus);
+                    break;
+            }
+
+        return result;
+    }
+
+    private static void AddProposalLife(ref List<ProposalLifeDto> result, ProposalStage proposalStage, ProposalStatus proposalStatus)
+    {
+        result.AddLast(new ProposalLifeDto
+        {
+            ProposalStage = proposalStage.ToString(),
+            ProposalStatus = proposalStatus.ToString()
+        });
+    }
+
     private ProposalIndex ProcessActiveProposalStage(ProposalIndex proposal, IndexerVote voteInfo)
     {
         var governanceMechanism = proposal.GovernanceMechanism;

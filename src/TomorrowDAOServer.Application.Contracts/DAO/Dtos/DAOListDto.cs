@@ -12,4 +12,5 @@ public class DAOListDto
     public string Symbol { get; set; }
     public long SymbolHoldersNum { get; set; } = 0;
     public long VotersNum { get; set; } = 0;
+    public bool IsNetworkDAO { get; set; }
 }

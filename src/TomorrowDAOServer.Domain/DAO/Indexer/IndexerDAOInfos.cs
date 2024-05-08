@@ -18,7 +18,11 @@ public class IndexerDAOInfo
     public IndexerMetadata Metadata { get; set; }
     public string GovernanceToken { get; set; }
     public bool IsHighCouncilEnabled { get; set; }
-    public IndexerHighCouncilConfig HighCouncilConfig { get; set; }
+    public string HighCouncilAddress { get; set; }
+    public long MaxHighCouncilMemberCount { get; set; }
+    public long MaxHighCouncilCandidateCount { get; set; }
+    public long ElectionPeriod { get; set; }
+    public long StakingAmount { get; set; }
     public long HighCouncilTermNumber { get; set; }
     public string FileInfoList { get; set; }
     public bool IsTreasuryContractNeeded { get; set; }
@@ -34,6 +38,7 @@ public class IndexerDAOInfo
     public string PermissionAddress { get; set; }
     public string PermissionInfoList { get; set; }
     public DateTime CreateTime { get; set; }
+    public bool IsNetworkDAO { get; set; }
 }
 
 public class IndexerMetadata
@@ -42,12 +47,4 @@ public class IndexerMetadata
     public string LogoUrl { get; set; }
     public string Description { get; set; }
     public string SocialMedia { get; set; }
-}
-
-public class IndexerHighCouncilConfig
-{
-    public int MaxHighCouncilMemberCount { get; set; }
-    public int MaxHighCouncilCandidateCount { get; set; }
-    public int ElectionPeriod { get; set; }
-    public bool IsRequireHighCouncilForExecution { get; set; }
 }

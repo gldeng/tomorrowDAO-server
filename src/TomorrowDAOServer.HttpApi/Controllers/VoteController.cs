@@ -9,7 +9,7 @@ namespace TomorrowDAOServer.Controllers;
 [RemoteService]
 [Area("app")]
 [ControllerName("Vote")]
-[Route("api/")]
+[Route("api/vote")]
 public class VoteController
 {
     private readonly IVoteService _voteService;
@@ -20,7 +20,7 @@ public class VoteController
     }
     
     [HttpGet]
-    [Route("contract/vote-scheme-list")]
+    [Route("/vote-scheme-list")]
     public async Task<VoteSchemeDetailDto> VoteSchemeList(GetVoteSchemeInput input)
     {
         return await _voteService.GetVoteSchemeAsync(input);

@@ -7,18 +7,18 @@ using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer.Governance.Dto;
 
-public class GovernanceSchemeDto
+public class IndexerGovernanceSchemeDto
 {
-    public List<GovernanceScheme> Data { get; set; }
+    public List<IndexerGovernanceScheme> Data { get; set; }
 }
-public class GovernanceScheme
+public class IndexerGovernanceScheme
 {
     public string Id { get; set; }
     public string DAOId { get; set; }
     public string SchemeId { get; set; }
     public string SchemeAddress { get; set; }
     public string ChainId { get; set; }
-    public string GovernanceMechanism { get; set; }
+    public GovernanceMechanism GovernanceMechanism { get; set; }
     public string GovernanceToken { get; set; }
     public DateTime CreateTime { get; set; }
     public int MinimalRequiredThreshold { get; set; }

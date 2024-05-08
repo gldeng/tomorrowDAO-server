@@ -9,7 +9,7 @@ namespace TomorrowDAOServer.Governance.Provider;
 
 public interface IGovernanceProvider
 {
-    Task<GovernanceSchemeDto> GetGovernanceSchemeAsync(string chainId, string daoId);
+    Task<IndexerGovernanceSchemeDto> GetGovernanceSchemeAsync(string chainId, string daoId);
 }
 
 public class GovernanceProvider : IGovernanceProvider, ISingletonDependency
@@ -21,9 +21,9 @@ public class GovernanceProvider : IGovernanceProvider, ISingletonDependency
         _graphQlHelper = graphQlHelper;
     }
 
-    public async Task<GovernanceSchemeDto> GetGovernanceSchemeAsync(string chainId, string daoId)
+    public async Task<IndexerGovernanceSchemeDto> GetGovernanceSchemeAsync(string chainId, string daoId)
     {
-        var graphQlResponse = await _graphQlHelper.QueryAsync<GovernanceSchemeDto>(new GraphQLRequest
+        var graphQlResponse = await _graphQlHelper.QueryAsync<IndexerGovernanceSchemeDto>(new GraphQLRequest
         {
             Query =
                 @"query($chainId:String, $daoId:String){
@@ -37,13 +37,11 @@ public class GovernanceProvider : IGovernanceProvider, ISingletonDependency
                 governanceMechanism,
                 governanceToken,
                 createTime,
-                schemeThresholdDto {
-                    minimalRequiredThreshold,
-                    minimalVoteThreshold,
-                    minimalApproveThreshold,
-                    maximalRejectionThreshold,
-                    maximalAbstentionThreshold
-                }
+                minimalRequiredThreshold,
+                minimalVoteThreshold,
+                minimalApproveThreshold,
+                maximalRejectionThreshold,
+                maximalAbstentionThreshold
             }}",
             Variables = new
             {
@@ -51,6 +49,6 @@ public class GovernanceProvider : IGovernanceProvider, ISingletonDependency
                 daoId = daoId
             }
         });
-        return graphQlResponse ?? new GovernanceSchemeDto();
+        return graphQlResponse ?? new IndexerGovernanceSchemeDto();
     }
 }
