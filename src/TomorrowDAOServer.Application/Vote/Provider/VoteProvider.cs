@@ -147,7 +147,9 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voter,
                         amount,
                         option,
-                        voteTime
+                        voteTime,
+                        startTime,
+                        endTime
                     }
                   }",
                 Variables = new
