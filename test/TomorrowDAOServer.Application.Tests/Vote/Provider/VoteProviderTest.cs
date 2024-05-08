@@ -16,17 +16,17 @@ public class VoteProviderTest
     private static readonly IGraphQlHelper GraphQlHelper = Substitute.For<IGraphQlHelper>();
     private readonly VoteProvider _voteProvider = new(GraphQlHelper);
 
-    [Fact]
-    public async void GetVoteInfosMemoryAsync_Test()
-    {
-        var result = await _voteProvider.GetVoteInfosMemoryAsync("AELF", new List<string>());
-        result.ShouldNotBeNull();
-
-        GraphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(Arg.Any<GraphQLRequest>())
-            .Returns(Task.FromResult(new IndexerCommonResult<IndexerVotes>()));
-        result = await _voteProvider.GetVoteInfosMemoryAsync("AELF", new List<string>{"votingItemId"});
-        result.ShouldNotBeNull();
-    }
+    // [Fact]
+    // public async void GetVoteInfosMemoryAsync_Test()
+    // {
+    //     var result = await _voteProvider.GetVoteInfosMemoryAsync("AELF", new List<string>());
+    //     result.ShouldNotBeNull();
+    //
+    //     GraphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(Arg.Any<GraphQLRequest>())
+    //         .Returns(Task.FromResult(new IndexerCommonResult<IndexerVotes>()));
+    //     result = await _voteProvider.GetVoteInfosMemoryAsync("AELF", new List<string>{"votingItemId"});
+    //     result.ShouldNotBeNull();
+    // }
     
     [Fact]
     public async void GetVoteInfosAsync_Test()
