@@ -18,7 +18,6 @@ public class VoteServiceTest
         var result = await _voteService.GetVoteSchemeAsync(new GetVoteSchemeInput
         {
             ChainId = "AELF",
-            Types = new List<int>{1}
         });
         result.ShouldNotBeNull();
     }
