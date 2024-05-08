@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
+using Microsoft.Extensions.Logging;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.GraphQL;
 using TomorrowDAOServer.Vote.Dto;
@@ -27,18 +28,19 @@ public interface IVoteProvider
 public class VoteProvider : IVoteProvider, ISingletonDependency
 {
     private readonly IGraphQlHelper _graphQlHelper;
+    private readonly ILogger<VoteProvider> _logger;
 
-    public VoteProvider(IGraphQlHelper graphQlHelper)
+    public VoteProvider(IGraphQlHelper graphQlHelper, ILogger<VoteProvider> logger)
     {
         _graphQlHelper = graphQlHelper;
+        _logger = logger;
     }
 
     public async Task<Dictionary<string, IndexerVote>> GetVoteInfosMemoryAsync(string chainId, List<string> votingItemIds)
     {
-        return new Dictionary<string, IndexerVote>();
         if (votingItemIds.IsNullOrEmpty())
         {
-            return new();
+            return new Dictionary<string, IndexerVote>();
         }
 
         var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(new GraphQLRequest
@@ -70,12 +72,14 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
     {
         if (votingItemIds.IsNullOrEmpty())
         {
-            return new();
+            return new Dictionary<string, IndexerVote>();
         }
-        
-        var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(new GraphQLRequest
+
+        try
         {
-            Query = @"
+            var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(new GraphQLRequest
+            {
+                Query = @"
 			    query($chainId: String!,$votingItemIds: [votingItemId!]!) {
                     dataList:getVoteInfos(input:{chainId:$chainId,votingItemIds:$votingItemIds}) {
                         votingItemId,
@@ -89,13 +93,19 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voterCount
                     }
                   }",
-            Variables = new
-            {
-                chainId, votingItemIds
-            }
-        });
-        var voteInfos = result.Data?.Data ?? new IndexerVotes();
-        return voteInfos.DataList.ToDictionary(vote => vote.VotingItemId, vote => vote);
+                Variables = new
+                {
+                    chainId, votingItemIds
+                }
+            });
+            var voteInfos = result.Data?.Data ?? new IndexerVotes();
+            return voteInfos.DataList.ToDictionary(vote => vote.VotingItemId, vote => vote);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetVoteInfosAsync Exception chainId {chainId}, votingItemIds {votingItemIds}", chainId, votingItemIds);
+            return new Dictionary<string, IndexerVote>();
+        }
     }
 
     public async Task<IndexerVoteStake> GetVoteStakeAsync(string chainId, string votingItemId, string voter)
@@ -127,9 +137,11 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
 
     public async Task<List<IndexerVoteRecord>> GetVoteRecordAsync(GetVoteRecordInput input)
     {
-        var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVoteRecords>>(new GraphQLRequest
+        try
         {
-            Query = @"
+            var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVoteRecords>>(new GraphQLRequest
+            {
+                Query = @"
 			    query($chainId: String!,$votingItemId: String!,$voter: String,$sorting: String) {
                     dataList:getVoteRecord(input:{chainId:$chainId,votingItemId:$votingItemId,voter:$voter,sorting:$sorting}) {
                         voter,
@@ -138,15 +150,22 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voteTime
                     }
                   }",
-            Variables = new
-            {
-                chainId = input.ChainId,
-                votingItemId = input.VotingItemId, 
-                voter = input.Voter,
-                sorting = input.Sorting
-            }
-        });
-        return result?.Data?.DataList ?? new List<IndexerVoteRecord>();
+                Variables = new
+                {
+                    chainId = input.ChainId,
+                    votingItemId = input.VotingItemId, 
+                    voter = input.Voter,
+                    sorting = input.Sorting
+                }
+            });
+            return result?.Data?.DataList ?? new List<IndexerVoteRecord>();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetVoteRecordAsync Exception chainId {chainId}, votingItemId {votingItemId}, voter {voter}, sorting {sorting}", 
+                input.ChainId, input.VotingItemId, input.Voter, input.Sorting);
+            return new List<IndexerVoteRecord>();
+        }
     }
 
     public async Task<List<IndexerVoteSchemeInfo>> GetVoteSchemeAsync(GetVoteSchemeInput input)

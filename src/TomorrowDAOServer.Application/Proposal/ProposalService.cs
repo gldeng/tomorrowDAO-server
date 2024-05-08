@@ -98,28 +98,19 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
         var proposalDetailDto = _objectMapper.Map<ProposalIndex, ProposalDetailDto>(proposalIndex);
         proposalDetailDto.ProposalLifeList = _proposalAssistService.ConvertProposalLifeList(proposalIndex);
-        //todo query graphql later
-        // var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId,
-        //     new List<string> { input.ProposalId });
-
-        var voteInfos = new Dictionary<string, IndexerVote>();
-
+        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, new List<string> { input.ProposalId });
         if (voteInfos.TryGetValue(input.ProposalId, out var voteInfo))
         {
-            //of vote info
             _objectMapper.Map(voteInfo, proposalDetailDto);
         }
 
-        //todo query graphql later
-        // var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
-        // {
-        //     ChainId = input.ChainId,
-        //     VotingItemId = input.ProposalId,
-        //     Sorting = VoteTopSorting
-        // });
-        // proposalDetailDto.VoteTopList = _objectMapper.Map<List<IndexerVoteRecord>, List<VoteRecordDto>>(voteRecords);
-        proposalDetailDto.ExecuteTime = null;
-        proposalDetailDto.VoteTopList = new List<VoteRecordDto>();
+        var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
+        {
+            ChainId = input.ChainId,
+            VotingItemId = input.ProposalId,
+            Sorting = VoteTopSorting
+        });
+        proposalDetailDto.VoteTopList = _objectMapper.Map<List<IndexerVoteRecord>, List<VoteRecordDto>>(voteRecords);
         return proposalDetailDto;
     }
 
