@@ -27,12 +27,8 @@ public class DAOInfoDto
     public string ElectionContractAddress { get; set; }
     public string GovernanceContractAddress { get; set; }
     public string TimelockContractAddress { get; set; }
-    // public long ActiveTimePeriod { get; set; }
-    // public long VetoActiveTimePeriod { get; set; }
-    // public long PendingTimePeriod { get; set; }
-    // public long ExecuteTimePeriod { get; set; }
-    // public long VetoExecuteTimePeriod { get; set; }
     public DateTime CreateTime { get; set; }
+    public bool IsNetworkDAO { get; set; }
 }
 
 public class MetadataDto

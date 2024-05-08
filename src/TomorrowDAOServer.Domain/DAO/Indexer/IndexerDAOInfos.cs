@@ -38,6 +38,7 @@ public class IndexerDAOInfo
     public string PermissionAddress { get; set; }
     public string PermissionInfoList { get; set; }
     public DateTime CreateTime { get; set; }
+    public bool IsNetworkDAO { get; set; }
 }
 
 public class IndexerMetadata

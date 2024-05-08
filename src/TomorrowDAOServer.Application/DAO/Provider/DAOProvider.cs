@@ -74,7 +74,8 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
                         pendingTimePeriod,
                         executeTimePeriod,
                         vetoExecuteTimePeriod,
-                        createTime
+                        createTime,
+                        isNetworkDAO
                     }
                 }",
             Variables = new
