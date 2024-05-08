@@ -55,9 +55,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
         //query proposal vote infos
         var proposalIds = tuple.Item2.Select(item => item.ProposalId).ToList();
-        //todo query real vote result, mock now
-        // var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, proposalIds);
-        var voteInfos = new Dictionary<string, IndexerVote>();
+        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, proposalIds);
         var resultList = new List<ProposalListDto>();
         foreach (var proposal in tuple.Item2)
         {
@@ -65,17 +63,16 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
             if (voteInfos.TryGetValue(proposal.ProposalId, out var voteInfo))
             {
-                //of vote info
                 _objectMapper.Map(voteInfo, proposalDto);
             }
 
-            // proposalDto.OfTagList(_proposalTagOptionsMonitor.CurrentValue);
             resultList.Add(proposalDto);
         }
         foreach (var listDto in resultList.Where(listDto => listDto.ProposalType == ProposalType.Advisory.ToString()))
         {
             listDto.ExecuteStartTime = null;
             listDto.ExecuteEndTime = null;
+            listDto.ExecuteTime = null;
         }
         foreach (var listDto in resultList.Where(listDto => listDto.ProposalStatus != ProposalStatus.Executed.ToString()))
         {
@@ -111,6 +108,16 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             Sorting = VoteTopSorting
         });
         proposalDetailDto.VoteTopList = _objectMapper.Map<List<IndexerVoteRecord>, List<VoteRecordDto>>(voteRecords);
+        if (proposalDetailDto.ProposalType != ProposalType.Advisory.ToString())
+        {
+            proposalDetailDto.ExecuteStartTime = null;
+            proposalDetailDto.ExecuteEndTime = null;
+            proposalDetailDto.ExecuteTime = null;
+        }
+        if (proposalDetailDto.ProposalStatus != ProposalStatus.Executed.ToString())
+        {
+            proposalDetailDto.ExecuteTime = null;
+        }
         return proposalDetailDto;
     }
 
