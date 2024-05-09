@@ -173,8 +173,10 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         {
             myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
         }
+        var proposalIdList = new List<string> { };
+        proposalIdList.Add(input.ProposalId);
 
-        myProposalDto.ProposalIdList.Add(input.ProposalId);
+        myProposalDto.ProposalIdList = proposalIdList;
         return myProposalDto;
     }
 
