@@ -208,4 +208,62 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
         return myProposalDto;
     }
+
+    private async Task<VoteHistoryDto>  QueryVoteRecordsAsync(QueryVoteHistoryInput input)
+    {
+        var myProposalDto = new VoteHistoryDto
+        {
+            ChainId = input.ChainId
+        };
+        var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
+        {
+            ChainId = input.ChainId,
+            VotingItemId = input.ProposalId,
+            Sorting = VoteTopSorting,
+            Voter = input.Address
+        });
+        var votingItemIds = new List<string> { };
+        foreach (var voteRecordItem in voteRecords )
+        {
+            var indexerVoteHistory = new IndexerVoteHistoryDto
+            {
+                TimeStamp = voteRecordItem.VoteTime,
+                ProposalId = voteRecordItem.VotingItemId,
+                MyOption = voteRecordItem.Option,
+                VoteNum = voteRecordItem.Amount,
+                TransactionId = voteRecordItem.TransactionId,
+            };
+            votingItemIds.Add(voteRecordItem.VotingItemId);
+            myProposalDto.Items.Add(indexerVoteHistory);
+        }
+        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, votingItemIds);
+        foreach (var voteRecordItem in voteRecords)
+        {
+            var indexerVoteHistory = new IndexerVoteHistoryDto
+            {
+                TimeStamp = voteRecordItem.VoteTime,
+                ProposalId = voteRecordItem.VotingItemId,
+                MyOption = voteRecordItem.Option,
+                VoteNum = voteRecordItem.Amount,
+                TransactionId = voteRecordItem.TransactionId,
+            };
+            // votingItemIds.Add(voteRecordItem.VotingItemId);
+            if (voteInfos.TryGetValue(voteRecordItem.VotingItemId, out var voteInfo))
+            {
+                indexerVoteHistory.Executer = voteInfo.Executer;
+            }
+            var proposalIndex = await _proposalProvider.GetProposalByIdAsync(input.ChainId, voteRecordItem.VotingItemId);
+            if (proposalIndex == null)
+            {
+                indexerVoteHistory.ProposalTitle = proposalIndex.ProposalTitle;
+            }
+            myProposalDto.Items.Add(indexerVoteHistory);
+        }
+        return myProposalDto;
+    }
+
+    public async Task<VoteHistoryDto> QueryVoteHistoryAsync(QueryVoteHistoryInput input)
+    {
+        return await QueryVoteRecordsAsync(input);
+    }
 }

@@ -11,4 +11,5 @@ public interface IProposalService
     Task<ProposalDetailDto> QueryProposalDetailAsync(QueryProposalDetailInput input);
 
     Task<MyProposalDto> QueryMyInfoAsync(QueryMyProposalInput input);
+    Task<VoteHistoryDto> QueryVoteHistoryAsync(QueryVoteHistoryInput input);
 }

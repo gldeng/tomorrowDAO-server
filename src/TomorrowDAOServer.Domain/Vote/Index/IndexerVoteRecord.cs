@@ -12,10 +12,13 @@ public class IndexerVoteRecords : IndexerCommonResult<IndexerVoteRecords>
 public class IndexerVoteRecord : IndexerCommonResult<IndexerVoteRecord>
 {
     public string Voter { get; set; }
+    public string TransactionId { get; set; }
     
     public int Amount { get; set; }
+    public string VotingItemId {get; set; }
 
     public VoteOption Option { get; set; }
+    public DateTime VoteTime { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
 }
