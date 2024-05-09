@@ -210,10 +210,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
             if (voteRecords.Count > 0)
             {
+                _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} in count", input.DAOId);
                 myProposalDto.StakeAmount += voteRecords[0].Amount;
                 myProposalDto.VotesAmount += myProposalDto.StakeAmount;
             }
+            _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out count", input.DAOId);
             myProposalDto.ProposalIdList.Add(proposalIndex.ProposalId);
+            _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out1 count", input.DAOId);
             //todo query real vote result, mock now
             // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
             var voteStake = new IndexerVoteStake();
@@ -221,6 +224,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             {
                 myProposalDto.AvailableUnStakeAmount += myProposalDto.StakeAmount;
             }
+            _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out2 count", input.DAOId);
         }
         _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} end myProposalDto {myProposalDto}:", input.DAOId, JsonConvert.SerializeObject(myProposalDto));
         return myProposalDto;
