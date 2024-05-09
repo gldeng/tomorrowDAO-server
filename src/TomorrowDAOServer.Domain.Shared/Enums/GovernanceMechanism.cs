@@ -2,7 +2,6 @@ namespace TomorrowDAOServer.Enums;
 
 public enum GovernanceMechanism
 {
-    Unspecified = 0,
-    Referendum = 1,
-    HighCouncil = 2
+    Referendum = 0,
+    HighCouncil = 1
 }

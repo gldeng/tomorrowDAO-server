@@ -47,7 +47,6 @@ public class ProposalDto
 
     public DateTime? ExecuteTime { get; set; }   
     
-    
     public string GovernanceMechanism { get; set; }
     
     public int MinimalRequiredThreshold { get; set; }
