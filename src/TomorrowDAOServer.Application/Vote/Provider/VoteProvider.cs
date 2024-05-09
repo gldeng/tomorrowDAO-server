@@ -151,7 +151,8 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         voteTime,
                         startTime,
                         endTime,
-                        transactionId
+                        transactionId,
+                        votingItemId
                     }
                   }",
                 Variables = new
