@@ -178,16 +178,16 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
         var graphQlResponse = await _graphQlHelper.QueryAsync<IndexerVoteSchemeResult>(new GraphQLRequest
         {
             Query =
-                @"query($chainId:String,$types:[Int!]){
-            data:getVoteSchemeInfo(input: {chainId:$chainId})
+                @"query($chainId:String){
+            data:getVoteSchemes(input: {chainId:$chainId})
             {
                 id,chainId,voteSchemeId,voteMechanism
             }}",
-            Variables = new
+            Variables = new 
             {
-                input.ChainId,
+                chainId = input.ChainId,
             }
         });
-        return graphQlResponse?.DataList ?? new List<IndexerVoteSchemeInfo>();
+        return graphQlResponse?.Data ?? new List<IndexerVoteSchemeInfo>();
     }
 }
