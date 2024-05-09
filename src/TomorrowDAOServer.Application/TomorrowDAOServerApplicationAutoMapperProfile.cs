@@ -10,6 +10,7 @@ using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Dtos.NetworkDao;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Governance;
 using TomorrowDAOServer.Governance.Dto;
 using TomorrowDAOServer.Options;
@@ -54,7 +55,10 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
         CreateMap<ProposalIndex, MyProposalDto>();
         CreateMap<IndexerVote, ProposalListDto>();
         CreateMap<IndexerVote, ProposalDetailDto>();
-        CreateMap<IndexerVoteRecord, VoteRecordDto>();
+        CreateMap<IndexerVoteRecord, VoteRecordDto>()
+            .ForMember(des => des.Option, opt
+                => opt.MapFrom(source => source.Option.ToString()))
+            ;
 
         CreateMap<DAOIndex, DAOInfoDto>().ReverseMap();
         CreateMap<IndexerDAOInfo, HighCouncilConfig>()

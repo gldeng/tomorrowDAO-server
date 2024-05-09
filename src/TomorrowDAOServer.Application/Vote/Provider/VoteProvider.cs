@@ -77,21 +77,21 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
 
         try
         {
-            var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(new GraphQLRequest
+            var result = await _graphQlHelper.QueryAsync<IndexerVotes>(new GraphQLRequest
             {
                 Query = @"
-			    query($chainId: String!,$votingItemIds: [votingItemId!]!) {
+			    query($chainId: String!,$votingItemIds: [String!]!) {
                     dataList:getVoteInfos(input:{chainId:$chainId,votingItemIds:$votingItemIds}) {
                         votingItemId,
                         voteSchemeId,
-                        daoId,
+                        dAOId,
                         acceptedCurrency,
                         approvedCount,
                         rejectionCount,
-                        AbstentionCount,
+                        abstentionCount,
                         votesAmount,
                         voterCount,
-                        Executer
+                        executer
                     }
                   }",
                 Variables = new
@@ -99,8 +99,8 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                     chainId, votingItemIds
                 }
             });
-            var voteInfos = result.Data?.Data ?? new IndexerVotes();
-            return voteInfos.DataList.ToDictionary(vote => vote.VotingItemId, vote => vote);
+            var voteInfos = result?.DataList ?? new List<IndexerVote>();
+            return voteInfos.ToDictionary(vote => vote.VotingItemId, vote => vote);
         }
         catch (Exception e)
         {
@@ -140,7 +140,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
     {
         try
         {
-            var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVoteRecords>>(new GraphQLRequest
+            var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
             {
                 Query = @"
 			    query($chainId: String!,$votingItemId: String!,$voter: String,$sorting: String) {
@@ -163,7 +163,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                     sorting = input.Sorting
                 }
             });
-            return result?.Data?.DataList ?? new List<IndexerVoteRecord>();
+            return result?.DataList ?? new List<IndexerVoteRecord>();
         }
         catch (Exception e)
         {
