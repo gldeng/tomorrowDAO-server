@@ -18,6 +18,7 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
 using Volo.Abp.ObjectMapping;
+using Newtonsoft.Json;
 
 namespace TomorrowDAOServer.Proposal;
 
@@ -96,12 +97,12 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         {
             return new ProposalDetailDto();
         }
-        _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} proposalIndex {proposalIndex}:", input.ProposalId, proposalIndex.ToString());
+        _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} proposalIndex {proposalIndex}:", input.ProposalId, JsonConvert.SerializeObject(proposalIndex));
 
         var proposalDetailDto = _objectMapper.Map<ProposalIndex, ProposalDetailDto>(proposalIndex);
         proposalDetailDto.ProposalLifeList = _proposalAssistService.ConvertProposalLifeList(proposalIndex);
         var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, new List<string> { input.ProposalId });
-        _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteInfos {voteInfos}:", input.ProposalId, voteInfos.ToString());
+        _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteInfos {voteInfos}:", input.ProposalId, JsonConvert.SerializeObject(voteInfos));
         if (voteInfos.TryGetValue(input.ProposalId, out var voteInfo))
         {
             _objectMapper.Map(voteInfo, proposalDetailDto);
@@ -113,7 +114,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             VotingItemId = input.ProposalId,
             Sorting = VoteTopSorting
         });
-        _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteRecords {voteRecords}:", input.ProposalId, voteRecords.ToString());
+        _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteRecords {voteRecords}:", input.ProposalId, JsonConvert.SerializeObject(voteRecords));
         proposalDetailDto.VoteTopList = _objectMapper.Map<List<IndexerVoteRecord>, List<VoteRecordDto>>(voteRecords);
         if (proposalDetailDto.ProposalType != ProposalType.Advisory.ToString())
         {
@@ -139,13 +140,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     {
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync start daoid:{DAOId}:", input.DAOId);
         var proposalIndex = await _proposalProvider.GetProposalByIdAsync(input.ChainId, input.ProposalId);
-        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync  daoid:{DAOId}: proposalIndex:{proposalIndex}:", input.DAOId, proposalIndex.ToString());
+        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync  daoid:{DAOId}: proposalIndex:{proposalIndex}:", input.DAOId, JsonConvert.SerializeObject(proposalIndex));
         if (proposalIndex == null)
         {
             return new MyProposalDto();
         }
         var myProposalDto = _objectMapper.Map<ProposalIndex, MyProposalDto>(proposalIndex);
-        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} myProposalDto:{myProposalDto}:", input.DAOId, myProposalDto.ToString());
+        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} myProposalDto:{myProposalDto}:", input.DAOId, JsonConvert.SerializeObject(myProposalDto));
         var daoIndex = await _DAOProvider.GetAsync(new GetDAOInfoInput
         {
             ChainId = input.ChainId,
@@ -159,7 +160,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             VotingItemId = input.ProposalId,
             Sorting = VoteTopSorting
         });
-        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, voteRecords.ToString());
+        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
         // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
         var voteStake = new IndexerVoteStake();
         if (voteRecords.Count > 0)
@@ -181,7 +182,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     {
         _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} start ", input.DAOId);
         var proposalList = await _proposalProvider.GetProposalByDAOIdAsync(input.ChainId, input.DAOId);
-        _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} proposalList {proposalList}:", input.DAOId, proposalList.ToString());
+        _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} proposalList {proposalList}:", input.DAOId, JsonConvert.SerializeObject(proposalList));
         var myProposalDto = new MyProposalDto
         {
             ChainId = input.ChainId
@@ -195,7 +196,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             ChainId = input.ChainId,
             DAOId = input.DAOId
         });
-        _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} daoIndex {daoIndex}:", input.DAOId, daoIndex.ToString());
+        _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} daoIndex {daoIndex}:", input.DAOId, JsonConvert.SerializeObject(daoIndex));
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
         myProposalDto.CanVote = false;
         foreach (var proposalIndex in proposalList)
@@ -206,7 +207,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 VotingItemId = proposalIndex.ProposalId,
                 Sorting = VoteTopSorting
             });
-            _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, voteRecords.ToString());
+            _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
             if (voteRecords.Count > 0)
             {
                 myProposalDto.StakeAmount += voteRecords[0].Amount;
@@ -238,7 +239,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             Sorting = VoteTopSorting,
             Voter = input.Address
         });
-        _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} voteRecords:{voteRecords} ", input.DAOId, voteRecords.ToString());
+        _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} voteRecords:{voteRecords} ", input.DAOId, JsonConvert.SerializeObject(voteRecords));
         var votingItemIds = new List<string> { };
         foreach (var voteRecordItem in voteRecords )
         {
@@ -254,7 +255,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             myProposalDto.Items.Add(indexerVoteHistory);
         }
         var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, votingItemIds);
-        _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} voteInfos:{voteInfos} ", input.DAOId, voteInfos.ToString());
+        _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} voteInfos:{voteInfos} ", input.DAOId, JsonConvert.SerializeObject(voteInfos));
         foreach (var voteRecordItem in voteRecords)
         {
             var indexerVoteHistory = new IndexerVoteHistoryDto
@@ -275,7 +276,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             {
                 indexerVoteHistory.ProposalTitle = proposalIndex.ProposalTitle;
             }
-            _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} proposalIndex:{proposalIndex} ", input.DAOId, proposalIndex.ToString());
+            _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} proposalIndex:{proposalIndex} ", input.DAOId, JsonConvert.SerializeObject(proposalIndex));
             
             myProposalDto.Items.Add(indexerVoteHistory);
         }
