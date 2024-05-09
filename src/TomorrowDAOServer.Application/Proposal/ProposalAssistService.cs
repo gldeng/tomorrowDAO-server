@@ -117,7 +117,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         var result = new List<ProposalLifeDto>();
         AddProposalLife(ref result, ProposalStage.Active, ProposalStatus.PendingVote);
 
-        ProposalStatus proposalStatus = proposalIndex.ProposalStatus;
+        var proposalStatus = proposalIndex.ProposalStatus;
         var isVetoed = proposalIndex.VetoProposalId.IsNullOrEmpty();
         switch (proposalIndex.ProposalStage)
             {

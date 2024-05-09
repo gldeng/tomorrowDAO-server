@@ -1,4 +1,4 @@
-using Google.Type;
+using System;
 using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer.Vote.Dto;
@@ -15,5 +15,5 @@ public class VoteRecordDto
     
     public DateTime VoteTime { get; set; }
 
-    public VoteOption Option { get; set; }
+    public string Option { get; set; }
 }

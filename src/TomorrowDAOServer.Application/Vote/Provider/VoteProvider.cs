@@ -141,7 +141,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
     {
         try
         {
-            var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVoteRecords>>(new GraphQLRequest
+            var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
             {
                 Query = @"
 			    query($chainId: String!,$votingItemId: String!,$voter: String,$sorting: String) {
@@ -164,7 +164,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                     sorting = input.Sorting
                 }
             });
-            return result?.Data?.DataList ?? new List<IndexerVoteRecord>();
+            return result?.DataList ?? new List<IndexerVoteRecord>();
         }
         catch (Exception e)
         {
