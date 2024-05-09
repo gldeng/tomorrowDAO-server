@@ -90,7 +90,8 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         rejectionCount,
                         AbstentionCount,
                         votesAmount,
-                        voterCount
+                        voterCount,
+                        Executer
                     }
                   }",
                 Variables = new
@@ -149,7 +150,8 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                         option,
                         voteTime,
                         startTime,
-                        endTime
+                        endTime,
+                        transactionId
                     }
                   }",
                 Variables = new

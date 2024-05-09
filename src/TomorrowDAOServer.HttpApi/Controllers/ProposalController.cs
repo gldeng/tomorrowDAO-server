@@ -40,4 +40,11 @@ public class ProposalController
     {
         return await _proposalService.QueryMyInfoAsync(input);
     }
+    
+    [HttpGet]
+    [Route("vote-history")]
+    public async Task<VoteHistoryDto> QueryVoteHistoryAsync(QueryVoteHistoryInput input)
+    {
+        return await _proposalService.QueryVoteHistoryAsync(input);
+    }
 }
