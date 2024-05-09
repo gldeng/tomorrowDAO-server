@@ -222,6 +222,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 myProposalDto.AvailableUnStakeAmount += myProposalDto.StakeAmount;
             }
         }
+        _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} end myProposalDto {myProposalDto}:", input.DAOId, JsonConvert.SerializeObject(myProposalDto));
         return myProposalDto;
     }
 
