@@ -31,12 +31,12 @@ public class VoteProviderTest
     // [Fact]
     // public async void GetVoteInfosAsync_Test()
     // {
-    //     var result = await _voteProvider.GetVoteInfosAsync("AELF", new List<string>());
+    //     var result = await _voteProvider.GetVoteItemsAsync("AELF", new List<string>());
     //     result.ShouldNotBeNull();
     //
     //     GraphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(Arg.Any<GraphQLRequest>())
     //         .Returns(Task.FromResult(new IndexerCommonResult<IndexerVotes>()));
-    //     result = await _voteProvider.GetVoteInfosAsync("AELF", new List<string>{"votingItemId"});
+    //     result = await _voteProvider.GetVoteItemsAsync("AELF", new List<string>{"votingItemId"});
     //     result.ShouldNotBeNull();
     // }
     //

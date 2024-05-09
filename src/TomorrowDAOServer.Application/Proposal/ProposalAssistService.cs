@@ -47,7 +47,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     {
         var proposalIds = list.Select(x => x.ProposalId).ToList();
         //todo query real vote result, mock now
-        // var voteInfos = await _voteProvider.GetVoteInfosAsync(chainId, proposalIds);
+        // var voteInfos = await _voteProvider.GetVoteItemsAsync(chainId, proposalIds);
         var voteInfos = new Dictionary<string, IndexerVote>();
         
         foreach (var proposal in list)

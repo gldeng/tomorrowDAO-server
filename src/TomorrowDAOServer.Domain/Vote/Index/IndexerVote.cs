@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using TomorrowDAOServer.Common;
 
 namespace TomorrowDAOServer.Vote.Index;
 
-public class IndexerVotes : IndexerCommonResult<IndexerVotes>
+public class IndexerVotes
 {
-    public List<IndexerVote> DataList { get; set; } = new ();
+    public List<IndexerVote> Data { get; set; } = new ();
 }
-public class IndexerVote : IndexerCommonResult<IndexerVote>
+public class IndexerVote
 {
     // The voting activity id.(proposal id/customize)
     public string VotingItemId { get; set; }

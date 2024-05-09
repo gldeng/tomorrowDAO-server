@@ -61,7 +61,7 @@
 //         var mock = new Mock<IVoteProvider>();
 //
 //         mock.Setup(p =>
-//             p.GetVoteInfosAsync(It.IsAny<string>(), It.IsAny<List<string>>())).ReturnsAsync(MockVoteInfos());
+//             p.GetVoteItemsAsync(It.IsAny<string>(), It.IsAny<List<string>>())).ReturnsAsync(MockVoteInfos());
 //
 //         mock.Setup(p => p.GetVoteRecordAsync(It.Is<GetVoteRecordInput>(x => x.VotingItemId.Equals(ProposalId))))
 //             .ReturnsAsync(MockVoteRecord());

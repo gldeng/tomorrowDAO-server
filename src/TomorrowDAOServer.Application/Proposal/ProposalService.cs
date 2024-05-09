@@ -55,13 +55,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
         //query proposal vote infos
         var proposalIds = tuple.Item2.Select(item => item.ProposalId).ToList();
-        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, proposalIds);
+        var voteItemsMap = await _voteProvider.GetVoteItemsAsync(input.ChainId, proposalIds);
         var resultList = new List<ProposalListDto>();
         foreach (var proposal in tuple.Item2)
         {
             var proposalDto = _objectMapper.Map<ProposalIndex, ProposalListDto>(proposal);
 
-            if (voteInfos.TryGetValue(proposal.ProposalId, out var voteInfo))
+            if (voteItemsMap.TryGetValue(proposal.ProposalId, out var voteInfo))
             {
                 _objectMapper.Map(voteInfo, proposalDto);
             }
@@ -95,7 +95,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
         var proposalDetailDto = _objectMapper.Map<ProposalIndex, ProposalDetailDto>(proposalIndex);
         proposalDetailDto.ProposalLifeList = _proposalAssistService.ConvertProposalLifeList(proposalIndex);
-        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, new List<string> { input.ProposalId });
+        var voteInfos = await _voteProvider.GetVoteItemsAsync(input.ChainId, new List<string> { input.ProposalId });
         if (voteInfos.TryGetValue(input.ProposalId, out var voteInfo))
         {
             _objectMapper.Map(voteInfo, proposalDetailDto);
@@ -236,7 +236,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             votingItemIds.Add(voteRecordItem.VotingItemId);
             myProposalDto.Items.Add(indexerVoteHistory);
         }
-        var voteInfos = await _voteProvider.GetVoteInfosAsync(input.ChainId, votingItemIds);
+        var voteInfos = await _voteProvider.GetVoteItemsAsync(input.ChainId, votingItemIds);
         foreach (var voteRecordItem in voteRecords)
         {
             var indexerVoteHistory = new IndexerVoteHistoryDto
