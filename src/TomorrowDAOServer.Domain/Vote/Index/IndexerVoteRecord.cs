@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Enums;
@@ -15,4 +16,6 @@ public class IndexerVoteRecord : IndexerCommonResult<IndexerVoteRecord>
     public int Amount { get; set; }
 
     public VoteOption Option { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
 }
