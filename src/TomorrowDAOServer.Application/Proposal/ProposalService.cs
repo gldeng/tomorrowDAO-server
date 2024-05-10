@@ -179,7 +179,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             {
                 myProposalDto.StakeAmount += voteRecord.Amount;
             }
-            myProposalDto.VotesAmount += voteRecord.Amount;
+            myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
         if (proposalIndex.ProposalStage == ProposalStage.Active)
@@ -233,7 +233,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 {
                     myProposalDto.StakeAmount += voteRecord.Amount;
                 }
-                myProposalDto.VotesAmount += voteRecord.Amount;
+                myProposalDto.VotesAmount = myProposalDto.StakeAmount;
             }
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out count", input.DAOId);
             proposalIdList.Add(proposalIndex.ProposalId);
