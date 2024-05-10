@@ -152,6 +152,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             ChainId = input.ChainId,
             DAOId = proposalIndex.DAOId
         });
+        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} daoIndex:{daoIndex}:", input.DAOId, JsonConvert.SerializeObject(daoIndex));
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
         //todo query real vote result, mock now
         var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
@@ -241,7 +242,8 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} start ", input.DAOId);
         var myProposalDto = new VoteHistoryDto
         {
-            ChainId = input.ChainId
+            ChainId = input.ChainId,
+            Items = new List<IndexerVoteHistoryDto> {}
         };
         var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
         {
