@@ -159,7 +159,6 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         });
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} daoIndex:{daoIndex}:", input.DAOId, JsonConvert.SerializeObject(daoIndex));
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
-        //todo query real vote result, mock now
         var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
         {
             ChainId = input.ChainId,
@@ -167,7 +166,6 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             Sorting = VoteTopSorting
         });
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
-        // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
         var voteStake = new IndexerVoteStake();
         if (voteRecords.Count > 0)
         {
@@ -225,11 +223,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             }
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out count", input.DAOId);
             proposalIdList.Add(proposalIndex.ProposalId);
-            // myProposalDto.ProposalIdList.Add(proposalIndex.ProposalId);
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out1 count", input.DAOId);
-            //todo query real vote result, mock now
-            // var voteStake = await _voteProvider.GetVoteStakeAsync(input.ChainId, input.ProposalId, input.Address);
-            var voteStake = new IndexerVoteStake();
             if (proposalIndex.ProposalStage == ProposalStage.Active)
             {
                 myProposalDto.AvailableUnStakeAmount += myProposalDto.StakeAmount;
@@ -284,13 +278,12 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 VoteNum = voteRecordItem.Amount,
                 TransactionId = voteRecordItem.TransactionId,
             };
-            // votingItemIds.Add(voteRecordItem.VotingItemId);
             if (voteInfos.TryGetValue(voteRecordItem.VotingItemId, out var voteInfo))
             {
                 indexerVoteHistory.Executer = voteInfo.Executer;
             }
             var proposalIndex = await _proposalProvider.GetProposalByIdAsync(input.ChainId, voteRecordItem.VotingItemId);
-            if (proposalIndex == null)
+            if (proposalIndex != null)
             {
                 indexerVoteHistory.ProposalTitle = proposalIndex.ProposalTitle;
             }
