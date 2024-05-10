@@ -186,7 +186,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
             var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
             {
                 Query = @"
-			    query($chainId: String!,$votingItemId: String!,$voter: String,$sorting: String) {
+			    query($chainId: String!,$voter: String,$sorting: String) {
                     dataList:getVoteRecord(input:{chainId:$chainId,voter:$voter,sorting:$sorting}) {
                         voter,
                         amount,
