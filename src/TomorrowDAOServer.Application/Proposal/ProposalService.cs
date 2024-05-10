@@ -175,8 +175,11 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
         foreach (var voteRecord in voteRecords)
         {
-            myProposalDto.StakeAmount += voteRecord.Amount;
-            myProposalDto.VotesAmount = myProposalDto.StakeAmount;
+            if (voteRecord.VoteMechanism == VoteMechanism.TokenBallot)
+            {
+                myProposalDto.StakeAmount += voteRecord.Amount;
+            }
+            myProposalDto.VotesAmount += voteRecord.Amount;
         }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
         if (proposalIndex.ProposalStage == ProposalStage.Active)
@@ -226,8 +229,11 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             foreach (var voteRecord in voteRecords)
             {
                 _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} in count", input.DAOId);
-                myProposalDto.StakeAmount += voteRecord.Amount;
-                myProposalDto.VotesAmount = myProposalDto.StakeAmount;
+                if (voteRecord.VoteMechanism == VoteMechanism.TokenBallot)
+                {
+                    myProposalDto.StakeAmount += voteRecord.Amount;
+                }
+                myProposalDto.VotesAmount += voteRecord.Amount;
             }
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out count", input.DAOId);
             proposalIdList.Add(proposalIndex.ProposalId);

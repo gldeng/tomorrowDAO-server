@@ -13,7 +13,7 @@ public class IndexerVoteRecord : IndexerCommonResult<IndexerVoteRecord>
 {
     public string Voter { get; set; }
     public string TransactionId { get; set; }
-    
+    public VoteMechanism VoteMechanism { get; set; }
     public int Amount { get; set; }
     public string VotingItemId {get; set; }
 
