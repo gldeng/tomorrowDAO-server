@@ -100,6 +100,11 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} proposalIndex {proposalIndex}:", input.ProposalId, JsonConvert.SerializeObject(proposalIndex));
 
         var proposalDetailDto = _objectMapper.Map<ProposalIndex, ProposalDetailDto>(proposalIndex);
+        var voteSchemeDic = (await _voteProvider.GetVoteSchemeAsync(new GetVoteSchemeInput{ChainId = input.ChainId})).ToDictionary(x => x.VoteSchemeId, x => x.VoteMechanism);
+        if (voteSchemeDic.TryGetValue(proposalDetailDto.VoteSchemeId, out var voteMechanism))
+        {
+            proposalDetailDto.VoteMechanismName = voteMechanism.ToString();
+        }
         proposalDetailDto.ProposalLifeList = _proposalAssistService.ConvertProposalLifeList(proposalIndex);
         var voteInfos = await _voteProvider.GetVoteItemsAsync(input.ChainId, new List<string> { input.ProposalId });
         _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteInfos {voteInfos}:", input.ProposalId, JsonConvert.SerializeObject(voteInfos));

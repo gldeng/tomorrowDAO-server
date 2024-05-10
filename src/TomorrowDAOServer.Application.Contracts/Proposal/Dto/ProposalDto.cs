@@ -41,6 +41,8 @@ public class ProposalDto
     
     public string VoteSchemeId { get; set; }
     
+    public string VoteMechanismName { get; set; }
+    
     public string VetoProposalId { get; set; }
     
     public DateTime DeployTime { get; set; }
