@@ -19,6 +19,8 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.Auditing;
 using Volo.Abp.ObjectMapping;
 using Newtonsoft.Json;
+using TomorrowDAOServer.Dtos.Explorer;
+using TomorrowDAOServer.Providers;
 
 namespace TomorrowDAOServer.Proposal;
 
@@ -34,8 +36,9 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     private readonly IDAOProvider _DAOProvider;
     private readonly IProposalAssistService _proposalAssistService;
     private readonly ILogger<ProposalProvider> _logger;
+    private readonly IExplorerProvider _explorerProvider;
 
-    public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider, 
+    public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider, IExplorerProvider explorerProvider,
         IProposalAssistService proposalAssistService,
         IDAOProvider DAOProvider, IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor, ILogger<ProposalProvider> logger)
     {
@@ -46,6 +49,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _logger = logger;
         _DAOProvider = DAOProvider;
         _proposalAssistService = proposalAssistService;
+        _explorerProvider = explorerProvider;
     }
 
     public async Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input)
@@ -61,6 +65,16 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         var proposalIds = tuple.Item2.Select(item => item.ProposalId).ToList();
         var voteItemsMap = await _voteProvider.GetVoteItemsAsync(input.ChainId, proposalIds);
         var resultList = new List<ProposalListDto>();
+        var daoIndex = await _DAOProvider.GetAsync(new GetDAOInfoInput
+        {
+            ChainId = input.ChainId,
+            DAOId = input.DaoId
+        });
+        var symbol = daoIndex?.GovernanceToken ?? string.Empty;
+        var symbolDecimal = symbol.IsNullOrEmpty() ? string.Empty : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest
+        {
+            Symbol = symbol
+        })).Decimals;
         foreach (var proposal in tuple.Item2)
         {
             var proposalDto = _objectMapper.Map<ProposalIndex, ProposalListDto>(proposal);
@@ -86,6 +100,8 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         foreach (var listDto in resultList)
         {
             listDto.VoteMechanismName = voteSchemeDic.TryGetValue(listDto.VoteSchemeId, out var voteMechanism) ? voteMechanism.ToString() : string.Empty;
+            listDto.Symbol = symbol;
+            listDto.Decimals = symbolDecimal;
         }
         
         return new PagedResultDto<ProposalListDto>
@@ -111,6 +127,18 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         {
             proposalDetailDto.VoteMechanismName = voteMechanism.ToString();
         }
+        var daoIndex = await _DAOProvider.GetAsync(new GetDAOInfoInput
+        {
+            ChainId = input.ChainId,
+            DAOId = proposalDetailDto.DAOId
+        });
+        var symbol = daoIndex?.GovernanceToken ?? string.Empty;
+        var symbolDecimal = symbol.IsNullOrEmpty() ? string.Empty : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest
+        {
+            Symbol = symbol
+        })).Decimals;
+        proposalDetailDto.Symbol = symbol;
+        proposalDetailDto.Decimals = symbolDecimal;
         proposalDetailDto.ProposalLifeList = _proposalAssistService.ConvertProposalLifeList(proposalIndex);
         var voteInfos = await _voteProvider.GetVoteItemsAsync(input.ChainId, new List<string> { input.ProposalId });
         _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteInfos {voteInfos}:", input.ProposalId, JsonConvert.SerializeObject(voteInfos));
