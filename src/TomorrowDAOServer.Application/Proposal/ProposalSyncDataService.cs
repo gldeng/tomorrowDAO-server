@@ -58,7 +58,7 @@ public class ProposalSyncDataService : ScheduleSyncDataService
         List<IndexerProposal> queryList;
         do
         {
-            queryList = await _proposalProvider.GetSyncProposalDataAsync(skipCount, chainId, 117507830, 0, MaxResultCount);
+            queryList = await _proposalProvider.GetSyncProposalDataAsync(skipCount, chainId, lastEndHeight, 0, MaxResultCount);
             _logger.LogInformation("SyncProposalData queryList skipCount {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
                 skipCount, lastEndHeight, newIndexHeight, queryList?.Count);
             if (queryList == null || queryList.IsNullOrEmpty())
