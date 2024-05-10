@@ -46,9 +46,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     public async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<ProposalIndex> list)
     {
         var proposalIds = list.Select(x => x.ProposalId).ToList();
-        //todo query real vote result, mock now
-        // var voteInfos = await _voteProvider.GetVoteItemsAsync(chainId, proposalIds);
-        var voteInfos = new Dictionary<string, IndexerVote>();
+        var voteInfos = await _voteProvider.GetVoteItemsAsync(chainId, proposalIds);
         
         foreach (var proposal in list)
         {
@@ -226,5 +224,5 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         return proposal;
     }
 
-    private bool TimeEnd(DateTime time) => DateTime.UtcNow < time;
+    private bool TimeEnd(DateTime time) => DateTime.UtcNow > time;
 }
