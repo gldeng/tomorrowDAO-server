@@ -64,15 +64,15 @@ public class ProposalDto
     //percentage    
     public int MaximalAbstentionThreshold { get; set; }
     
-    public long ActiveTimePeriod { get; set; }
-    
-    public long VetoActiveTimePeriod { get; set; }
-    
-    public long PendingTimePeriod { get; set; }
-    
-    public long ExecuteTimePeriod { get; set; }
-    
-    public long VetoExecuteTimePeriod { get; set; }
+    // public long ActiveTimePeriod { get; set; }
+    //
+    // public long VetoActiveTimePeriod { get; set; }
+    //
+    // public long PendingTimePeriod { get; set; }
+    //
+    // public long ExecuteTimePeriod { get; set; }
+    //
+    // public long VetoExecuteTimePeriod { get; set; }
 
     //vote count info
     public int VoterCount { get; set; }
