@@ -82,6 +82,12 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         {
             listDto.ExecuteTime = null;
         }
+        var voteSchemeDic = (await _voteProvider.GetVoteSchemeAsync(new GetVoteSchemeInput{ChainId = input.ChainId})).ToDictionary(x => x.VoteSchemeId, x => x.VoteMechanism);
+        foreach (var listDto in resultList)
+        {
+            listDto.VoteMechanismName = voteSchemeDic.TryGetValue(listDto.VoteSchemeId, out var voteMechanism) ? voteMechanism.ToString() : string.Empty;
+        }
+        
         return new PagedResultDto<ProposalListDto>
         {
             Items = resultList,
