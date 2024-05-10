@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.GraphQL;
 using TomorrowDAOServer.Vote.Dto;
@@ -181,6 +182,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
     {
         try
         {
+            _logger.LogInformation("GetAddressVoteRecordAsync input :{input}", JsonConvert.SerializeObject(input));
             var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
             {
                 Query = @"
