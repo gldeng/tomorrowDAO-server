@@ -286,7 +286,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             ChainId = input.ChainId,
             Items = new List<IndexerVoteHistoryDto> {}
         };
-        var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
+        var voteRecords = await _voteProvider.GetAddressVoteRecordAsync(new GetVoteRecordInput
         {
             ChainId = input.ChainId,
             VotingItemId = input.ProposalId,
