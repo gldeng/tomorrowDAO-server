@@ -169,7 +169,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         var voteStake = new IndexerVoteStake();
         if (voteRecords.Count > 0)
         {
-            myProposalDto.StakeAmount = voteStake.Amount;
+            myProposalDto.StakeAmount = voteRecords[0].Amount;
             myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
