@@ -121,7 +121,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         });
         _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteRecords {voteRecords}:", input.ProposalId, JsonConvert.SerializeObject(voteRecords));
         proposalDetailDto.VoteTopList = _objectMapper.Map<List<IndexerVoteRecord>, List<VoteRecordDto>>(voteRecords);
-        if (proposalDetailDto.ProposalType != ProposalType.Advisory.ToString())
+        if (proposalDetailDto.ProposalType == ProposalType.Advisory.ToString())
         {
             proposalDetailDto.ExecuteStartTime = null;
             proposalDetailDto.ExecuteEndTime = null;
