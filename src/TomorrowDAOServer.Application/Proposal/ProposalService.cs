@@ -173,10 +173,9 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             Voter = input.Address
         });
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
-        var voteStake = new IndexerVoteStake();
-        if (voteRecords.Count > 0)
+        foreach (var voteRecord in voteRecords)
         {
-            myProposalDto.StakeAmount = voteRecords[0].Amount;
+            myProposalDto.StakeAmount += voteRecord.Amount;
             myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
@@ -184,6 +183,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         {
             myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
         }
+        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} myProposalDto {myProposalDto}:", input.DAOId, JsonConvert.SerializeObject(myProposalDto));
         var proposalIdList = new List<string> { };
         proposalIdList.Add(input.ProposalId);
 
@@ -223,18 +223,18 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 Voter = input.Address
             });
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
-            if (voteRecords.Count > 0)
+            foreach (var voteRecord in voteRecords)
             {
                 _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} in count", input.DAOId);
-                myProposalDto.StakeAmount += voteRecords[0].Amount;
-                myProposalDto.VotesAmount += myProposalDto.StakeAmount;
+                myProposalDto.StakeAmount += voteRecord.Amount;
+                myProposalDto.VotesAmount = myProposalDto.StakeAmount;
             }
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out count", input.DAOId);
             proposalIdList.Add(proposalIndex.ProposalId);
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out1 count", input.DAOId);
             if (proposalIndex.ProposalStage == ProposalStage.Active)
             {
-                myProposalDto.AvailableUnStakeAmount += myProposalDto.StakeAmount;
+                myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
             }
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out2 count", input.DAOId);
         }
