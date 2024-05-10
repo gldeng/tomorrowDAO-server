@@ -169,13 +169,14 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         {
             ChainId = input.ChainId,
             VotingItemId = input.ProposalId,
-            Sorting = VoteTopSorting
+            Sorting = VoteTopSorting,
+            Voter = input.Address
         });
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
         var voteStake = new IndexerVoteStake();
         if (voteRecords.Count > 0)
         {
-            myProposalDto.StakeAmount = voteStake.Amount;
+            myProposalDto.StakeAmount = voteRecords[0].Amount;
             myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
@@ -218,7 +219,8 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             {
                 ChainId = input.ChainId,
                 VotingItemId = proposalIndex.ProposalId,
-                Sorting = VoteTopSorting
+                Sorting = VoteTopSorting,
+                Voter = input.Address
             });
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
             if (voteRecords.Count > 0)
