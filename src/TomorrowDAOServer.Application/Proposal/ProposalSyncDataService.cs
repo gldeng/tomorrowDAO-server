@@ -52,6 +52,7 @@ public class ProposalSyncDataService : ScheduleSyncDataService
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
     {
+        lastEndHeight = 0;
         var skipCount = 0;
         var blockHeight = -1L;
         List<IndexerProposal> queryList;
