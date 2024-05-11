@@ -193,6 +193,11 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         });
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} daoIndex:{daoIndex}:", input.DAOId, JsonConvert.SerializeObject(daoIndex));
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
+        myProposalDto.Decimal = myProposalDto.Symbol.IsNullOrEmpty() ? string.Empty : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest
+            {
+                Symbol = myProposalDto.Symbol
+            })).Decimals;
+        
         var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
         {
             ChainId = input.ChainId,
@@ -243,6 +248,10 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         });
         _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} daoIndex {daoIndex}:", input.DAOId, JsonConvert.SerializeObject(daoIndex));
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
+        myProposalDto.Decimal = myProposalDto.Symbol.IsNullOrEmpty() ? string.Empty : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest
+        {
+            Symbol = myProposalDto.Symbol
+        })).Decimals;
         myProposalDto.CanVote = false;
         var proposalIdList = new List<string> { };
         foreach (var proposalIndex in proposalList)
