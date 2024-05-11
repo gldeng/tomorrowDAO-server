@@ -216,10 +216,10 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
-        var withdrawnInfos = _voteProvider.GetVoteWithdrawnAsync(input.ChainId, input.DAOId, input.Address);
+        var withdrawnInfos = await _voteProvider.GetVoteWithdrawnAsync(input.ChainId, input.DAOId, input.Address);
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} withdrawnInfos:{withdrawnInfos}:", input.DAOId, JsonConvert.SerializeObject(withdrawnInfos));
         var hasWithdrawn = false;
-        foreach (var withdrawnInfo in withdrawnInfos.Result)
+        foreach (var withdrawnInfo in withdrawnInfos)
         {
             if (withdrawnInfo.VotingItemIdList.Contains(input.ProposalId))
             {
