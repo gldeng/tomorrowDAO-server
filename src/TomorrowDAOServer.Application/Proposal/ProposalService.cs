@@ -203,6 +203,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
         foreach (var voteRecord in voteRecords)
         {
+            _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} voteRecord:{voteRecord}:", input.DAOId, JsonConvert.SerializeObject(voteRecord));
             if (voteRecord.VoteMechanism == VoteMechanism.TOKEN_BALLOT)
             {
                 myProposalDto.StakeAmount += voteRecord.Amount;
@@ -256,7 +257,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
             foreach (var voteRecord in voteRecords)
             {
-                _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} in count", input.DAOId);
+                _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} in count voteRecorditem{voteRecord}", input.DAOId, voteRecord);
                 if (voteRecord.VoteMechanism == VoteMechanism.TOKEN_BALLOT)
                 {
                     myProposalDto.StakeAmount += voteRecord.Amount;
