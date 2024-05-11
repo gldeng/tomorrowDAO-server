@@ -287,10 +287,10 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out count", input.DAOId);
             proposalIdList.Add(proposalIndex.ProposalId);
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out1 count", input.DAOId);
-            var withdrawnInfos = _voteProvider.GetVoteWithdrawnAsync(input.ChainId, input.DAOId, input.Address);
+            var withdrawnInfos = await _voteProvider.GetVoteWithdrawnAsync(input.ChainId, input.DAOId, input.Address);
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} withdrawnInfos:{withdrawnInfos}:", input.DAOId, JsonConvert.SerializeObject(withdrawnInfos));
             var hasWithdrawn = false;
-            foreach (var withdrawnInfo in withdrawnInfos.Result)
+            foreach (var withdrawnInfo in withdrawnInfos)
             {
                 if (withdrawnInfo.VotingItemIdList.Contains(input.ProposalId))
                 {
