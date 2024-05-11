@@ -177,11 +177,11 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         var abstainVote = voteInfo?.AbstentionCount ?? 0;
         var approveVote = voteInfo?.ApprovedCount ?? 0;
 
-        var enoughVoter = totalVoter >= proposal.MinimalApproveThreshold;
+        var enoughVoter = totalVoter >= proposal.MinimalRequiredThreshold;
         var enoughVote = rejectVote + abstainVote + approveVote >= proposal.MinimalVoteThreshold;
-        var isReject = rejectVote / (double)totalVote * AbstractVoteTotal > proposal.MaximalRejectionThreshold;
-        var isAbstained = abstainVote / (double)totalVote * AbstractVoteTotal > proposal.MaximalAbstentionThreshold;
-        var isApproved = approveVote / (double)totalVote * AbstractVoteTotal > proposal.MaximalAbstentionThreshold;
+        var isReject = (rejectVote / (double)totalVote * AbstractVoteTotal) * 10000 > proposal.MaximalRejectionThreshold;
+        var isAbstained = abstainVote / (double)totalVote * AbstractVoteTotal * 10000 > proposal.MaximalAbstentionThreshold;
+        var isApproved = approveVote / (double)totalVote * AbstractVoteTotal * 10000 > proposal.MinimalApproveThreshold;
 
         if (!TimeEnd(activeEndTime))
         {
@@ -190,15 +190,15 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
 
         if (enoughVoter && enoughVote)
         {
-            if (isApproved)
-            {
-                proposal.ProposalStage = governanceMechanism == GovernanceMechanism.Referendum ? ProposalStage.Execute : ProposalStage.Pending;
-                proposal.ProposalStatus = ProposalStatus.Approved;
-            }
-            else
+            if (!isApproved)
             {
                 proposal.ProposalStage = ProposalStage.Finished;
                 proposal.ProposalStatus = isReject ? ProposalStatus.Rejected : ProposalStatus.Abstained;
+            }
+            else 
+            {
+                proposal.ProposalStage = governanceMechanism == GovernanceMechanism.Referendum ? ProposalStage.Execute : ProposalStage.Pending;
+                proposal.ProposalStatus = ProposalStatus.Approved;
             }
         }
         else
