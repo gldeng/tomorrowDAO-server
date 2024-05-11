@@ -149,7 +149,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
             {
                 Query = @"
 			    query($chainId: String!,$daoId: String!,$voter: String!) {
-                    getVoteWithdrawn(input:{chainId:$chainId,daoId:daoId,voter:$voter}) {
+                    getVoteWithdrawn(input:{chainId:$chainId,daoId:$daoId,voter:$voter}) {
                         votingItemIdList,
                         voter
                     }
