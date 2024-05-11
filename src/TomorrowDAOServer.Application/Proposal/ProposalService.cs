@@ -216,7 +216,18 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             myProposalDto.VotesAmount = myProposalDto.StakeAmount;
         }
         myProposalDto.CanVote = proposalIndex.ProposalStage == ProposalStage.Active;
-        if (proposalIndex.ProposalStage == ProposalStage.Active)
+        var withdrawnInfos = _voteProvider.GetVoteWithdrawnAsync(input.ChainId, input.DAOId, input.Address);
+        _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} withdrawnInfos:{withdrawnInfos}:", input.DAOId, JsonConvert.SerializeObject(withdrawnInfos));
+        var hasWithdrawn = false;
+        foreach (var withdrawnInfo in withdrawnInfos.Result)
+        {
+            if (withdrawnInfo.VotingItemIdList.Contains(input.ProposalId))
+            {
+                hasWithdrawn = true;
+            }
+        }
+        var cutTime = DateTime.Now;
+        if (cutTime > proposalIndex.ActiveEndTime && !hasWithdrawn)
         {
             myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
         }
@@ -264,21 +275,34 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 Voter = input.Address
             });
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} voteRecords {voteRecords}:", input.DAOId, JsonConvert.SerializeObject(voteRecords));
+            var currentStakeAmount = 0;
             foreach (var voteRecord in voteRecords)
             {
                 _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} in count voteRecorditem{voteRecord}", input.DAOId, voteRecord);
                 if (voteRecord.VoteMechanism == VoteMechanism.TOKEN_BALLOT)
                 {
-                    myProposalDto.StakeAmount += voteRecord.Amount;
+                    currentStakeAmount += voteRecord.Amount;
                 }
-                myProposalDto.VotesAmount = myProposalDto.StakeAmount;
             }
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out count", input.DAOId);
             proposalIdList.Add(proposalIndex.ProposalId);
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out1 count", input.DAOId);
-            if (proposalIndex.ProposalStage == ProposalStage.Active)
+            var withdrawnInfos = _voteProvider.GetVoteWithdrawnAsync(input.ChainId, input.DAOId, input.Address);
+            _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} withdrawnInfos:{withdrawnInfos}:", input.DAOId, JsonConvert.SerializeObject(withdrawnInfos));
+            var hasWithdrawn = false;
+            foreach (var withdrawnInfo in withdrawnInfos.Result)
             {
-                myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
+                if (withdrawnInfo.VotingItemIdList.Contains(input.ProposalId))
+                {
+                    hasWithdrawn = true;
+                }
+            }
+            var cutTime = DateTime.Now;
+            myProposalDto.StakeAmount += currentStakeAmount;
+            myProposalDto.VotesAmount = myProposalDto.StakeAmount;
+            if (cutTime > proposalIndex.ActiveEndTime && !hasWithdrawn)
+            {
+                myProposalDto.AvailableUnStakeAmount += currentStakeAmount;
             }
             _logger.LogInformation("ProposalService QueryDaoMyInfoAsync daoid:{DAOId} out2 count", input.DAOId);
         }

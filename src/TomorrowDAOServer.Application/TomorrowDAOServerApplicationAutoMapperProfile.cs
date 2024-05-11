@@ -129,7 +129,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.Description, opt => opt.MapFrom(src => src.Metadata.Description))
             .ForMember(des => des.Creator, opt => opt.MapFrom(src => src.Creator))
             .ForMember(des => des.Symbol, opt => opt.MapFrom(src => src.GovernanceToken))
-            ;
+            .ForMember(dec => dec.VotersNum, opt => opt.MapFrom(source => source.VoterCount));
         CreateMap<ContractInfo, ContractInfoDto>();
         CreateMap<IndexerGovernanceMechanism, GovernanceMechanismInfo>()
             .ForMember(des => des.GovernanceSchemeId, opt => opt.MapFrom(src => src.Id))

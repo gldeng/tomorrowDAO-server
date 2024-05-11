@@ -18,6 +18,7 @@ using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal.Provider;
+using TomorrowDAOServer.Vote.Provider;
 
 namespace TomorrowDAOServer.DAO;
 
@@ -29,6 +30,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private readonly IElectionProvider _electionProvider;
     private readonly IProposalProvider _proposalProvider;
     private readonly IGraphQLProvider _graphQlProvider;
+    private readonly IVoteProvider _voteProvider;
     private const int ZeroSkipCount = 0;
     private const int GetMemberListMaxResultCount = 100;
     private const int CandidateTermNumber = 0;
@@ -36,12 +38,13 @@ public class DAOAppService : ApplicationService, IDAOAppService
     public DAOAppService(IDAOProvider daoProvider,
         IElectionProvider electionProvider,
         IProposalProvider proposalProvider,
-        IGraphQLProvider graphQlProvider)
+        IGraphQLProvider graphQlProvider, IVoteProvider voteProvider)
     {
         _daoProvider = daoProvider;
         _electionProvider = electionProvider;
         _proposalProvider = proposalProvider;
         _graphQlProvider = graphQlProvider;
+        _voteProvider = voteProvider;
     }
 
     public async Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input)

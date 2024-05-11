@@ -87,8 +87,6 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
     {
         try
         {
-            //todo change chainId
-            chainId = "tDVV";
             var response = await _graphQlClientFactory.GetClient(GraphQLClientEnum.ModuleClient)
                 .SendQueryAsync<IndexerTokenInfosDto>(new GraphQLRequest
                 {
