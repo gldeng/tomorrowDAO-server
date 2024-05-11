@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using GraphQL;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.GraphQL;
 using TomorrowDAOServer.Vote.Dto;
@@ -21,6 +22,8 @@ public interface IVoteProvider
     Task<IndexerVoteStake> GetVoteStakeAsync(string chainId, string votingItemId, string voter);
     
     Task<List<IndexerVoteRecord>> GetVoteRecordAsync(GetVoteRecordInput input);
+    
+    Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetVoteRecordInput input);
     
     Task<List<IndexerVoteSchemeInfo>> GetVoteSchemeAsync(GetVoteSchemeInput input);
 }
@@ -171,6 +174,44 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
         {
             _logger.LogError(e, "GetVoteRecordAsync Exception chainId {chainId}, votingItemId {votingItemId}, voter {voter}, sorting {sorting}", 
                 input.ChainId, input.VotingItemId, input.Voter, input.Sorting);
+            return new List<IndexerVoteRecord>();
+        }
+    }
+    
+    public async Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetVoteRecordInput input)
+    {
+        try
+        {
+            _logger.LogInformation("GetAddressVoteRecordAsync input :{input}", JsonConvert.SerializeObject(input));
+            var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
+            {
+                Query = @"
+			    query($chainId: String!,$voter: String,$sorting: String) {
+                    dataList:getVoteRecord(input:{chainId:$chainId,voter:$voter,sorting:$sorting}) {
+                        voter,
+                        amount,
+                        option,
+                        voteTime,
+                        startTime,
+                        endTime,
+                        transactionId,
+                        votingItemId,
+                        voteMechanism
+                    }
+                  }",
+                Variables = new
+                {
+                    chainId = input.ChainId,
+                    voter = input.Voter,
+                    sorting = input.Sorting
+                }
+            });
+            return result?.DataList ?? new List<IndexerVoteRecord>();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetAddressVoteRecordAsync Exception chainId {chainId}, voter {voter}, sorting {sorting}", 
+                input.ChainId, input.Voter, input.Sorting);
             return new List<IndexerVoteRecord>();
         }
     }

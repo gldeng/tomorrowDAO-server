@@ -3,5 +3,5 @@ namespace TomorrowDAOServer.Enums;
 public enum VoteMechanism
 {
     UniqueVote = 0,
-    TokenBallot = 1
+    TOKEN_BALLOT = 1
 }
