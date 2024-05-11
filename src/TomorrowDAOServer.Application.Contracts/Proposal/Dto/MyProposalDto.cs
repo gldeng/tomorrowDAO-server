@@ -8,6 +8,7 @@ public class MyProposalDto
     public string ChainId { get; set; }
 
     public string Symbol { get; set; }
+    public string Decimal{ get; set; }
     
     public long AvailableUnStakeAmount { get; set; }
 

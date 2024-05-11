@@ -7,9 +7,8 @@ using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer.Vote.Index;
 
-public class IndexerVoteSchemeResult : IndexerCommonResult<IndexerVoteSchemeResult>
+public class IndexerVoteSchemeResult : IndexerCommonResult<List<IndexerVoteSchemeInfo>>
 {
-    public List<IndexerVoteSchemeInfo> Data { get; set; } = new ();
 }
 
 public class IndexerVoteSchemeInfo

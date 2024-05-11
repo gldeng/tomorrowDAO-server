@@ -84,4 +84,8 @@ public class ProposalDto
     public int RejectionCount { get; set; }
     
     public int AbstentionCount { get; set; }
+    
+    public string Decimals { get; set; }
+    
+    public string Symbol { get; set; }
 }
