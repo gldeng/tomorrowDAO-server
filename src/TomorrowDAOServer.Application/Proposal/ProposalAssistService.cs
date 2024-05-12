@@ -170,6 +170,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     private ProposalIndex ProcessActiveProposalStage(ProposalIndex proposal, IndexerVote voteInfo)
     {
         var governanceMechanism = proposal.GovernanceMechanism;
+        var proposalType = proposal.ProposalType;
         var activeEndTime = proposal.ActiveEndTime;
         var totalVote = voteInfo?.VotesAmount ?? 0;
         var totalVoter = voteInfo?.VoterCount ?? 0;
@@ -197,8 +198,21 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             }
             else 
             {
-                proposal.ProposalStage = governanceMechanism == GovernanceMechanism.Referendum ? ProposalStage.Execute : ProposalStage.Pending;
-                proposal.ProposalStatus = ProposalStatus.Approved;
+                switch (proposalType)
+                {
+                    case ProposalType.Advisory:
+                        proposal.ProposalStage = ProposalStage.Finished;
+                        proposal.ProposalStatus = ProposalStatus.Approved;
+                        break;
+                    case ProposalType.Governance:
+                        proposal.ProposalStage = governanceMechanism == GovernanceMechanism.Referendum ? ProposalStage.Execute : ProposalStage.Pending;
+                        proposal.ProposalStatus = ProposalStatus.Approved;
+                        break;
+                    case ProposalType.Veto:
+                        proposal.ProposalStage = ProposalStage.Execute;
+                        proposal.ProposalStatus = ProposalStatus.Approved;
+                        break;
+                }
             }
         }
         else
