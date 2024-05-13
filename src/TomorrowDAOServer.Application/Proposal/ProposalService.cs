@@ -227,10 +227,10 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             }
         }
         var cutTime = DateTime.Now;
-        if (cutTime > proposalIndex.ActiveEndTime && !hasWithdrawn)
-        {
-            myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
-        }
+        // if (cutTime > proposalIndex.ActiveEndTime && !hasWithdrawn)
+        // {
+        myProposalDto.AvailableUnStakeAmount = myProposalDto.StakeAmount;
+        // }
         _logger.LogInformation("ProposalService QueryProposalMyInfoAsync daoid:{DAOId} myProposalDto {myProposalDto}:", input.DAOId, JsonConvert.SerializeObject(myProposalDto));
         var proposalIdList = new List<string> { };
         proposalIdList.Add(input.ProposalId);
