@@ -54,6 +54,7 @@ public class ProposalSyncDataService : ScheduleSyncDataService
     {
         var skipCount = 0;
         var blockHeight = -1L;
+        lastEndHeight = 0;
         List<IndexerProposal> queryList;
         do
         {
@@ -83,10 +84,5 @@ public class ProposalSyncDataService : ScheduleSyncDataService
     public override WorkerBusinessType GetBusinessType()
     {
         return WorkerBusinessType.ProposalSync;
-    }
-
-    private string GetProposalSyncHeightCacheKey(long blockHeight)
-    {
-        return $"ProposalSync:{blockHeight}";
     }
 }

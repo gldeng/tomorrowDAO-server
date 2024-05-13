@@ -85,6 +85,8 @@ public class IndexerProposal
     public long VetoExecuteTimePeriod { get; set; }
 
     public bool VoteFinished { get; set; }
+    
+    public bool IsNetworkDAO { get; set; }
 }
 
 public class ExecuteTransactionDto
