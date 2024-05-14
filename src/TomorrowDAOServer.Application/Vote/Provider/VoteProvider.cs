@@ -27,6 +27,8 @@ public interface IVoteProvider
     Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetVoteRecordInput input);
     
     Task<List<IndexerVoteSchemeInfo>> GetVoteSchemeAsync(GetVoteSchemeInput input);
+
+    Task<IDictionary<string, IndexerVoteSchemeInfo>> GetVoteSchemeDicAsync(GetVoteSchemeInput input);
 }
 
 public class VoteProvider : IVoteProvider, ISingletonDependency
@@ -263,5 +265,11 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
             }
         });
         return graphQlResponse?.Data ?? new List<IndexerVoteSchemeInfo>();
+    }
+
+    public async Task<IDictionary<string, IndexerVoteSchemeInfo>> GetVoteSchemeDicAsync(GetVoteSchemeInput input)
+    {
+        var voteSchemeInfos = await GetVoteSchemeAsync(input);
+        return voteSchemeInfos.ToDictionary(x => x.VoteSchemeId, x => x);
     }
 }

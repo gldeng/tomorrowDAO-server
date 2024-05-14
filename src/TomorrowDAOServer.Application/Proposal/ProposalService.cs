@@ -81,8 +81,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         var symbol = daoIndex?.GovernanceToken ?? string.Empty;
         var symbolDecimal = await _explorerProvider.GetTokenDecimalAsync(input.ChainId, symbol);
         var voteSchemeDic =
-            (await _voteProvider.GetVoteSchemeAsync(new GetVoteSchemeInput { ChainId = input.ChainId })).ToDictionary(
-                x => x.VoteSchemeId, x => x.VoteMechanism);
+            await _voteProvider.GetVoteSchemeDicAsync(new GetVoteSchemeInput { ChainId = input.ChainId });
         foreach (var proposal in proposalList.Where(proposal => proposal.ProposalSource == ProposalSourceEnum.TMRWDAO))
         {
             if (voteItemsMap.TryGetValue(proposal.ProposalId, out var voteInfo))
@@ -119,11 +118,11 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
     private async Task<List<ProposalDto>> GetProposalListFromMultiSourceAsync(QueryProposalListInput input)
     {
-        if (!input.IsNetworkDao)
+        if (!input.IsNetworkDao || (input.ProposalType != null && input.ProposalType != ProposalType.ONCHAIN))
         {
             return await GetProposalListAsync(input, ProposalSourceEnum.TMRWDAO);
         }
-        
+
         var tasks = new List<Task<List<ProposalDto>>>();
         tasks.Add(GetProposalListAsync(input, ProposalSourceEnum.TMRWDAO));
         tasks.Add(GetProposalListAsync(input, ProposalSourceEnum.ONCHAIN_PARLIAMENT));
@@ -176,16 +175,17 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             }
 
             var proposalType = _explorerProvider.GetProposalType(proposalSource);
+            var proposalStatus = _explorerProvider.GetProposalStatus(input.ProposalStatus, null);
             var explorerrResponse = await _explorerProvider.GetProposalPagerAsync(input.ChainId,
                 new ExplorerProposalListRequest
                 {
                     PageSize = input.MaxResultCount,
                     PageNum = pageSize,
                     ProposalType = proposalType.ToString(),
-                    Status = input.ProposalStatus?.ToString() ?? "all",
+                    Status = proposalStatus,
                     IsContract = 0,
                     Address = null,
-                    Search = null
+                    Search = input.Content
                 });
             return ConvertToProposal(explorerrResponse.List, input, proposalSource);
         }

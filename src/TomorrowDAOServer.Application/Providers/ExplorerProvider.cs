@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -9,8 +8,10 @@ using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.Enum;
 using TomorrowDAOServer.Common.HttpClient;
 using TomorrowDAOServer.Dtos.Explorer;
+using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using Volo.Abp.DependencyInjection;
+using ProposalType = TomorrowDAOServer.Common.Enum.ProposalType;
 
 namespace TomorrowDAOServer.Providers;
 
@@ -28,6 +29,7 @@ public interface IExplorerProvider
         ExplorerTransferRequest request);
 
     ProposalType GetProposalType(ProposalSourceEnum proposalSource);
+    string GetProposalStatus(ProposalStatus? proposalStatus, ProposalStage? proposalStage);
 }
 
 public static class ExplorerApi
@@ -49,6 +51,8 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
         .WithCamelCasePropertyNamesResolver()
         .IgnoreNullValue()
         .Build();
+
+    private const string ProposalStatusAll = "all";
 
 
     public ExplorerProvider(IHttpProvider httpProvider, IOptionsMonitor<ExplorerOptions> explorerOptions)
@@ -159,6 +163,32 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
             ProposalSourceEnum.ONCHAIN_PARLIAMENT => ProposalType.Parliament,
             _ => ProposalType.Parliament
         };
+    }
+
+    public string GetProposalStatus(ProposalStatus? proposalStatus, ProposalStage? proposalStage)
+    {
+        switch (proposalStatus)
+        {
+            case null:
+                return ProposalStatusAll;
+            //explorer support status: all, pending, approved, released, expired
+            case ProposalStatus.PendingVote:
+            case ProposalStatus.BelowThreshold:
+            case ProposalStatus.Challenged:
+                return ProposalStatusEnum.Pending.ToString().ToLower();
+            case ProposalStatus.Approved:
+                return ProposalStatusEnum.Approved.ToString().ToLower();
+            case ProposalStatus.Executed:
+                return ProposalStatusEnum.Released.ToString().ToLower();
+            case ProposalStatus.Expired:
+            case ProposalStatus.Vetoed:
+                return ProposalStatusEnum.Expired.ToString().ToLower();
+            case ProposalStatus.Empty:
+            case ProposalStatus.Rejected:
+            case ProposalStatus.Abstained:
+            default:
+                return ProposalStatusAll;
+        }
     }
 
     private Dictionary<string, string> ToDictionary(object param)
