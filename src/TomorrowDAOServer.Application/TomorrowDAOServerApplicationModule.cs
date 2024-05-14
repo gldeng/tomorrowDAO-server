@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using TomorrowDAOServer.Common.Cache;
 using TomorrowDAOServer.DAO;
+using TomorrowDAOServer.Election;
 using TomorrowDAOServer.Grains;
 using TomorrowDAOServer.Proposal;
 using TomorrowDAOServer.Options;
@@ -32,10 +33,13 @@ public class TomorrowDAOServerApplicationModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
+        Configure<QueryContractOption>(configuration.GetSection("QueryContractOption"));
+        Configure<ApiOption>(configuration.GetSection("Api"));
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TomorrowDAOServerApplicationModule>(); });
         context.Services.AddTransient<IScheduleSyncDataService, ProposalSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, ProposalUpdateService>();
         context.Services.AddTransient<IScheduleSyncDataService, DAOSyncDataService>();
+        context.Services.AddTransient<IScheduleSyncDataService, BPInfoUpdateService>();
         context.Services.AddHttpClient();
         context.Services.AddMemoryCache();
         context.Services.AddSingleton(typeof(ILocalMemoryCache<>), typeof(LocalMemoryCache<>));
