@@ -232,6 +232,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         var titleMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
         var descriptionMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
         var proposalIdMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+        var proposerMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
         
         titleMustQuery.Add(q => q.
             Match(m => m.Field(f => f.ProposalTitle).Query(content)));
@@ -239,10 +240,13 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             Match(m => m.Field(f => f.ProposalDescription).Query(content)));
         proposalIdMustQuery.Add(q => q.
             Match(m => m.Field(f => f.ProposalId).Query(content)));
+        proposerMustQuery.Add(q => q.
+            Match(m => m.Field(f => f.Proposer).Query(content)));
         
         shouldQuery.Add(s => s.Bool(sb => sb.Must(titleMustQuery)));
         shouldQuery.Add(s => s.Bool(sb => sb.Must(descriptionMustQuery)));
         shouldQuery.Add(s => s.Bool(sb => sb.Must(proposalIdMustQuery)));
+        shouldQuery.Add(s => s.Bool(sb => sb.Must(proposerMustQuery)));
     }
 
     private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetQuerySortDescriptor()
