@@ -4,5 +4,6 @@ namespace TomorrowDAOServer.Proposal.Dto;
 
 public class ProposalPagedResultDto : PagedResultDto<ProposalDto>
 {
-    public PageInfo PageInfo { get; set; }
+    public PageInfo PreviousPageInfo { get; set; }
+    public PageInfo NextPageInfo { get; set; }
 }

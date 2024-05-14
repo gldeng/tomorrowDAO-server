@@ -112,7 +112,8 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         {
             Items = proposalList,
             TotalCount = total,
-            PageInfo = CalcNewPageInfo(proposalList, input.PageInfo)
+            PreviousPageInfo = input.PageInfo,
+            NextPageInfo = CalcNewPageInfo(proposalList, input.PageInfo)
         };
     }
 
@@ -149,7 +150,9 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     {
         var newPageInfo = new PageInfo
         {
-            ProposalSkipCount = pageInfo?.ProposalSkipCount ?? new Dictionary<ProposalSourceEnum, int>()
+            ProposalSkipCount = pageInfo?.ProposalSkipCount == null
+                ? new Dictionary<ProposalSourceEnum, int>()
+                : new Dictionary<ProposalSourceEnum, int>(pageInfo.ProposalSkipCount)
         };
         var skipCount = newPageInfo.ProposalSkipCount;
         foreach (var proposalDto in proposalList)
@@ -176,7 +179,11 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
             if (proposalSource == ProposalSourceEnum.TMRWDAO)
             {
-                input.SkipCount = skipCount;
+                //if Network DAO, use memory paging parameters; otherwise, use the input.SkipCount.
+                if (input.IsNetworkDao)
+                {
+                    input.SkipCount = skipCount;
+                }
                 var (total, proposalIndexList) = await _proposalProvider.GetProposalListAsync(input);
                 var proposalDtos = _objectMapper.Map<List<ProposalIndex>, List<ProposalDto>>(proposalIndexList);
                 return new Tuple<long, List<ProposalDto>>(total, proposalDtos);
