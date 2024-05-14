@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Proposal.Dto;
@@ -28,19 +29,20 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     private readonly IObjectMapper _objectMapper;
     private readonly IVoteProvider _voteProvider;
     private readonly IProposalProvider _proposalProvider;
+    private readonly IGraphQLProvider _graphQlProvider;
     private const int AbstractVoteTotal = 10000;
     private Dictionary<string, VoteMechanism> _voteMechanisms = new();
-    //todo temporary count, call contract later
+    //todo temporary count, query later
     private const int HCCount = 3;
-    private const int BPCount = 21;
 
     public ProposalAssistService(ILogger<ProposalAssistService> logger, IObjectMapper objectMapper, IVoteProvider voteProvider,
-        IProposalProvider proposalProvider)
+        IProposalProvider proposalProvider, IGraphQLProvider graphQlProvider)
     {
         _logger = logger;
         _objectMapper = objectMapper;
         _voteProvider = voteProvider;
         _proposalProvider = proposalProvider;
+        _graphQlProvider = graphQlProvider;
     }
 
     public async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<IndexerProposal> list)
@@ -50,6 +52,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
 
     public async Task<List<ProposalIndex>> ConvertProposalList(string chainId, List<ProposalIndex> list)
     {
+        var bpCount = (await _graphQlProvider.GetBPAsync(chainId)).Count;
         var proposalIds = list.Select(x => x.ProposalId).ToList();
         var voteInfos = await _voteProvider.GetVoteItemsAsync(chainId, proposalIds);
         if (_voteMechanisms.IsNullOrEmpty())
@@ -78,7 +81,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
                     switch (proposalStage)
                     {
                         case ProposalStage.Active:
-                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo), proposal);
+                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo, bpCount), proposal);
                             break;
                         case ProposalStage.Pending:
                             if (!vetoProposalId.IsNullOrEmpty())
@@ -103,7 +106,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
                     switch (proposalStage)
                     {
                         case ProposalStage.Active:
-                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo), proposal);
+                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo, bpCount), proposal);
                             break;
                         case ProposalStage.Execute:
                             _objectMapper.Map(ProcessExecuteProposalStage(proposal), proposal);
@@ -114,7 +117,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
                     switch (proposalStage)
                     {
                         case ProposalStage.Active:
-                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo), proposal);
+                            _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo, bpCount), proposal);
                             break;
                     }
                     break;
@@ -181,7 +184,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         });
     }
 
-    private ProposalIndex ProcessActiveProposalStage(ProposalIndex proposal, IndexerVote voteInfo)
+    private ProposalIndex ProcessActiveProposalStage(ProposalIndex proposal, IndexerVote voteInfo, long bpCount)
     {
         var governanceMechanism = proposal.GovernanceMechanism;
         var proposalType = proposal.ProposalType;
@@ -193,7 +196,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         var abstainVote = voteInfo?.AbstentionCount ?? 0;
         var approveVote = voteInfo?.ApprovedCount ?? 0;
 
-        var enoughVoter = totalVoter >= GetRealVoterThreshold(proposal);
+        var enoughVoter = totalVoter >= GetRealVoterThreshold(proposal, bpCount);
         var enoughVote = rejectVote + abstainVote + approveVote >= proposal.MinimalVoteThreshold;
         var isReject = rejectVote * AbstractVoteTotal > proposal.MaximalRejectionThreshold * totalVote;
         var isAbstained = abstainVote * AbstractVoteTotal > proposal.MaximalAbstentionThreshold *  totalVote;
@@ -253,14 +256,14 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
 
     private static bool TimeEnd(DateTime time) => DateTime.UtcNow > time;
 
-    private static long GetRealVoterThreshold(ProposalIndex proposalIndex)
+    private static long GetRealVoterThreshold(ProposalIndex proposalIndex, long bpCount)
     {
         if (GovernanceMechanism.Referendum == proposalIndex.GovernanceMechanism)
         {
             return proposalIndex.MinimalRequiredThreshold;
         }
 
-        var minCount =  (proposalIndex.IsNetworkDAO ? BPCount : HCCount) * proposalIndex.MinimalRequiredThreshold; 
+        var minCount =  (proposalIndex.IsNetworkDAO ? bpCount : HCCount) * proposalIndex.MinimalRequiredThreshold; 
         return minCount / AbstractVoteTotal + (minCount % AbstractVoteTotal == 0 ? 0 : 1);
     }
 }
