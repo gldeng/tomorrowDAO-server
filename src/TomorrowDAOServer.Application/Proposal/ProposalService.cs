@@ -108,13 +108,18 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             proposal.Decimals = symbolDecimal;
         }
 
-        return new ProposalPagedResultDto
+        var proposalPagedResultDto = new ProposalPagedResultDto
         {
             Items = proposalList,
             TotalCount = total,
-            PreviousPageInfo = input.PageInfo,
-            NextPageInfo = CalcNewPageInfo(proposalList, input.PageInfo)
         };
+        if (input.IsNetworkDao)
+        {
+            proposalPagedResultDto.PreviousPageInfo = input.PageInfo;
+            proposalPagedResultDto.NextPageInfo = CalcNewPageInfo(proposalList, input.PageInfo);
+        }
+
+        return proposalPagedResultDto;
     }
 
     private async Task<Tuple<long, List<ProposalDto>>> GetProposalListFromMultiSourceAsync(QueryProposalListInput input)
