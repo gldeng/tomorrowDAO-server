@@ -284,7 +284,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
             var proposalType = _explorerProvider.GetProposalType(proposalSource);
             var proposalStatus = _explorerProvider.GetProposalStatus(input.ProposalStatus, null);
-            var explorerrResponse = await _explorerProvider.GetProposalPagerAsync(input.ChainId,
+            var explorerrResponse = await _explorerProvider.GetProposalPagerAsync("AELF",
                 new ExplorerProposalListRequest
                 {
                     PageSize = input.MaxResultCount,
