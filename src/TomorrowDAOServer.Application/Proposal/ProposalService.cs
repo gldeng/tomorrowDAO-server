@@ -119,6 +119,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             proposal.Symbol = symbol;
             proposal.Decimals = symbolDecimal;
         }
+        
+        foreach (var proposal in proposalList.Where(proposal => proposal.ProposalSource == ProposalSourceEnum.ONCHAIN_PARLIAMENT))
+        {
+            await CalculateRealBpVoteCountAsync(proposal, councilMemberCount);
+            proposal.Symbol = symbol;
+            proposal.Decimals = symbolDecimal;
+        }
 
         var proposalPagedResultDto = new ProposalPagedResultDto
         {
@@ -184,6 +191,23 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             Convert.ToInt64(Math.Round(proposal.MinimalVoteThreshold / pow, MidpointRounding.AwayFromZero));
         return Task.CompletedTask;
     }
+    
+    private static Task CalculateRealBpVoteCountAsync(ProposalDto proposal, int bpCont)
+    {
+        if (proposal.ProposalSource != ProposalSourceEnum.ONCHAIN_PARLIAMENT)
+        {
+            return Task.CompletedTask;
+        }
+        var pow = 10000;
+        proposal.MinimalVoteThreshold = Convert.ToInt64(Math.Round((decimal)proposal.MinimalVoteThreshold / pow * bpCont, MidpointRounding.AwayFromZero));
+        proposal.MinimalApproveThreshold = Convert.ToInt64(Math.Round((decimal)proposal.MinimalApproveThreshold / pow * bpCont, MidpointRounding.AwayFromZero));
+        proposal.MaximalRejectionThreshold = Convert.ToInt64(Math.Round((decimal)proposal.MaximalRejectionThreshold / pow * bpCont, MidpointRounding.AwayFromZero));
+        proposal.MaximalAbstentionThreshold = Convert.ToInt64(Math.Round((decimal)proposal.MaximalAbstentionThreshold / pow * bpCont, MidpointRounding.AwayFromZero));
+        proposal.MinimalVoteThreshold = Convert.ToInt64(Math.Round((decimal)proposal.MinimalVoteThreshold / pow, MidpointRounding.AwayFromZero));
+        proposal.MinimalRequiredThreshold = Convert.ToInt64(Math.Round((decimal)proposal.MinimalRequiredThreshold / pow, MidpointRounding.AwayFromZero));
+        return Task.CompletedTask;
+    }
+    
 
     private async Task<Tuple<long, List<ProposalDto>>> GetProposalListFromMultiSourceAsync(QueryProposalListInput input)
     {
@@ -351,8 +375,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }));
         return proposalIndexList;
     }
-
-
+    
     public async Task<ProposalDetailDto> QueryProposalDetailAsync(QueryProposalDetailInput input)
     {
         _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} start", input.ProposalId);
