@@ -15,6 +15,8 @@ namespace TomorrowDAOServer.Common.Provider;
 
 public interface IGraphQLProvider
 {
+    public Task<List<string>> GetBPAsync(string chainId);
+    public Task SetBPAsync(string chainId, List<string> addressList);
     public Task<long> GetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType);
     public Task SetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType, long height);
     public Task<long> GetIndexBlockHeightAsync(string chainId);
@@ -23,20 +25,47 @@ public interface IGraphQLProvider
 
 public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
 {
-    private readonly IGraphQLClient _graphQLClient;
+    private readonly IGraphQLClient _graphQlClient;
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<GraphQLProvider> _logger;
     private readonly IGraphQlClientFactory _graphQlClientFactory;
 
-    public GraphQLProvider(IGraphQLClient graphQLClient, ILogger<GraphQLProvider> logger,
+    public GraphQLProvider(IGraphQLClient graphQlClient, ILogger<GraphQLProvider> logger,
         IClusterClient clusterClient, IGraphQlClientFactory graphQlClientFactory)
     {
         _logger = logger;
         _clusterClient = clusterClient;
         _graphQlClientFactory = graphQlClientFactory;
-        _graphQLClient = graphQLClient;
+        _graphQlClient = graphQlClient;
     }
-    
+
+    public async Task<List<string>> GetBPAsync(string chainId)
+    {
+        try
+        {
+            var grain = _clusterClient.GetGrain<IBPGrain>(chainId);
+            return await grain.GetBPAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetBPAsync Exception chainId {chainId}", chainId);
+            return new List<string>();
+        }
+    }
+
+    public async Task SetBPAsync(string chainId, List<string> addressList)
+    {
+        try
+        {
+            var grain = _clusterClient.GetGrain<IBPGrain>(chainId);
+            await grain.SetBPAsync(addressList);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "SetBPAsync Exception chainId {chainId}", chainId);
+        }
+    }
+
     public async Task<long> GetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType)
     {
         try
@@ -66,7 +95,7 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
 
     public async Task<long> GetIndexBlockHeightAsync(string chainId)
     {
-        var graphQlResponse = await _graphQLClient.SendQueryAsync<ConfirmedBlockHeightRecord>(new GraphQLRequest
+        var graphQlResponse = await _graphQlClient.SendQueryAsync<ConfirmedBlockHeightRecord>(new GraphQLRequest
         {
             Query =
                 @"query($chainId:String,$filterType:BlockFilterType!) {

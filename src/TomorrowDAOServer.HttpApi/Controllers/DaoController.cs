@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.DAO;
@@ -36,5 +38,11 @@ public class DaoController
     public async Task<PagedResultDto<DAOListDto>> GetDAOListAsync(QueryDAOListInput request)
     {
         return await _daoAppService.GetDAOListAsync(request);
+    }
+    
+    [HttpGet("bp-list")]
+    public async Task<List<string>> BPList([Required]string chainId)
+    {
+        return await _daoAppService.GetBPList(chainId);
     }
 }

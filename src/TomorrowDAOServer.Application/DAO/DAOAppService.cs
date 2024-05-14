@@ -103,4 +103,9 @@ public class DAOAppService : ApplicationService, IDAOAppService
             Items = items
         };
     }
+
+    public async Task<List<string>> GetBPList(string chainId)
+    {
+        return await _graphQlProvider.GetBPAsync(chainId);
+    }
 }
