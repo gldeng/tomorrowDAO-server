@@ -551,14 +551,6 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         var votingItemIds = new List<string> { };
         foreach (var voteRecordItem in voteRecords)
         {
-            var indexerVoteHistory = new IndexerVoteHistoryDto
-            {
-                TimeStamp = voteRecordItem.VoteTime,
-                ProposalId = voteRecordItem.VotingItemId,
-                MyOption = voteRecordItem.Option,
-                VoteNum = voteRecordItem.Amount,
-                TransactionId = voteRecordItem.TransactionId,
-            };
             votingItemIds.Add(voteRecordItem.VotingItemId);
         }
 
