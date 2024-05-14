@@ -539,7 +539,6 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 TransactionId = voteRecordItem.TransactionId,
             };
             votingItemIds.Add(voteRecordItem.VotingItemId);
-            myProposalDto.Items.Add(indexerVoteHistory);
         }
 
         var voteInfos = await _voteProvider.GetVoteItemsAsync(input.ChainId, votingItemIds);
