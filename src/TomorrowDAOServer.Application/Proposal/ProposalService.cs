@@ -138,7 +138,6 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         int councilMemberCount)
     {
         if (proposal.GovernanceMechanism == GovernanceMechanism.HighCouncil.ToString()
-            && proposal.ProposalSource != ProposalSourceEnum.ONCHAIN_PARLIAMENT
             && proposal.ProposalSource != ProposalSourceEnum.ONCHAIN_REFERENDUM
             && proposal.ProposalSource != ProposalSourceEnum.ONCHAIN_ASSOCIATION)
         {
