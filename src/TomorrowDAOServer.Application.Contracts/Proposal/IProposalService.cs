@@ -6,7 +6,7 @@ namespace TomorrowDAOServer.Proposal;
 
 public interface IProposalService
 {
-    Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input);
+    Task<ProposalPagedResultDto> QueryProposalListAsync(QueryProposalListInput input);
     
     Task<ProposalDetailDto> QueryProposalDetailAsync(QueryProposalDetailInput input);
 

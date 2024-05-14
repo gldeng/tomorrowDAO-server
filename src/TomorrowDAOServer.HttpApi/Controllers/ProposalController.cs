@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.Proposal;
 using TomorrowDAOServer.Proposal.Dto;
 using Volo.Abp;
-using Volo.Abp.Application.Dtos;
+using Volo.Abp.AspNetCore.Mvc;
 
 namespace TomorrowDAOServer.Controllers;
 
@@ -11,7 +11,7 @@ namespace TomorrowDAOServer.Controllers;
 [Area("app")]
 [ControllerName("Proposal")]
 [Route("api/app/proposal")]
-public class ProposalController
+public class ProposalController : AbpController
 {
     private readonly IProposalService _proposalService;
 
@@ -20,9 +20,8 @@ public class ProposalController
         _proposalService = proposalService;
     }
     
-    [HttpGet]
-    [Route("list")]
-    public async Task<PagedResultDto<ProposalListDto>> QueryProposalListAsync(QueryProposalListInput input)
+    [HttpPost("list")]
+    public async Task<ProposalPagedResultDto> QueryProposalListAsync(QueryProposalListInput input)
     {
          return await _proposalService.QueryProposalListAsync(input);
     }

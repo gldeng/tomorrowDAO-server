@@ -41,7 +41,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.Params, opt
                 => opt.MapFrom(source => MapTransactionParams(source.Params)))
             ;
-        CreateMap<ProposalIndex, ProposalListDto>()
+        CreateMap<ProposalIndex, ProposalDto>()
             .ForMember(des => des.ProposalType, opt
                 => opt.MapFrom(source => source.ProposalType.ToString()))
             .ForMember(des => des.ProposalStatus, opt
@@ -53,7 +53,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             ;
         CreateMap<ProposalIndex, ProposalDetailDto>();
         CreateMap<ProposalIndex, MyProposalDto>();
-        CreateMap<IndexerVote, ProposalListDto>();
+        CreateMap<IndexerVote, ProposalDto>();
         CreateMap<IndexerVote, ProposalDetailDto>();
         CreateMap<IndexerVoteRecord, VoteRecordDto>()
             .ForMember(des => des.Option, opt

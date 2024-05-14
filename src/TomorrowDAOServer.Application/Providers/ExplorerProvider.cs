@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using TomorrowDAOServer.Common;
+using TomorrowDAOServer.Common.Enum;
 using TomorrowDAOServer.Common.HttpClient;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Options;
@@ -18,12 +19,15 @@ public interface IExplorerProvider
     Task<ExplorerProposalResponse> GetProposalPagerAsync(string chainId, ExplorerProposalListRequest request);
     Task<List<ExplorerBalanceOutput>> GetBalancesAsync(string chainId, ExplorerBalanceRequest request);
     Task<ExplorerTokenInfoResponse> GetTokenInfoAsync(string chainId, ExplorerTokenInfoRequest request);
+    Task<string> GetTokenDecimalAsync(string chainId, string symbol);
 
     Task<ExplorerPagerResult<ExplorerTransactionResponse>> GetTransactionPagerAsync(string chainId,
         ExplorerTransactionRequest request);
 
     Task<ExplorerPagerResult<ExplorerTransferResult>> GetTransferListAsync(string chainId,
         ExplorerTransferRequest request);
+
+    ProposalType GetProposalType(ProposalSourceEnum proposalSource);
 }
 
 public static class ExplorerApi
@@ -70,7 +74,8 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
         ExplorerProposalListRequest request)
     {
         var resp = await _httpProvider.InvokeAsync<ExplorerBaseResponse<ExplorerProposalResponse>>(BaseUrl(chainId),
-            ExplorerApi.ProposalList, param: ToDictionary(request), withInfoLog:false, withDebugLog:false, settings: DefaultJsonSettings);
+            ExplorerApi.ProposalList, param: ToDictionary(request), withInfoLog: false, withDebugLog: false,
+            settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
     }
@@ -103,6 +108,19 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
         return resp.Data;
     }
 
+    public async Task<string> GetTokenDecimalAsync(string chainId, string symbol)
+    {
+        if (symbol.IsNullOrWhiteSpace())
+        {
+            return string.Empty;
+        }
+
+        return (await GetTokenInfoAsync(chainId, new ExplorerTokenInfoRequest
+        {
+            Symbol = symbol
+        })).Decimals;
+    }
+
     /// <summary>
     ///     
     /// </summary>
@@ -130,6 +148,17 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
             BaseUrl(chainId), ExplorerApi.TransferList, param: ToDictionary(request), settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
+    }
+
+    public ProposalType GetProposalType(ProposalSourceEnum proposalSource)
+    {
+        return proposalSource switch
+        {
+            ProposalSourceEnum.ONCHAIN_ASSOCIATION => ProposalType.Association,
+            ProposalSourceEnum.ONCHAIN_REFERENDUM => ProposalType.Referendum,
+            ProposalSourceEnum.ONCHAIN_PARLIAMENT => ProposalType.Parliament,
+            _ => ProposalType.Parliament
+        };
     }
 
     private Dictionary<string, string> ToDictionary(object param)

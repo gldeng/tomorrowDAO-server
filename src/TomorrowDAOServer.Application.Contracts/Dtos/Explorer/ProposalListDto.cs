@@ -1,5 +1,4 @@
 using System;
-using TomorrowDAOServer.Common.Dtos;
 
 namespace TomorrowDAOServer.Dtos.Explorer;
 
