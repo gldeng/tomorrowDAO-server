@@ -1,7 +1,7 @@
 {
   "ClientId": "TomorrowDAOServer_Silo",
   "apollo": {
-    "UseApollo" : false,
+    "UseApollo" : true,
     "AppId": "tmrwdao-server",
     "MetaServer": "http://127.0.0.1:8090,http://127.0.0.1:8091",
     "Namespaces": [

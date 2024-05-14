@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AElf.Contracts.MultiToken;
 using GraphQL;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
@@ -101,9 +102,12 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 proposal.ExecuteTime = null;
             }
 
-            proposal.VoteMechanismName = voteSchemeDic.TryGetValue(proposal.VoteSchemeId, out var voteMechanism)
-                ? voteMechanism.ToString()
-                : string.Empty;
+            if (voteSchemeDic.TryGetValue(proposal.VoteSchemeId, out var indexerVoteScheme))
+            {
+                proposal.VoteMechanismName = indexerVoteScheme.VoteMechanism.ToString();
+                await CalculateRealVoteCountAsync(proposal, indexerVoteScheme, symbol, symbolDecimal);
+            }
+
             proposal.Symbol = symbol;
             proposal.Decimals = symbolDecimal;
         }
@@ -120,6 +124,25 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
 
         return proposalPagedResultDto;
+    }
+
+    private static Task CalculateRealVoteCountAsync(ProposalDto proposal, IndexerVoteSchemeInfo indexerVoteScheme,
+        string symbol, string symbolDecimalStr)
+    {
+        if (indexerVoteScheme?.VoteMechanism == null || indexerVoteScheme.VoteMechanism != VoteMechanism.TOKEN_BALLOT ||
+            symbolDecimalStr.IsNullOrWhiteSpace() || !int.TryParse(symbolDecimalStr, out int symbolDecimal))
+        {
+            return Task.CompletedTask;
+        }
+
+        var pow = (decimal)Math.Pow(10, 8);
+        
+        proposal.VotesAmount = Convert.ToInt64(Math.Round(proposal.VotesAmount / pow, MidpointRounding.AwayFromZero));
+        proposal.ApprovedCount = Convert.ToInt64(Math.Round(proposal.ApprovedCount / pow, MidpointRounding.AwayFromZero));
+        proposal.RejectionCount = Convert.ToInt64(Math.Round(proposal.RejectionCount / pow, MidpointRounding.AwayFromZero));
+        proposal.AbstentionCount = Convert.ToInt64(Math.Round(proposal.AbstentionCount / pow, MidpointRounding.AwayFromZero));
+        proposal.MinimalRequiredThreshold = Convert.ToInt64(Math.Round(proposal.MinimalRequiredThreshold / pow, MidpointRounding.AwayFromZero));
+        return Task.CompletedTask;
     }
 
     private async Task<Tuple<long, List<ProposalDto>>> GetProposalListFromMultiSourceAsync(QueryProposalListInput input)
@@ -189,6 +212,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 {
                     input.SkipCount = skipCount;
                 }
+
                 var (total, proposalIndexList) = await _proposalProvider.GetProposalListAsync(input);
                 var proposalDtos = _objectMapper.Map<List<ProposalIndex>, List<ProposalDto>>(proposalIndexList);
                 return new Tuple<long, List<ProposalDto>>(total, proposalDtos);

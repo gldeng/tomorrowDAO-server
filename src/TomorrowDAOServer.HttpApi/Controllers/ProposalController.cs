@@ -19,15 +19,9 @@ public class ProposalController : AbpController
     {
         _proposalService = proposalService;
     }
-    
-    [HttpGet("list")]
+
+    [HttpPost("list")]
     public async Task<ProposalPagedResultDto> QueryProposalListAsync(QueryProposalListInput input)
-    {
-        return await _proposalService.QueryProposalListAsync(input);
-    }
-    
-    [HttpPost("lista")]
-    public async Task<ProposalPagedResultDto> aQueryProposalListAsync(QueryProposalListInput input)
     {
          return await _proposalService.QueryProposalListAsync(input);
     }
