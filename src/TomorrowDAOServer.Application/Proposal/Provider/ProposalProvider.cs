@@ -20,7 +20,7 @@ public interface IProposalProvider
     Task<List<IndexerProposal>> GetSyncProposalDataAsync(int skipCount, string chainId, long startBlockHeight,
         long endBlockHeight, int maxResultCount);
 
-    public Task<List<ProposalIndex>> GetProposalListAsync(QueryProposalListInput input);
+    public Task<Tuple<long, List<ProposalIndex>>> GetProposalListAsync(QueryProposalListInput input);
     
     public Task<ProposalIndex> GetProposalByIdAsync(string chainId, string proposalId);
     public Task<List<ProposalIndex>> GetProposalByDAOIdAsync(string chainId, string proposalId);
@@ -80,7 +80,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         return graphQlResponse?.DataList ?? new List<IndexerProposal>();
     }
 
-    public async Task<List<ProposalIndex>> GetProposalListAsync(QueryProposalListInput input)
+    public async Task<Tuple<long, List<ProposalIndex>>> GetProposalListAsync(QueryProposalListInput input)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
 
@@ -101,10 +101,9 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         //add sorting
         var sortDescriptor = GetQuerySortDescriptor();
 
-        var result =  await _proposalIndexRepository.GetSortListAsync(Filter, sortFunc: sortDescriptor,
+        return await _proposalIndexRepository.GetSortListAsync(Filter, sortFunc: sortDescriptor,
             skip: input.SkipCount,
             limit: input.MaxResultCount);
-        return result.Item2 ?? new List<ProposalIndex>();
     }
 
     public async Task<ProposalIndex> GetProposalByIdAsync(string chainId, string proposalId)

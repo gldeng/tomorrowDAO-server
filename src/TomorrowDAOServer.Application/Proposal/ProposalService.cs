@@ -63,7 +63,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
     public async Task<ProposalPagedResultDto> QueryProposalListAsync(QueryProposalListInput input)
     {
-        var proposalList = await GetProposalListFromMultiSourceAsync(input);
+        var (total, proposalList) = await GetProposalListFromMultiSourceAsync(input);
         if (proposalList.IsNullOrEmpty())
         {
             return new ProposalPagedResultDto();
@@ -111,19 +111,19 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         return new ProposalPagedResultDto
         {
             Items = proposalList,
-            TotalCount = proposalList.Count,
+            TotalCount = total,
             PageInfo = CalcNewPageInfo(proposalList, input.PageInfo)
         };
     }
 
-    private async Task<List<ProposalDto>> GetProposalListFromMultiSourceAsync(QueryProposalListInput input)
+    private async Task<Tuple<long, List<ProposalDto>>> GetProposalListFromMultiSourceAsync(QueryProposalListInput input)
     {
         if (!input.IsNetworkDao || (input.ProposalType != null && input.ProposalType != ProposalType.ONCHAIN))
         {
             return await GetProposalListAsync(input, ProposalSourceEnum.TMRWDAO);
         }
 
-        var tasks = new List<Task<List<ProposalDto>>>();
+        var tasks = new List<Task<Tuple<long, List<ProposalDto>>>>();
         tasks.Add(GetProposalListAsync(input, ProposalSourceEnum.TMRWDAO));
         tasks.Add(GetProposalListAsync(input, ProposalSourceEnum.ONCHAIN_PARLIAMENT));
         tasks.Add(GetProposalListAsync(input, ProposalSourceEnum.ONCHAIN_REFERENDUM));
@@ -131,12 +131,18 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
         await tasks.WhenAll();
         var proposalDtoList = new List<ProposalDto>();
-        foreach (var task in tasks.Where(task => !task.Result.IsNullOrEmpty()))
+        long total = 0;
+        foreach (var task in tasks)
         {
-            proposalDtoList.AddRange(task.Result);
+            total += task.Result.Item1;
+            if (!task.Result.Item2.IsNullOrEmpty())
+            {
+                proposalDtoList.AddRange(task.Result.Item2);
+            }
         }
 
-        return proposalDtoList.OrderByDescending(item => item.DeployTime).Take(input.MaxResultCount).ToList();
+        var list = proposalDtoList.OrderByDescending(item => item.DeployTime).Take(input.MaxResultCount).ToList();
+        return new Tuple<long, List<ProposalDto>>(total, list);
     }
 
     private static PageInfo CalcNewPageInfo(List<ProposalDto> proposalList, [CanBeNull] PageInfo pageInfo)
@@ -156,22 +162,24 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         return newPageInfo;
     }
 
-    private async Task<List<ProposalDto>> GetProposalListAsync(QueryProposalListInput input,
+    private async Task<Tuple<long, List<ProposalDto>>> GetProposalListAsync(QueryProposalListInput input,
         ProposalSourceEnum proposalSource)
     {
         try
         {
-            if (proposalSource == ProposalSourceEnum.TMRWDAO)
-            {
-                var proposalIndexList = await _proposalProvider.GetProposalListAsync(input);
-                return _objectMapper.Map<List<ProposalIndex>, List<ProposalDto>>(proposalIndexList);
-            }
-
-            var pageSize = 1;
-            if (input.PageInfo != null && !input.PageInfo.ProposalSkipCount.IsNullOrEmpty() &&
+            var skipCount = 1;
+            if (input != null && input.PageInfo != null && !input.PageInfo.ProposalSkipCount.IsNullOrEmpty() &&
                 input.PageInfo.ProposalSkipCount.ContainsKey(proposalSource))
             {
-                pageSize = input.PageInfo.ProposalSkipCount[proposalSource];
+                skipCount = input.PageInfo.ProposalSkipCount[proposalSource];
+            }
+
+            if (proposalSource == ProposalSourceEnum.TMRWDAO)
+            {
+                input.SkipCount = skipCount;
+                var (total, proposalIndexList) = await _proposalProvider.GetProposalListAsync(input);
+                var proposalDtos = _objectMapper.Map<List<ProposalIndex>, List<ProposalDto>>(proposalIndexList);
+                return new Tuple<long, List<ProposalDto>>(total, proposalDtos);
             }
 
             var proposalType = _explorerProvider.GetProposalType(proposalSource);
@@ -180,20 +188,21 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 new ExplorerProposalListRequest
                 {
                     PageSize = input.MaxResultCount,
-                    PageNum = pageSize,
+                    PageNum = skipCount,
                     ProposalType = proposalType.ToString(),
                     Status = proposalStatus,
                     IsContract = 0,
                     Address = null,
                     Search = input.Content
                 });
-            return ConvertToProposal(explorerrResponse.List, input, proposalSource);
+            var proposalList = ConvertToProposal(explorerrResponse.List, input, proposalSource);
+            return new Tuple<long, List<ProposalDto>>(explorerrResponse.Total, proposalList);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "GetProposalList from Source:{source} error, input={daoId}", proposalSource,
                 JsonConvert.SerializeObject(input));
-            return new List<ProposalDto>();
+            return new Tuple<long, List<ProposalDto>>(0, new List<ProposalDto>());
         }
     }
 
