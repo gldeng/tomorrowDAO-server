@@ -6,5 +6,5 @@ public enum ProposalType
     Governance = 1,
     Advisory = 2,
     Veto = 3,
-    ONCHAIN = 4
+    OnChain = 4
 }
