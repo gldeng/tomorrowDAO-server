@@ -84,9 +84,4 @@ public class ProposalSyncDataService : ScheduleSyncDataService
     {
         return WorkerBusinessType.ProposalSync;
     }
-
-    private string GetProposalSyncHeightCacheKey(long blockHeight)
-    {
-        return $"ProposalSync:{blockHeight}";
-    }
 }

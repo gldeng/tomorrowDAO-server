@@ -47,6 +47,8 @@ public class ProposalBase : BlockInfoBase
     
     [Keyword] public string VoteSchemeId { get; set; }
     
+    public VoteMechanism VoteMechanism { get; set; }
+    
     [Keyword] public string VetoProposalId { get; set; }
     
     public DateTime DeployTime { get; set; }
@@ -80,6 +82,8 @@ public class ProposalBase : BlockInfoBase
     public long VetoExecuteTimePeriod { get; set; }
 
     public bool VoteFinished { get; set; }
+    
+    public bool IsNetworkDAO { get; set; }
     
     public bool IsFinalStatus()
     {
