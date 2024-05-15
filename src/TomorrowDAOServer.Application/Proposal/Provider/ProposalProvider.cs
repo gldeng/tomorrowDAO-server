@@ -24,10 +24,7 @@ public interface IProposalProvider
     public Task<Tuple<long, List<ProposalIndex>>> GetProposalListAsync(QueryProposalListInput input);
     
     public Task<ProposalIndex> GetProposalByIdAsync(string chainId, string proposalId);
-    public Task<List<ProposalIndex>> GetProposalByDAOIdAsync(string chainId, string proposalId);
     
-    public Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(string chainId, List<string> ids);
-
     public Task<long> GetProposalCountByDAOIds(string chainId, string DAOId);
 
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
@@ -167,41 +164,6 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         return await _proposalIndexRepository.GetSortListAsync(Filter, sortFunc: sortDescriptor,
             skip: request.SkipCount,
             limit: request.MaxResultCount);
-    }
-
-    public async Task<List<ProposalIndex>> GetProposalByDAOIdAsync(string chainId, string DAOId)
-    {
-        //todo query all
-        var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        
-        mustQuery.Add(q => q.Term(i =>
-            i.Field(f => f.ChainId).Value(chainId)));
-        
-        mustQuery.Add(q => q.Term(i =>
-            i.Field(f => f.DAOId).Value(DAOId)));
-      
-        QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
-            f.Bool(b => b.Must(mustQuery));
-
-        return (await _proposalIndexRepository.GetListAsync(Filter)).Item2;
-    }
-
-    public async Task<Dictionary<string, ProposalIndex>> GetProposalListByIds(string chainId, List<string> proposalIds)
-    {
-        var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        
-        mustQuery.Add(q => q.Term(i =>
-            i.Field(f => f.ChainId).Value(chainId)));
-        
-        mustQuery.Add(q => q.Terms(i =>
-            i.Field(f => f.ProposalId).Terms(proposalIds)));
-        
-        QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
-            f.Bool(b => b.Must(mustQuery));
-        
-        var tuple = await _proposalIndexRepository.GetListAsync(Filter);
-
-        return tuple.Item2.ToDictionary(p => p.ProposalId, p => p);
     }
 
     public async Task<long> GetProposalCountByDAOIds(string chainId, string DAOId)

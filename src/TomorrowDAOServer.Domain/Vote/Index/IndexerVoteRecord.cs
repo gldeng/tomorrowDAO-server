@@ -5,11 +5,11 @@ using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer.Vote.Index;
 
-public class IndexerVoteRecords : IndexerCommonResult<IndexerVoteRecords>
+public class IndexerVoteRecords
 {
     public List<IndexerVoteRecord> DataList { get; set; } = new ();
 }
-public class IndexerVoteRecord : IndexerCommonResult<IndexerVoteRecord>
+public class IndexerVoteRecord
 {
     public string Voter { get; set; }
     public string TransactionId { get; set; }

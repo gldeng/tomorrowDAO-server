@@ -15,14 +15,12 @@ namespace TomorrowDAOServer.Vote.Provider;
 
 public interface IVoteProvider
 {
-    Task<Dictionary<string, IndexerVote>> GetVoteInfosMemoryAsync(string chainId, List<string> votingItemIds);
-    
     Task<Dictionary<string, IndexerVote>> GetVoteItemsAsync(string chainId, List<string> votingItemIds);
     
-    Task<IndexerVoteStake> GetVoteStakeAsync(string chainId, string votingItemId, string voter);
-    Task<List<IndexerVoteWithdrawnStake>> GetVoteWithdrawnAsync(string chainId, string daoId, string voter);
+    Task<List<WithdrawnDto>> GetVoteWithdrawnAsync(string chainId, string daoId, string voter);
     
-    Task<List<IndexerVoteRecord>> GetVoteRecordAsync(GetVoteRecordInput input);
+    Task<List<IndexerVoteRecord>> GetLimitVoteRecordAsync(GetLimitVoteRecordInput input);
+    Task<List<IndexerVoteRecord>> GetAllVoteRecordAsync(GetAllVoteRecordInput input);
     
     Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetVoteRecordInput input);
     
@@ -40,38 +38,6 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
     {
         _graphQlHelper = graphQlHelper;
         _logger = logger;
-    }
-
-    public async Task<Dictionary<string, IndexerVote>> GetVoteInfosMemoryAsync(string chainId, List<string> votingItemIds)
-    {
-        if (votingItemIds.IsNullOrEmpty())
-        {
-            return new Dictionary<string, IndexerVote>();
-        }
-
-        var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVotes>>(new GraphQLRequest
-        {
-            Query = @"
-			    query($chainId: String!,$votingItemIds: [votingItemId!]!) {
-                    dataList:getVoteInfosMemory(input:{chainId:$chainId,votingItemIds:$votingItemIds}) {
-                        votingItemId,
-                        voteSchemeId,
-                        daoId,
-                        acceptedCurrency,
-                        approvedCount,
-                        rejectionCount,
-                        AbstentionCount,
-                        votesAmount,
-                        voterCount
-                    }
-                  }",
-            Variables = new
-            {
-                chainId, votingItemIds
-            }
-        });
-        var voteInfos = result.Data ?? new IndexerVotes();
-        return voteInfos.Data.ToDictionary(vote => vote.VotingItemId, vote => vote);
     }
 
     public async Task<Dictionary<string, IndexerVote>> GetVoteItemsAsync(string chainId, List<string> votingItemIds)
@@ -115,39 +81,12 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
             return new Dictionary<string, IndexerVote>();
         }
     }
-
-    public async Task<IndexerVoteStake> GetVoteStakeAsync(string chainId, string votingItemId, string voter)
-    {
-        if (votingItemId.IsNullOrEmpty() || voter.IsNullOrEmpty())
-        {
-            return new IndexerVoteStake();
-        }
-        
-        var result = await _graphQlHelper.QueryAsync<IndexerCommonResult<IndexerVoteStake>>(new GraphQLRequest
-        {
-            Query = @"
-			    query($chainId: String!,$votingItemId: String!,$voter: String!) {
-                    getVoteStake(input:{chainId:$chainId,votingItemId:$votingItemId,voter:$voter}) {
-                        votingItemId,
-                        voter,
-                        acceptedCurrency
-                        amount,
-                        createTime
-                    }
-                  }",
-            Variables = new
-            {
-                chainId, votingItemId, voter
-            }
-        });
-        return result.Data?.Data ?? new IndexerVoteStake();
-    }
     
-    public async Task<List<IndexerVoteWithdrawnStake>> GetVoteWithdrawnAsync(string chainId, string daoId, string voter)
+    public async Task<List<WithdrawnDto>> GetVoteWithdrawnAsync(string chainId, string daoId, string voter)
     {
         try
         {
-            var result = await _graphQlHelper.QueryAsync<IndexerVoteWithdrawnStakes>(new GraphQLRequest
+            var result = await _graphQlHelper.QueryAsync<IndexerVoteWithdrawn>(new GraphQLRequest
             {
                 Query = @"
 			    query($chainId: String!,$daoId: String!,$voter: String!) {
@@ -158,30 +97,68 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                   }",
                 Variables = new
                 {
-                    chainId = chainId, 
-                    daoId = daoId, 
-                    voter = voter
+                    chainId, 
+                    daoId, 
+                    voter
                 }
             });
-            return result?.DataList ?? new List<IndexerVoteWithdrawnStake>();
+            return result?.DataList ?? new List<WithdrawnDto>();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "GetVoteRecordAsync Exception chainId {chainId}, daoId {daoId}, voter {voter}", 
-                chainId, daoId, voter);
-            return new List<IndexerVoteWithdrawnStake>();
+            _logger.LogError(e, "GetVoteWithdrawnAsync Exception chainId {chainId}, daoId {daoId}, voter {voter}", chainId, daoId, voter);
+            return new List<WithdrawnDto>();
         }
     }
 
-    public async Task<List<IndexerVoteRecord>> GetVoteRecordAsync(GetVoteRecordInput input)
+    public async Task<List<IndexerVoteRecord>> GetLimitVoteRecordAsync(GetLimitVoteRecordInput input)
     {
         try
         {
             var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
             {
                 Query = @"
-			    query($chainId: String!,$votingItemId: String!,$voter: String,$sorting: String) {
-                    dataList:getVoteRecord(input:{chainId:$chainId,votingItemId:$votingItemId,voter:$voter,sorting:$sorting}) {
+			    query($chainId: String!,$votingItemId: String!,$voter: String,$sorting: String, $limit: Int!) {
+                    dataList:getLimitVoteRecord(input:{chainId:$chainId,votingItemId:$votingItemId,voter:$voter,sorting:$sorting,limit:$limit}) {
+                        voter,
+                        amount,
+                        option,
+                        voteTime,
+                        startTime,
+                        endTime,
+                        transactionId,
+                        votingItemId,
+                        voteMechanism
+                    }
+                  }",
+                Variables = new
+                {
+                    input.ChainId,
+                    input.VotingItemId, 
+                    input.Voter,
+                    input.Sorting,
+                    input.Limit
+                }
+            });
+            return result?.DataList ?? new List<IndexerVoteRecord>();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetLimitVoteRecordAsync Exception chainId {chainId}, votingItemId {votingItemId}, voter {voter}, sorting {sorting}", 
+                input.ChainId, input.VotingItemId, input.Voter, input.Sorting);
+            return new List<IndexerVoteRecord>();
+        }
+    }
+
+    public async Task<List<IndexerVoteRecord>> GetAllVoteRecordAsync(GetAllVoteRecordInput input)
+    {
+        try
+        {
+            var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
+            {
+                Query = @"
+			    query($chainId: String!,$voter: String!,$dAOId: String!) {
+                    dataList:getAllVoteRecord(input:{chainId:$chainId,voter:$voter,dAOId:$dAOId}) {
                         voter,
                         amount,
                         option,
@@ -196,21 +173,19 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
                 Variables = new
                 {
                     chainId = input.ChainId,
-                    votingItemId = input.VotingItemId, 
                     voter = input.Voter,
-                    sorting = input.Sorting
+                    dAOId = input.DAOId
                 }
             });
             return result?.DataList ?? new List<IndexerVoteRecord>();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "GetVoteRecordAsync Exception chainId {chainId}, votingItemId {votingItemId}, voter {voter}, sorting {sorting}", 
-                input.ChainId, input.VotingItemId, input.Voter, input.Sorting);
+            _logger.LogError(e, "GetAllVoteRecordAsync Exception chainId {chainId}, daoId {daoId}, voter {voter}", input.ChainId, input.DAOId, input.Voter);
             return new List<IndexerVoteRecord>();
         }
     }
-    
+
     public async Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetVoteRecordInput input)
     {
         try
