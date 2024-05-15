@@ -569,51 +569,30 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
     private async Task<VoteHistoryDto> QueryVoteRecordsAsync(QueryVoteHistoryInput input)
     {
-        var myProposalDto = new VoteHistoryDto
-        {
-            ChainId = input.ChainId,
-            Items = new List<IndexerVoteHistoryDto>()
-        };
-        var voteRecords = await _voteProvider.GetAddressVoteRecordAsync(new GetPageVoteRecordInput
+        var voteHistoryDto = new VoteHistoryDto { ChainId = input.ChainId, };
+        var voteRecords = await _voteProvider.GetPageVoteRecordAsync(new GetPageVoteRecordInput
         {
             ChainId = input.ChainId, DaoId = input.DAOId, Voter = input.Address,
             VotingItemId = input.ProposalId, SkipCount = input.SkipCount, MaxResultCount = input.MaxResultCount,
             VoteOption = input.VoteOption
         });
-        var votingItemIds = new List<string>();
-        foreach (var voteRecordItem in voteRecords)
+        if (voteRecords.IsNullOrEmpty())
         {
-            votingItemIds.Add(voteRecordItem.VotingItemId);
+            return voteHistoryDto;
         }
-
+        
+        var votingItemIds = voteRecords.Select(x => x.VotingItemId).ToList();
         var voteInfos = await _voteProvider.GetVoteItemsAsync(input.ChainId, votingItemIds);
-        _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} voteInfos:{voteInfos} ",
-            input.Address, JsonConvert.SerializeObject(voteInfos));
-        foreach (var voteRecordItem in voteRecords)
+        var proposalInfos = (await _proposalProvider.GetProposalByIdsAsync(input.ChainId, votingItemIds))
+            .ToDictionary(x => x.ProposalId, x => x);
+        var historyList = _objectMapper.Map<List<IndexerVoteRecord>, List<IndexerVoteHistoryDto>>(voteRecords);
+        foreach (var history in historyList)
         {
-            var indexerVoteHistory = new IndexerVoteHistoryDto
-            {
-                TimeStamp = voteRecordItem.VoteTime,
-                ProposalId = voteRecordItem.VotingItemId,
-                MyOption = voteRecordItem.Option,
-                VoteNum = voteRecordItem.Amount,
-                TransactionId = voteRecordItem.TransactionId,
-            };
-            if (voteInfos.TryGetValue(voteRecordItem.VotingItemId, out var voteInfo))
-            {
-                indexerVoteHistory.Executer = voteInfo.Executer;
-            }
-
-            var proposalIndex = await _proposalProvider.GetProposalByIdAsync(input.ChainId, voteRecordItem.VotingItemId);
-            indexerVoteHistory.ProposalTitle = proposalIndex?.ProposalTitle ?? string.Empty;
-
-            _logger.LogInformation("ProposalService QueryVoteRecordsAsync daoid:{DAOId} proposalIndex:{proposalIndex} ",
-                input.Address, JsonConvert.SerializeObject(proposalIndex));
-
-            myProposalDto.Items.Add(indexerVoteHistory);
+            history.Executer = voteInfos.TryGetValue(history.ProposalId, out var voteInfo) ? voteInfo.Executer : string.Empty;
+            history.ProposalTitle = proposalInfos.TryGetValue(history.ProposalId, out var proposalIndex) ? proposalIndex.ProposalTitle : string.Empty;
         }
-
-        return myProposalDto;
+        voteHistoryDto.Items = historyList;
+        return voteHistoryDto;
     }
 
     public async Task<VoteHistoryDto> QueryVoteHistoryAsync(QueryVoteHistoryInput input)

@@ -25,6 +25,8 @@ public interface IProposalProvider
     
     public Task<ProposalIndex> GetProposalByIdAsync(string chainId, string proposalId);
     
+    public Task<List<ProposalIndex>> GetProposalByIdsAsync(string chainId, List<string> proposalIds);
+    
     public Task<long> GetProposalCountByDAOIds(string chainId, string DAOId);
 
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
@@ -120,6 +122,22 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             f.Bool(b => b.Must(mustQuery));
 
         return await _proposalIndexRepository.GetAsync(Filter);
+    }
+
+    public async Task<List<ProposalIndex>> GetProposalByIdsAsync(string chainId, List<string> proposalIds)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+        
+        mustQuery.Add(q => q.Term(i =>
+            i.Field(f => f.ChainId).Value(chainId)));
+        
+        mustQuery.Add(q => q.Terms(i =>
+            i.Field(f => f.ProposalId).Terms(proposalIds)));
+      
+        QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
+            f.Bool(b => b.Must(mustQuery));
+
+        return (await _proposalIndexRepository.GetListAsync(Filter)).Item2;
     }
 
     public async Task<Tuple<long, List<ProposalIndex>>> QueryProposalsByProposerAsync(QueryProposalByProposerRequest request)

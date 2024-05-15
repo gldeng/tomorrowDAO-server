@@ -22,7 +22,7 @@ public interface IVoteProvider
     Task<List<IndexerVoteRecord>> GetLimitVoteRecordAsync(GetLimitVoteRecordInput input);
     Task<List<IndexerVoteRecord>> GetAllVoteRecordAsync(GetAllVoteRecordInput input);
     
-    Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetPageVoteRecordInput input);
+    Task<List<IndexerVoteRecord>> GetPageVoteRecordAsync(GetPageVoteRecordInput input);
     
     Task<List<IndexerVoteSchemeInfo>> GetVoteSchemeAsync(GetVoteSchemeInput input);
 
@@ -186,7 +186,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
         }
     }
 
-    public async Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetPageVoteRecordInput input)
+    public async Task<List<IndexerVoteRecord>> GetPageVoteRecordAsync(GetPageVoteRecordInput input)
     {
         try
         {

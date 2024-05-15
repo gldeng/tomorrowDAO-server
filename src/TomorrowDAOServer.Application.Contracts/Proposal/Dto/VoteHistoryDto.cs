@@ -7,7 +7,7 @@ namespace TomorrowDAOServer.Proposal.Dto;
 public class VoteHistoryDto
 {
     public string ChainId { get; set; }
-    public List<IndexerVoteHistoryDto> Items { get; set; }
+    public List<IndexerVoteHistoryDto> Items { get; set; } = new();
 }
 
 public class IndexerVoteHistoryDto
