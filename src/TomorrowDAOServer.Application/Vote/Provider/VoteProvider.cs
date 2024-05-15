@@ -22,7 +22,7 @@ public interface IVoteProvider
     Task<List<IndexerVoteRecord>> GetLimitVoteRecordAsync(GetLimitVoteRecordInput input);
     Task<List<IndexerVoteRecord>> GetAllVoteRecordAsync(GetAllVoteRecordInput input);
     
-    Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetVoteRecordInput input);
+    Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetPageVoteRecordInput input);
     
     Task<List<IndexerVoteSchemeInfo>> GetVoteSchemeAsync(GetVoteSchemeInput input);
 
@@ -186,40 +186,50 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
         }
     }
 
-    public async Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetVoteRecordInput input)
+    public async Task<List<IndexerVoteRecord>> GetAddressVoteRecordAsync(GetPageVoteRecordInput input)
     {
         try
         {
-            _logger.LogInformation("GetAddressVoteRecordAsync input :{input}", JsonConvert.SerializeObject(input));
             var result = await _graphQlHelper.QueryAsync<IndexerVoteRecords>(new GraphQLRequest
             {
                 Query = @"
-			    query($chainId: String!,$voter: String,$sorting: String) {
-                    dataList:getVoteRecord(input:{chainId:$chainId,voter:$voter,sorting:$sorting}) {
-                        voter,
-                        amount,
-                        option,
-                        voteTime,
-                        startTime,
-                        endTime,
-                        transactionId,
-                        votingItemId,
-                        voteMechanism
-                    }
-                  }",
+                            query($chainId: String!, $daoId: String!, $voter: String!, $votingItemId: String, $skipCount: Int!, $maxResultCount: Int!, $voteOption: String) {
+                                dataList: getPageVoteRecord(input: {
+                                    chainId: $chainId,
+                                    daoId: $daoId,
+                                    voter: $voter,
+                                    votingItemId: $votingItemId,
+                                    skipCount: $skipCount,
+                                    maxResultCount: $maxResultCount,
+                                    voteOption: $voteOption
+                                }) {
+                                    voter,
+                                    amount,
+                                    option,
+                                    voteTime,
+                                    startTime,
+                                    endTime,
+                                    transactionId,
+                                    votingItemId,
+                                    voteMechanism
+                                }
+                            }",
                 Variables = new
                 {
-                    chainId = input.ChainId,
-                    voter = input.Voter,
-                    sorting = input.Sorting
+                    input.ChainId,
+                    input.DaoId,
+                    input.Voter,
+                    input.VotingItemId,
+                    input.SkipCount,
+                    input.MaxResultCount,
+                    input.VoteOption
                 }
             });
             return result?.DataList ?? new List<IndexerVoteRecord>();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "GetAddressVoteRecordAsync Exception chainId {chainId}, voter {voter}, sorting {sorting}", 
-                input.ChainId, input.Voter, input.Sorting);
+            _logger.LogError(e, "GetAddressVoteRecordAsync Exception chainId {chainId}, voter {voter}", input.ChainId, input.Voter);
             return new List<IndexerVoteRecord>();
         }
     }
