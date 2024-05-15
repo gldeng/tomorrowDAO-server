@@ -569,7 +569,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
     private async Task<VoteHistoryDto> QueryVoteRecordsAsync(QueryVoteHistoryInput input)
     {
-        var voteHistoryDto = new VoteHistoryDto { ChainId = input.ChainId, };
+        var voteHistoryDto = new VoteHistoryDto { ChainId = input.ChainId };
         var voteRecords = await _voteProvider.GetPageVoteRecordAsync(new GetPageVoteRecordInput
         {
             ChainId = input.ChainId, DaoId = input.DAOId, Voter = input.Address,
