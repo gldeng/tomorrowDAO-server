@@ -4,18 +4,18 @@ using TomorrowDAOServer.Common;
 
 namespace TomorrowDAOServer.Vote.Index;
 
-public class IndexerVoteWithdrawnStakes : IndexerCommonResult<IndexerVoteWithdrawnStakes>
+public class IndexerVoteWithdrawn
 {
-    public List<IndexerVoteWithdrawnStake> DataList { get; set; } = new ();
+    public List<WithdrawnDto> DataList { get; set; } = new ();
 }
 
-public class IndexerVoteWithdrawnStake : IndexerCommonResult<IndexerVoteWithdrawnStake>
+public class WithdrawnDto
 {
     public string Id { get; set; }
     public string DaoId { get; set; }
     public string Voter { get; set; }
     public long WithdrawAmount { get; set; }
     public DateTime WithdrawTimestamp { get; set; }
-    public List<string> VotingItemIdList { get; set; }
+    public List<string> VotingItemIdList { get; set; } = new();
     public DateTime CreateTime { get; set; }
 }
