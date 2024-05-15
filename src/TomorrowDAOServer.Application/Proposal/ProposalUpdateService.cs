@@ -49,7 +49,10 @@ public class ProposalUpdateService : ScheduleSyncDataService
             var toUpdate = queryList.Where(x => 
                 resultDic.TryGetValue(x.ProposalId, out var resultIndex) 
                 && (x.ProposalStage != resultIndex.ProposalStage || x.ProposalStatus != resultIndex.ProposalStatus)).ToList();
-            await _proposalProvider.BulkAddOrUpdateAsync(toUpdate);
+            if (!toUpdate.IsNullOrEmpty())
+            {
+                await _proposalProvider.BulkAddOrUpdateAsync(toUpdate);
+            }
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 
