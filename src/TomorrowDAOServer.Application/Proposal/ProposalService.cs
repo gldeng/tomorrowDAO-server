@@ -440,7 +440,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _logger.LogInformation("ProposalService QueryProposalDetailAsync daoid:{ProposalId} voteInfos {voteInfos}:",
             input.ProposalId, JsonConvert.SerializeObject(voteInfos));
 
-        var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput
+        var voteRecords = await _voteProvider.GetLimitVoteRecordAsync(new GetLimitVoteRecordInput
         {
             ChainId = input.ChainId,
             VotingItemId = input.ProposalId,
@@ -484,8 +484,8 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
         myProposalDto.Decimal = myProposalDto.Symbol.IsNullOrEmpty() ? string.Empty
             : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest { Symbol = myProposalDto.Symbol })).Decimals;
-        var voteRecords = await _voteProvider.GetVoteRecordAsync(new GetVoteRecordInput 
-            { ChainId = input.ChainId, VotingItemId = input.ProposalId, Voter = input.Address });
+        var voteRecords = await _voteProvider.GetLimitVoteRecordAsync(new GetLimitVoteRecordInput 
+            { ChainId = input.ChainId, VotingItemId = input.ProposalId, Voter = input.Address, Limit = 1});
         if (voteRecords.IsNullOrEmpty())
         {
             myProposalDto.CanVote = await CanVote(daoIndex, proposalIndex, input.Address);
@@ -524,7 +524,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         myProposalDto.Decimal = myProposalDto.Symbol.IsNullOrEmpty() ? string.Empty
             : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest { Symbol = myProposalDto.Symbol })).Decimals;
         var voteRecords = await _voteProvider.GetAllVoteRecordAsync(
-            new GetAllNonWithdrawVoteRecordInput { ChainId = input.ChainId, DAOId = input.DAOId, Voter = input.Address });
+            new GetAllVoteRecordInput { ChainId = input.ChainId, DAOId = input.DAOId, Voter = input.Address });
         if (voteRecords.IsNullOrEmpty())
         {
             return myProposalDto;

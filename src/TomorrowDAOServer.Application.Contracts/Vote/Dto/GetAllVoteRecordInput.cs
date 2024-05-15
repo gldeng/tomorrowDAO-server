@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace TomorrowDAOServer.Vote.Dto;
 
-public class GetAllNonWithdrawVoteRecordInput
+public class GetAllVoteRecordInput
 {
     public string ChainId { get; set; }
 
@@ -10,5 +10,4 @@ public class GetAllNonWithdrawVoteRecordInput
     
     public string Voter { get; set; }
     
-    public List<string> WithdrawVotingItemIds { get; set; }
 }
