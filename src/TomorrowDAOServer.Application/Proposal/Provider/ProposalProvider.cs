@@ -11,6 +11,7 @@ using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Index;
+using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.Proposal.Provider;
@@ -32,6 +33,8 @@ public interface IProposalProvider
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
 
     public Task<List<ProposalIndex>> GetNonFinishedProposalListAsync(int skipCount, List<ProposalStage> stageList);
+
+    public Task<Tuple<long, List<ProposalIndex>>> QueryProposalsByProposerAsync(QueryProposalByProposerRequest request);
 }
 
 public class ProposalProvider : IProposalProvider, ISingletonDependency
@@ -99,7 +102,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             f.Bool(b => b.Must(mustQuery));
 
         //add sorting
-        var sortDescriptor = GetQuerySortDescriptor();
+        var sortDescriptor = GetDescendingDeployTimeSortDescriptor();
 
         return await _proposalIndexRepository.GetSortListAsync(Filter, sortFunc: sortDescriptor,
             skip: input.SkipCount,
@@ -120,6 +123,50 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             f.Bool(b => b.Must(mustQuery));
 
         return await _proposalIndexRepository.GetAsync(Filter);
+    }
+
+    public async Task<Tuple<long, List<ProposalIndex>>> QueryProposalsByProposerAsync(QueryProposalByProposerRequest request)
+    {
+        if (request == null || request.Proposer.IsNullOrWhiteSpace())
+        {
+            throw new UserFriendlyException("");
+        }
+        var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+
+        mustQuery.Add(q => q.Term(i =>
+            i.Field(f => f.Proposer).Value(request.Proposer)));
+
+        if (!request.ChainId.IsNullOrWhiteSpace())
+        {
+            mustQuery.Add(q => q.Term(i =>
+                i.Field(f => f.ChainId).Value(request.ChainId)));
+        }
+        
+        if (!request.DaoId.IsNullOrWhiteSpace())
+        {
+            mustQuery.Add(q => q.Term(i =>
+                i.Field(f => f.DAOId).Value(request.DaoId)));
+        }
+        
+        if (request.ProposalStage != null)
+        {
+            mustQuery.Add(q => q.Term(i =>
+                i.Field(f => f.ProposalStage).Value(request.ProposalStage)));
+        }
+        
+        if (request.ProposalStatus != null)
+        {
+            mustQuery.Add(q => q.Term(i =>
+                i.Field(f => f.ProposalStatus).Value(request.ProposalStatus)));
+        }
+
+        QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) => f.Bool(b => b.Must(mustQuery));
+
+        var sortDescriptor = GetAscendingDeployTimeSortDescriptor();
+
+        return await _proposalIndexRepository.GetSortListAsync(Filter, sortFunc: sortDescriptor,
+            skip: request.SkipCount,
+            limit: request.MaxResultCount);
     }
 
     public async Task<List<ProposalIndex>> GetProposalByDAOIdAsync(string chainId, string DAOId)
@@ -249,13 +296,19 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         shouldQuery.Add(s => s.Bool(sb => sb.Must(proposerMustQuery)));
     }
 
-    private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetQuerySortDescriptor()
+    private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetDescendingDeployTimeSortDescriptor()
     {
         //use default
         var sortDescriptor = new SortDescriptor<ProposalIndex>();
-
         sortDescriptor.Descending(a => a.DeployTime);
-
+        return _ => sortDescriptor;
+    }
+    
+    private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetAscendingDeployTimeSortDescriptor()
+    {
+        //use default
+        var sortDescriptor = new SortDescriptor<ProposalIndex>();
+        sortDescriptor.Ascending(a => a.DeployTime);
         return _ => sortDescriptor;
     }
 }

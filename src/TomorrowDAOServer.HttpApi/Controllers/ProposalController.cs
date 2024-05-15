@@ -46,4 +46,10 @@ public class ProposalController : AbpController
     {
         return await _proposalService.QueryVoteHistoryAsync(input);
     }
+
+    [HttpGet("executable-list")]
+    public async Task<ProposalPagedResultDto> QueryExecutableProposalsAsync(QueryExecutableProposalsInput input)
+    {
+        return await _proposalService.QueryExecutableProposalsAsync(input);
+    }
 }
