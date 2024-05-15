@@ -11,6 +11,8 @@ public class QueryProposalDetailInput : IValidatableObject
 
     [Required] public string ProposalId { get; set; }
     
+    public bool IsNetworkDao { get; set; }
+    
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (ChainId.IsNullOrEmpty() || !ChainId.MatchesChainId())
