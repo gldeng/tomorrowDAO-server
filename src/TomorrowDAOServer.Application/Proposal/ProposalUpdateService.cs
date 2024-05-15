@@ -34,7 +34,6 @@ public class ProposalUpdateService : ScheduleSyncDataService
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
     {
         var skipCount = 0;
-        var blockHeight = -1L;
         List<ProposalIndex> queryList;
         do
         {
@@ -46,11 +45,15 @@ public class ProposalUpdateService : ScheduleSyncDataService
                 break;
             }
             var resultList = await _proposalAssistService.ConvertProposalList(chainId, queryList);
-            await _proposalProvider.BulkAddOrUpdateAsync(resultList);
+            var resultDic = resultList.ToDictionary(x => x.ProposalId, x => x);
+            var toUpdate = queryList.Where(x => 
+                resultDic.TryGetValue(x.ProposalId, out var resultIndex) 
+                && (x.ProposalStage != resultIndex.ProposalStage || x.ProposalStatus != resultIndex.ProposalStatus)).ToList();
+            await _proposalProvider.BulkAddOrUpdateAsync(toUpdate);
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 
-        return blockHeight;
+        return -1L;
     }
 
     public override async Task<List<string>> GetChainIdsAsync()
