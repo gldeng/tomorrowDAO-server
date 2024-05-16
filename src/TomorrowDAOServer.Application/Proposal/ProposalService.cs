@@ -188,7 +188,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             return Task.CompletedTask;
         }
 
-        var pow = (decimal)Math.Pow(10, 8);
+        var pow = (decimal)Math.Pow(10, symbolDecimal);
 
         proposal.VotesAmount = Convert.ToInt64(Math.Round(proposal.VotesAmount / pow, MidpointRounding.AwayFromZero));
         proposal.ApprovedCount =
