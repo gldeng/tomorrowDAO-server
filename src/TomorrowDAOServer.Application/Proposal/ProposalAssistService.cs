@@ -32,7 +32,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     private readonly IGraphQLProvider _graphQlProvider;
     private const int AbstractVoteTotal = 10000;
     private Dictionary<string, VoteMechanism> _voteMechanisms = new();
-    //todo temporary count, query later
+    //todo temporary count to make hc proposal not approved, real query when next version
     private const int HCCount = 3;
 
     public ProposalAssistService(ILogger<ProposalAssistService> logger, IObjectMapper objectMapper, IVoteProvider voteProvider,

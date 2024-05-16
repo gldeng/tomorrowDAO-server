@@ -631,14 +631,18 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     
     private async Task<bool> CanVote(DAOIndex daoIndex, ProposalBase proposalIndex, string address, bool voted = false)
     {
-        if (voted)
+        if (voted || ProposalStage.Active != proposalIndex.ProposalStage)
         {
             return false;
         }
-        // todo temporary return true when non networkDao and GovernanceMechanism.HighCouncil, when release it is false
-        var typeCanVote = GovernanceMechanism.Referendum == proposalIndex.GovernanceMechanism || !daoIndex.IsNetworkDAO ||
-                          (await _graphQlProvider.GetBPAsync(daoIndex.ChainId)).Contains(address);
-        return typeCanVote && ProposalStage.Active == proposalIndex.ProposalStage;
+        
+        if (GovernanceMechanism.Referendum == proposalIndex.GovernanceMechanism)
+        {
+            return true;
+        }
+
+        // HC can not vote this version
+        return daoIndex.IsNetworkDAO && (await _graphQlProvider.GetBPAsync(daoIndex.ChainId)).Contains(address);
     }
 
     private static bool CanWithdraw(DateTime endTime, List<string> votingItemIdList, string proposalId, bool isUniqueVote = false)
