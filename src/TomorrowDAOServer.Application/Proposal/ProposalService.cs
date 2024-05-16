@@ -647,8 +647,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
     private static bool CanWithdraw(DateTime endTime, List<string> votingItemIdList, string proposalId, bool isUniqueVote = false)
     {
-        return true;
-        // return !isUniqueVote && DateTime.Now > endTime && !votingItemIdList.Contains(proposalId);
+        return !isUniqueVote && DateTime.Now > endTime && !votingItemIdList.Contains(proposalId);
     }
 
     private async Task<List<string>> GetWithdrawVotingItemIdLis(string chainId, string DAOId, string address)
