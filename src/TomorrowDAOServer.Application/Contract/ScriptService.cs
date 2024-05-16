@@ -15,6 +15,8 @@ namespace TomorrowDAOServer.Contract;
 public interface IScriptService
 {
     public Task<List<string>> GetCurrentBPAsync(string chainId);
+    
+    public Task<long> GetCurrentBPRoundAsync(string chainId);
 }
 
 public class ScriptService : IScriptService, ITransientDependency
@@ -36,5 +38,12 @@ public class ScriptService : IScriptService, ITransientDependency
         var queryContractInfo = _queryContractInfos.First(x => x.ChainId == chainId);
         var result = await _transactionService.CallTransactionAsync<GetCurrentMinerPubkeyListDto>(chainId, queryContractInfo.PrivateKey, queryContractInfo.ConsensusContractAddress, ContractConstants.GetCurrentMinerPubkeyList);
         return result?.Pubkeys?.Select(x => Address.FromPublicKey(ByteArrayHelper.HexStringToByteArray(x)).ToBase58()).ToList() ?? new List<string>();
+    }
+
+    public async Task<long> GetCurrentBPRoundAsync(string chainId)
+    {
+        var queryContractInfo = _queryContractInfos.First(x => x.ChainId == chainId);
+        var result = await _transactionService.CallTransactionAsync<GetCurrentMinerListWithRoundNumberDto>(chainId, queryContractInfo.PrivateKey, queryContractInfo.ConsensusContractAddress, ContractConstants.GetCurrentMinerListWithRoundNumber);
+        return result?.RoundNumber ?? 0L;
     }
 }

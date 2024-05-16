@@ -16,6 +16,7 @@ public class DAOInfoDto
     public string HighCouncilAddress { get; set; }
     public HighCouncilConfigDto HighCouncilConfig { get; set; }
     public long HighCouncilTermNumber { get; set; }
+    public long HighCouncilMemberCount { get; set; }
     public List<FileInfoDto> FileInfoList { get; set; }
     public bool IsTreasuryContractNeeded { get; set; }
     public bool SubsistStatus { get; set; }

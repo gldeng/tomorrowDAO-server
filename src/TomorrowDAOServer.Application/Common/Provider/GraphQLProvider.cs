@@ -16,7 +16,8 @@ namespace TomorrowDAOServer.Common.Provider;
 public interface IGraphQLProvider
 {
     public Task<List<string>> GetBPAsync(string chainId);
-    public Task SetBPAsync(string chainId, List<string> addressList);
+    public Task<BpInfoDto> GetBPWithRoundAsync(string chainId);
+    public Task SetBPAsync(string chainId, List<string> addressList, long round);
     public Task<long> GetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType);
     public Task SetLastEndHeightAsync(string chainId, WorkerBusinessType queryChainType, long height);
     public Task<long> GetIndexBlockHeightAsync(string chainId);
@@ -53,12 +54,26 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
         }
     }
 
-    public async Task SetBPAsync(string chainId, List<string> addressList)
+    public async Task<BpInfoDto> GetBPWithRoundAsync(string chainId)
     {
         try
         {
             var grain = _clusterClient.GetGrain<IBPGrain>(chainId);
-            await grain.SetBPAsync(addressList);
+            return await grain.GetBPWithRoundAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetBPWithRoundAsync Exception chainId {chainId}", chainId);
+            return new BpInfoDto();
+        }
+    }
+
+    public async Task SetBPAsync(string chainId, List<string> addressList, long round)
+    {
+        try
+        {
+            var grain = _clusterClient.GetGrain<IBPGrain>(chainId);
+            await grain.SetBPAsync(addressList, round);
         }
         catch (Exception e)
         {

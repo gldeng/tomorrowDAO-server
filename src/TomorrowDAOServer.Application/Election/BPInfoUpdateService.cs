@@ -29,8 +29,9 @@ public class BPInfoUpdateService : ScheduleSyncDataService
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
     {
         var bpList = await _scriptService.GetCurrentBPAsync(chainId);
-        _logger.LogInformation("bpList count {count}", bpList.Count);
-        await _graphQlProvider.SetBPAsync(chainId, bpList);
+        var round = await _scriptService.GetCurrentBPRoundAsync(chainId);
+        _logger.LogInformation("bpList count {count} round {round}", bpList.Count, round);
+        await _graphQlProvider.SetBPAsync(chainId, bpList, round);
         return newIndexHeight;
     }
 

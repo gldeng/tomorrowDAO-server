@@ -50,7 +50,16 @@ public class DAOAppService : ApplicationService, IDAOAppService
     public async Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input)
     {
         var daoIndex = await _daoProvider.GetAsync(input);
-        return ObjectMapper.Map<DAOIndex, DAOInfoDto>(daoIndex);
+        var daoInfo = ObjectMapper.Map<DAOIndex, DAOInfoDto>(daoIndex);
+        if (!daoInfo.IsNetworkDAO)
+        {
+            //todo hc info
+            return daoInfo;
+        }
+        var bpInfo = await _graphQlProvider.GetBPWithRoundAsync(input.ChainId);
+        daoInfo.HighCouncilTermNumber = bpInfo.Round;
+        daoInfo.HighCouncilMemberCount = bpInfo.AddressList.Count;
+        return daoInfo;
     }
 
     public async Task<PagedResultDto<HcMemberDto>> GetMemberListAsync(GetHcMemberInput input)

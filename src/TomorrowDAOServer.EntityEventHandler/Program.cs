@@ -23,7 +23,7 @@ namespace TomorrowDAOServer.EntityEventHandler
 
             try
             {
-                Log.Information("Starting NFTMarket.EntityEventHandler.");
+                Log.Information("Starting TomorrowDAO.EntityEventHandler.");
                 await CreateHostBuilder(args).RunConsoleAsync();
                 return 0;
             }
