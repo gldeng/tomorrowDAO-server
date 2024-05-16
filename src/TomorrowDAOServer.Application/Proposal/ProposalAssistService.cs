@@ -67,7 +67,8 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             var vetoProposalId = proposal.VetoProposalId;
             var proposalType = proposal.ProposalType;
             var proposalStage = proposal.ProposalStage;
-            var executeStartTime = proposal.ExecuteStartTime;
+            var executeEndTime = proposal.ExecuteEndTime;
+            var executeTime = proposal.ExecuteTime;
 
             voteInfos.TryGetValue(proposalId, out var voteInfo);
             if (_voteMechanisms.TryGetValue(proposal.VoteSchemeId, out var voteMechanism))
@@ -84,17 +85,31 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
                             _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo, bpCount), proposal);
                             break;
                         case ProposalStage.Pending:
+                            // executeStartTime ended
                             if (!vetoProposalId.IsNullOrEmpty())
                             {
+                                proposal.ProposalStatus = ProposalStatus.Challenged;
                                 var vetoProposal = await _proposalProvider.GetProposalByIdAsync(chainId, vetoProposalId);
-                                var vetoProposalStatus = vetoProposal?.ProposalStatus?? ProposalStatus.Empty;
-                                proposal.ProposalStatus = vetoProposalStatus == ProposalStatus.Executed ? ProposalStatus.Vetoed : ProposalStatus.Challenged;
-                                proposal.ProposalStage = vetoProposalStatus == ProposalStatus.Executed ? ProposalStage.Finished : ProposalStage.Execute;
+                                var vetoProposalStatus = vetoProposal.ProposalStatus;
+                                switch (vetoProposal.ProposalStage)
+                                {
+                                    case ProposalStage.Active:
+                                    case ProposalStage.Execute:
+                                        break;
+                                    case ProposalStage.Finished:
+                                        proposal.ProposalStatus = vetoProposalStatus == ProposalStatus.Executed ? ProposalStatus.Vetoed : ProposalStatus.Approved;
+                                        proposal.ProposalStage = vetoProposalStatus == ProposalStatus.Executed ? ProposalStage.Finished : ProposalStage.Execute;
+                                        break;
+                                }
                             }
-                            else if (TimeEnd(executeStartTime))
+                            else if (executeTime != null)
                             {
-                                proposal.ProposalStatus = ProposalStatus.Approved;
-                                proposal.ProposalStage = ProposalStage.Execute;
+                                proposal.ProposalStatus = ProposalStatus.Executed;
+                                proposal.ProposalStage = ProposalStage.Finished;
+                            }else if (TimeEnd(executeEndTime))
+                            {
+                                proposal.ProposalStatus = ProposalStatus.Expired;
+                                proposal.ProposalStage = ProposalStage.Finished;
                             }
                             break;
                         case ProposalStage.Execute:
