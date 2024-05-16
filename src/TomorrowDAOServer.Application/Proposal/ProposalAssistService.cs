@@ -184,7 +184,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         });
     }
 
-    private ProposalIndex ProcessActiveProposalStage(ProposalIndex proposal, IndexerVote voteInfo, long bpCount)
+    private static ProposalIndex ProcessActiveProposalStage(ProposalIndex proposal, IndexerVote voteInfo, long bpCount)
     {
         var governanceMechanism = proposal.GovernanceMechanism;
         var proposalType = proposal.ProposalType;
@@ -217,7 +217,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         if (!isApproved)
         {
             proposal.ProposalStage = ProposalStage.Finished;
-            proposal.ProposalStatus = isReject ? ProposalStatus.Rejected : ProposalStatus.Abstained;
+            proposal.ProposalStatus = isReject ? ProposalStatus.Rejected : isAbstained ? ProposalStatus.Abstained : ProposalStatus.BelowThreshold;
             return proposal; 
         }
 
@@ -240,7 +240,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         return proposal;
     }
 
-    private ProposalIndex ProcessExecuteProposalStage(ProposalIndex proposal)
+    private static ProposalIndex ProcessExecuteProposalStage(ProposalIndex proposal)
     {
         var executeEndTime = proposal.ExecuteEndTime;
         var executeTime = proposal.ExecuteTime;
@@ -256,7 +256,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
 
     private static bool TimeEnd(DateTime time) => DateTime.UtcNow > time;
 
-    private static long GetRealVoterThreshold(ProposalIndex proposalIndex, long bpCount)
+    private static long GetRealVoterThreshold(ProposalBase proposalIndex, long bpCount)
     {
         if (GovernanceMechanism.Referendum == proposalIndex.GovernanceMechanism)
         {
