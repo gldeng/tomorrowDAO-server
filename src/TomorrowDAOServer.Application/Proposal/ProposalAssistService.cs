@@ -211,30 +211,30 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         {
             proposal.ProposalStatus = ProposalStatus.BelowThreshold;
             proposal.ProposalStage = ProposalStage.Finished;
+            return proposal;
         }
         
         if (!isApproved)
         {
             proposal.ProposalStage = ProposalStage.Finished;
             proposal.ProposalStatus = isReject ? ProposalStatus.Rejected : ProposalStatus.Abstained;
+            return proposal; 
         }
-        else 
+
+        switch (proposalType)
         {
-            switch (proposalType)
-            {
-                case ProposalType.Advisory:
-                    proposal.ProposalStage = ProposalStage.Finished;
-                    proposal.ProposalStatus = ProposalStatus.Approved;
-                    break;
-                case ProposalType.Governance:
-                    proposal.ProposalStage = governanceMechanism == GovernanceMechanism.Referendum ? ProposalStage.Execute : ProposalStage.Pending;
-                    proposal.ProposalStatus = ProposalStatus.Approved;
-                    break;
-                case ProposalType.Veto:
-                    proposal.ProposalStage = ProposalStage.Execute;
-                    proposal.ProposalStatus = ProposalStatus.Approved;
-                    break;
-            }
+            case ProposalType.Advisory:
+                proposal.ProposalStage = ProposalStage.Finished;
+                proposal.ProposalStatus = ProposalStatus.Approved;
+                break;
+            case ProposalType.Governance:
+                proposal.ProposalStage = governanceMechanism == GovernanceMechanism.Referendum ? ProposalStage.Execute : ProposalStage.Pending;
+                proposal.ProposalStatus = ProposalStatus.Approved;
+                break;
+            case ProposalType.Veto:
+                proposal.ProposalStage = ProposalStage.Execute;
+                proposal.ProposalStatus = ProposalStatus.Approved;
+                break;
         }
 
         return proposal;
