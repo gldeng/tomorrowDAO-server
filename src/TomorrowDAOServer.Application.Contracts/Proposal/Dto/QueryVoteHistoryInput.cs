@@ -23,7 +23,7 @@ public class QueryVoteHistoryInput : IValidatableObject
             yield return new ValidationResult("ChainId invalid.");
         }
 
-        if (!VoteOption.IsNullOrEmpty() && !Enum.TryParse<VoteOption>(VoteOption, out var parse))
+        if (!VoteOption.IsNullOrEmpty() && !Enum.TryParse<VoteOption>(VoteOption, out _))
         {
             yield return new ValidationResult("VoteOption invalid.");
         }
