@@ -8,6 +8,7 @@ using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Proposal.Provider;
+using Volo.Abp.ObjectMapping;
 
 namespace TomorrowDAOServer.Proposal;
 
@@ -17,11 +18,12 @@ public class ProposalUpdateService : ScheduleSyncDataService
     private readonly IProposalProvider _proposalProvider;
     private readonly IChainAppService _chainAppService;
     private readonly IProposalAssistService _proposalAssistService;
+    private readonly IObjectMapper _objectMapper;
 
     public ProposalUpdateService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
         IProposalProvider proposalProvider,
-        IChainAppService chainAppService,
+        IChainAppService chainAppService,IObjectMapper objectMapper,
         IProposalAssistService proposalAssistService)
         : base(logger, graphQlProvider)
     {
@@ -29,6 +31,7 @@ public class ProposalUpdateService : ScheduleSyncDataService
         _proposalProvider = proposalProvider;
         _chainAppService = chainAppService;
         _proposalAssistService = proposalAssistService;
+        _objectMapper = objectMapper;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
@@ -44,14 +47,15 @@ public class ProposalUpdateService : ScheduleSyncDataService
             {
                 break;
             }
+            var originDic = queryList.ToDictionary(x => x.ProposalId,
+                x => new ValueTuple<ProposalStage, ProposalStatus>(x.ProposalStage, x.ProposalStatus));
             var resultList = await _proposalAssistService.ConvertProposalList(chainId, queryList);
-            var resultDic = resultList.ToDictionary(x => x.ProposalId, x => x);
-            var toUpdate = queryList.Where(x => 
-                resultDic.TryGetValue(x.ProposalId, out var resultIndex) 
-                && (x.ProposalStage != resultIndex.ProposalStage || x.ProposalStatus != resultIndex.ProposalStatus)).ToList();
+            var toUpdate = resultList.Where(x => 
+                originDic.TryGetValue(x.ProposalId, out var origin) 
+                && (x.ProposalStage != origin.Item1 || x.ProposalStatus != origin.Item2)).ToList();
             if (!toUpdate.IsNullOrEmpty())
             {
-                await _proposalProvider.BulkAddOrUpdateAsync(toUpdate);
+                await _proposalProvider.BulkAddOrUpdateAsync(resultList);
             }
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
