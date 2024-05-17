@@ -271,9 +271,9 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             Match(m => m.Field(f => f.Proposer).Query(content)));
         
         shouldQuery.Add(s => s.Bool(sb => sb.Must(titleMustQuery)));
-        shouldQuery.Add(s => s.Bool(sb => sb.Must(descriptionMustQuery)));
-        shouldQuery.Add(s => s.Bool(sb => sb.Must(proposalIdMustQuery)));
-        shouldQuery.Add(s => s.Bool(sb => sb.Must(proposerMustQuery)));
+        // shouldQuery.Add(s => s.Bool(sb => sb.Must(descriptionMustQuery)));
+        // shouldQuery.Add(s => s.Bool(sb => sb.Must(proposalIdMustQuery)));
+        // shouldQuery.Add(s => s.Bool(sb => sb.Must(proposerMustQuery)));
     }
 
     private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetDescendingDeployTimeSortDescriptor()
