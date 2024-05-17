@@ -118,6 +118,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
                 continue;
             }
 
+            dao.HighCouncilMemberCount = (await _graphQlProvider.GetBPAsync(input.ChainId)).Count;
             if (ProposalCountCache.Item1 == 0 || DateTime.UtcNow.ToUtcMilliSeconds() - ProposalCountCache.Item2 <= 10 * 60 * 1000)
             {
                 var parliamentTask = GetCountTask(Common.Enum.ProposalType.Parliament);
