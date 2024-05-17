@@ -12,11 +12,8 @@ using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Auditing;
-using AElf.Client;
-using Google.Protobuf.Reflection;
-using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Common;
-using TomorrowDAOServer.Options;
+using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Proposal.Provider;
 using TomorrowDAOServer.Providers;
 using TomorrowDAOServer.Vote.Provider;
@@ -36,6 +33,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private const int ZeroSkipCount = 0;
     private const int GetMemberListMaxResultCount = 100;
     private const int CandidateTermNumber = 0;
+    private ValueTuple<long, long> ProposalCountCache = new(0, 0);
     
     public DAOAppService(IDAOProvider daoProvider,
         IElectionProvider electionProvider,
@@ -106,17 +104,38 @@ public class DAOAppService : ApplicationService, IDAOAppService
         {
             tokenInfos[symbol] = await _explorerProvider.GetTokenInfoAsync(input.ChainId, symbol);
         }
-        // var holders = symbols.IsNullOrEmpty() ? new Dictionary<string, long>() 
-        //     : await _graphQlProvider.GetHoldersAsync(symbols, input.ChainId, ZeroSkipCount, symbols.Count);
-        foreach (var dto in items.Where(x => !x.Symbol.IsNullOrEmpty()).ToList())
+        
+        foreach (var dao in items)
         {
-            dto.SymbolHoldersNum = tokenInfos.TryGetValue(dto.Symbol.ToUpper(), out var tokenInfo) ? long.Parse(tokenInfo.Holders) : 0L;
-            dto.ProposalsNum = await _proposalProvider.GetProposalCountByDAOIds(input.ChainId, dto.DaoId);
+            if (!dao.Symbol.IsNullOrEmpty())
+            {
+                dao.SymbolHoldersNum = tokenInfos.TryGetValue(dao.Symbol.ToUpper(), out var tokenInfo) ? long.Parse(tokenInfo.Holders) : 0L;
+            }
+
+            dao.ProposalsNum = await _proposalProvider.GetProposalCountByDAOIds(input.ChainId, dao.DaoId);
+            if (!dao.IsNetworkDAO)
+            {
+                continue;
+            }
+
+            if (ProposalCountCache.Item1 == 0 || DateTime.UtcNow.ToUtcMilliSeconds() - ProposalCountCache.Item2 <= 10 * 60 * 1000)
+            {
+                var parliamentTask = GetCountTask(Common.Enum.ProposalType.Parliament);
+                var associationTask = GetCountTask(Common.Enum.ProposalType.Association);
+                var referendumTask = GetCountTask(Common.Enum.ProposalType.Referendum);
+                await Task.WhenAll(parliamentTask, associationTask, referendumTask);
+                dao.ProposalsNum += (await parliamentTask).Total + (await associationTask).Total + (await referendumTask).Total;
+                ProposalCountCache = new ValueTuple<long, long>(dao.ProposalsNum, DateTime.UtcNow.ToUtcMilliSeconds());
+            }
+            else
+            {
+                dao.ProposalsNum += ProposalCountCache.Item1;
+            }
         }
 
         return new PagedResultDto<DAOListDto>
         {
-            TotalCount = item1,
+            TotalCount = 0,
             Items = items
         };
     }
@@ -124,5 +143,14 @@ public class DAOAppService : ApplicationService, IDAOAppService
     public async Task<List<string>> GetBPList(string chainId)
     {
         return await _graphQlProvider.GetBPAsync(chainId);
+    }
+
+    private Task<ExplorerProposalResponse> GetCountTask(Common.Enum.ProposalType type)
+    {
+        return _explorerProvider.GetProposalPagerAsync(CommonConstant.MainChainId, new ExplorerProposalListRequest 
+        {
+            ProposalType = type.ToString(),
+            Status = "all", IsContract = 0, Address = null, Search = string.Empty
+        });
     }
 }
