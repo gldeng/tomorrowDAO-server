@@ -18,12 +18,11 @@ public class ProposalUpdateService : ScheduleSyncDataService
     private readonly IProposalProvider _proposalProvider;
     private readonly IChainAppService _chainAppService;
     private readonly IProposalAssistService _proposalAssistService;
-    private readonly IObjectMapper _objectMapper;
 
     public ProposalUpdateService(ILogger<ProposalSyncDataService> logger,
         IGraphQLProvider graphQlProvider,
         IProposalProvider proposalProvider,
-        IChainAppService chainAppService,IObjectMapper objectMapper,
+        IChainAppService chainAppService,
         IProposalAssistService proposalAssistService)
         : base(logger, graphQlProvider)
     {
@@ -31,7 +30,6 @@ public class ProposalUpdateService : ScheduleSyncDataService
         _proposalProvider = proposalProvider;
         _chainAppService = chainAppService;
         _proposalAssistService = proposalAssistService;
-        _objectMapper = objectMapper;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
