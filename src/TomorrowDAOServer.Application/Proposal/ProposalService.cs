@@ -567,7 +567,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         return myProposalDto;
     }
 
-    private async Task<VoteHistoryDto> QueryVoteRecordsAsync(QueryVoteHistoryInput input)
+    public async Task<VoteHistoryDto> QueryVoteHistoryAsync(QueryVoteHistoryInput input)
     {
         var voteHistoryDto = new VoteHistoryDto { ChainId = input.ChainId };
         var voteRecords = await _voteProvider.GetPageVoteRecordAsync(new GetPageVoteRecordInput
@@ -593,11 +593,6 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
         voteHistoryDto.Items = historyList;
         return voteHistoryDto;
-    }
-
-    public async Task<VoteHistoryDto> QueryVoteHistoryAsync(QueryVoteHistoryInput input)
-    {
-        return await QueryVoteRecordsAsync(input);
     }
 
     public async Task<ProposalPagedResultDto> QueryExecutableProposalsAsync(QueryExecutableProposalsInput input)
