@@ -157,5 +157,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.TransactionId, opt
                 => opt.MapFrom(source => source.TransactionId))
             ;
+
+        CreateMap<ExplorerTokenInfoResponse, TokenInfoDto>();
     }
 }

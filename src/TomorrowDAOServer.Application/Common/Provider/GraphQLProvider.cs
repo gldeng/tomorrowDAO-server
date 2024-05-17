@@ -9,12 +9,15 @@ using Orleans;
 using TomorrowDAOServer.Common.GraphQL;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Grains.Grain.ApplicationHandler;
+using TomorrowDAOServer.Grains.Grain.Token;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.Common.Provider;
 
 public interface IGraphQLProvider
 {
+    public Task<TokenInfoDto> GetTokenInfoAsync(string chainId, string symbol);
+    public Task SetTokenInfoAsync(TokenInfoDto tokenInfo);
     public Task<List<string>> GetBPAsync(string chainId);
     public Task<BpInfoDto> GetBPWithRoundAsync(string chainId);
     public Task SetBPAsync(string chainId, List<string> addressList, long round);
@@ -38,6 +41,33 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
         _clusterClient = clusterClient;
         _graphQlClientFactory = graphQlClientFactory;
         _graphQlClient = graphQlClient;
+    }
+
+    public async Task<TokenInfoDto> GetTokenInfoAsync(string chainId, string symbol)
+    {
+        try
+        {
+            var grain = _clusterClient.GetGrain<IExplorerTokenGrain>(GuidHelper.GenerateGrainId(chainId, symbol));
+            return await grain.GetTokenInfoAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetTokenInfoAsync Exception chainId {chainId} symbol {symbol}", chainId, symbol);
+            return new TokenInfoDto();
+        }
+    }
+
+    public async Task SetTokenInfoAsync(TokenInfoDto tokenInfo)
+    {
+        try
+        {
+            var grain = _clusterClient.GetGrain<IExplorerTokenGrain>(GuidHelper.GenerateGrainId(tokenInfo.ChainId, tokenInfo.Symbol));
+            await grain.SetTokenInfoAsync(tokenInfo);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "SetTokenInfoAsync Exception chainId {chainId} symbol {symbol}", tokenInfo.ChainId, tokenInfo.Symbol);
+        }
     }
 
     public async Task<List<string>> GetBPAsync(string chainId)

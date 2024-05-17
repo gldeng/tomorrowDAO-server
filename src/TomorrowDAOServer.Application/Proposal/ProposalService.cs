@@ -84,8 +84,9 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             ChainId = input.ChainId,
             DAOId = input.DaoId
         });
-        var symbol = daoIndex?.GovernanceToken ?? string.Empty;
-        var symbolDecimal = await _explorerProvider.GetTokenDecimalAsync(input.ChainId, symbol);
+        var tokenInfo = await _explorerProvider.GetTokenInfoAsync(input.ChainId, daoIndex?.GovernanceToken ?? string.Empty);
+        var symbol = tokenInfo.Symbol;
+        var symbolDecimal = tokenInfo.Decimals.ToString();
         var voteSchemeDic =
             await _voteProvider.GetVoteSchemeDicAsync(new GetVoteSchemeInput { ChainId = input.ChainId });
         await councilMemberCountTask;
@@ -417,8 +418,9 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         });
         var councilMemberCountTask =
             GetHighCouncilMemberCountAsync(daoIndex.IsNetworkDAO, input.ChainId, proposalDetailDto.DAOId);
-        var symbol = daoIndex?.GovernanceToken ?? string.Empty;
-        var symbolDecimal = await _explorerProvider.GetTokenDecimalAsync(input.ChainId, symbol);
+        var tokenInfo = await _explorerProvider.GetTokenInfoAsync(input.ChainId, daoIndex?.GovernanceToken ?? string.Empty);
+        var symbol = tokenInfo.Symbol;
+        var symbolDecimal = tokenInfo.Decimals.ToString();
         var voteInfos = await _voteProvider.GetVoteItemsAsync(input.ChainId, new List<string> { input.ProposalId });
         await councilMemberCountTask;
         var councilMemberCount = councilMemberCountTask.Result;
@@ -481,11 +483,14 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
         var myProposalDto = _objectMapper.Map<ProposalIndex, MyProposalDto>(proposalIndex);
         var daoIndex = await _DAOProvider.GetAsync(new GetDAOInfoInput { ChainId = input.ChainId, DAOId = proposalIndex.DAOId });
-        myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
-        myProposalDto.Decimal = myProposalDto.Symbol.IsNullOrEmpty() ? string.Empty
-            : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest { Symbol = myProposalDto.Symbol })).Decimals;
-        var voteRecords = await _voteProvider.GetLimitVoteRecordAsync(new GetLimitVoteRecordInput 
-            { ChainId = input.ChainId, VotingItemId = input.ProposalId, Voter = input.Address, Limit = 1});
+        var tokenInfo = await _explorerProvider.GetTokenInfoAsync(input.ChainId, daoIndex?.GovernanceToken ?? string.Empty);
+        var voteRecords = await _voteProvider.GetLimitVoteRecordAsync(new GetLimitVoteRecordInput
+        {
+            ChainId = input.ChainId, VotingItemId = input.ProposalId, Voter = input.Address, Limit = 1
+        });
+        
+        myProposalDto.Symbol = tokenInfo.Symbol;
+        myProposalDto.Decimal = tokenInfo.Decimals.ToString();
         if (voteRecords.IsNullOrEmpty())
         {
             myProposalDto.CanVote = await CanVote(daoIndex, proposalIndex, input.Address);
@@ -520,9 +525,9 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     {
         var myProposalDto = new MyProposalDto { ChainId = input.ChainId };
         var daoIndex = await _DAOProvider.GetAsync(new GetDAOInfoInput { ChainId = input.ChainId, DAOId = input.DAOId });
-        myProposalDto.Symbol = daoIndex?.GovernanceToken ?? string.Empty;
-        myProposalDto.Decimal = myProposalDto.Symbol.IsNullOrEmpty() ? string.Empty
-            : (await _explorerProvider.GetTokenInfoAsync(input.ChainId, new ExplorerTokenInfoRequest { Symbol = myProposalDto.Symbol })).Decimals;
+        var tokenInfo = await _explorerProvider.GetTokenInfoAsync(input.ChainId, daoIndex?.GovernanceToken ?? string.Empty);
+        myProposalDto.Symbol = tokenInfo.Symbol;
+        myProposalDto.Decimal = tokenInfo.Decimals.ToString();
         var voteRecords = await _voteProvider.GetAllVoteRecordAsync(
             new GetAllVoteRecordInput { ChainId = input.ChainId, DAOId = input.DAOId, Voter = input.Address });
         if (voteRecords.IsNullOrEmpty())

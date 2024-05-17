@@ -18,6 +18,7 @@ using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal.Provider;
+using TomorrowDAOServer.Providers;
 using TomorrowDAOServer.Vote.Provider;
 
 namespace TomorrowDAOServer.DAO;
@@ -31,13 +32,14 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private readonly IProposalProvider _proposalProvider;
     private readonly IGraphQLProvider _graphQlProvider;
     private readonly IVoteProvider _voteProvider;
+    private readonly IExplorerProvider _explorerProvider;
     private const int ZeroSkipCount = 0;
     private const int GetMemberListMaxResultCount = 100;
     private const int CandidateTermNumber = 0;
     
     public DAOAppService(IDAOProvider daoProvider,
         IElectionProvider electionProvider,
-        IProposalProvider proposalProvider,
+        IProposalProvider proposalProvider, IExplorerProvider explorerProvider,
         IGraphQLProvider graphQlProvider, IVoteProvider voteProvider)
     {
         _daoProvider = daoProvider;
@@ -45,6 +47,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
         _proposalProvider = proposalProvider;
         _graphQlProvider = graphQlProvider;
         _voteProvider = voteProvider;
+        _explorerProvider = explorerProvider;
     }
 
     public async Task<DAOInfoDto> GetDAOByIdAsync(GetDAOInfoInput input)
@@ -97,12 +100,13 @@ public class DAOAppService : ApplicationService, IDAOAppService
     {
         var (item1, daoList) = await _daoProvider.GetDAOListAsync(input);
         var items = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>(daoList);
-        var symbols = items.Select(x => x.Symbol.ToUpper()).Distinct().ToList();
-        var holders = symbols.IsNullOrEmpty() ? new Dictionary<string, long>() 
-            : await _graphQlProvider.GetHoldersAsync(symbols, input.ChainId, ZeroSkipCount, symbols.Count);
+        // var symbols = items.Select(x => x.Symbol.ToUpper()).Distinct().ToList();
+        // var holders = symbols.IsNullOrEmpty() ? new Dictionary<string, long>() 
+        //     : await _graphQlProvider.GetHoldersAsync(symbols, input.ChainId, ZeroSkipCount, symbols.Count);
         foreach (var dto in items.Where(x => !x.Symbol.IsNullOrEmpty()).ToList())
         {
-            dto.SymbolHoldersNum = holders.GetValueOrDefault(dto.Symbol.ToUpper());
+            var tokenInfo = await _explorerProvider.GetTokenInfoAsync(input.ChainId, dto.Symbol);
+            dto.SymbolHoldersNum = long.Parse(tokenInfo.Holders);
             dto.ProposalsNum = await _proposalProvider.GetProposalCountByDAOIds(input.ChainId, dto.DaoId);
         }
 

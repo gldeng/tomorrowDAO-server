@@ -264,7 +264,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             return proposal;
         }
 
-        proposal.ProposalStatus = IsExecute(executeTime) ? ProposalStatus.Expired : ProposalStatus.Executed;
+        proposal.ProposalStatus = IsDateNull(executeTime) ? ProposalStatus.Expired : ProposalStatus.Executed;
         proposal.ProposalStage = ProposalStage.Finished;
         return proposal;
     }
@@ -282,7 +282,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
         return minCount / AbstractVoteTotal + (minCount % AbstractVoteTotal == 0 ? 0 : 1);
     }
 
-    private static bool IsExecute(DateTime? time)
+    private static bool IsDateNull(DateTime? time)
     {
         return time == null || time.Value == DateTime.MinValue;
     }

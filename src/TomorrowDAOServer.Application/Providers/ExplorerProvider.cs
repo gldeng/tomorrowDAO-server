@@ -7,10 +7,12 @@ using Newtonsoft.Json;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.Enum;
 using TomorrowDAOServer.Common.HttpClient;
+using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.ObjectMapping;
 using ProposalType = TomorrowDAOServer.Common.Enum.ProposalType;
 
 namespace TomorrowDAOServer.Providers;
@@ -20,6 +22,7 @@ public interface IExplorerProvider
     Task<ExplorerProposalResponse> GetProposalPagerAsync(string chainId, ExplorerProposalListRequest request);
     Task<List<ExplorerBalanceOutput>> GetBalancesAsync(string chainId, ExplorerBalanceRequest request);
     Task<ExplorerTokenInfoResponse> GetTokenInfoAsync(string chainId, ExplorerTokenInfoRequest request);
+    Task<TokenInfoDto> GetTokenInfoAsync(string chainId, string symbol);
     Task<string> GetTokenDecimalAsync(string chainId, string symbol);
 
     Task<ExplorerPagerResult<ExplorerTransactionResponse>> GetTransactionPagerAsync(string chainId,
@@ -46,7 +49,8 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
 {
     private readonly IHttpProvider _httpProvider;
     private readonly IOptionsMonitor<ExplorerOptions> _explorerOptions;
-
+    private readonly IGraphQLProvider _graphQlProvider;
+    private readonly IObjectMapper _objectMapper;
     public static readonly JsonSerializerSettings DefaultJsonSettings = JsonSettingsBuilder.New()
         .WithCamelCasePropertyNamesResolver()
         .IgnoreNullValue()
@@ -55,10 +59,12 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
     private const string ProposalStatusAll = "all";
 
 
-    public ExplorerProvider(IHttpProvider httpProvider, IOptionsMonitor<ExplorerOptions> explorerOptions)
+    public ExplorerProvider(IHttpProvider httpProvider, IOptionsMonitor<ExplorerOptions> explorerOptions, IGraphQLProvider graphQlProvider, IObjectMapper objectMapper)
     {
         _httpProvider = httpProvider;
         _explorerOptions = explorerOptions;
+        _graphQlProvider = graphQlProvider;
+        _objectMapper = objectMapper;
     }
 
     public string BaseUrl(string chainId)
@@ -110,6 +116,26 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
             ExplorerApi.TokenInfo, param: ToDictionary(request), settings: DefaultJsonSettings);
         AssertHelper.IsTrue(resp.Success, resp.Msg);
         return resp.Data;
+    }
+
+    public async Task<TokenInfoDto> GetTokenInfoAsync(string chainId, string symbol)
+    {
+        if (symbol.IsNullOrEmpty())
+        {
+            return new TokenInfoDto();
+        }
+        var tokenInfo = await _graphQlProvider.GetTokenInfoAsync(chainId, symbol.ToUpper());
+        // 10 minute
+        if (DateTime.UtcNow.ToUtcMilliSeconds() - tokenInfo.LastUpdateTime <= 10 * 60 * 1000)
+        {
+            return tokenInfo;
+        }
+
+        var tokenResponse = await GetTokenInfoAsync(chainId, new ExplorerTokenInfoRequest { Symbol = symbol.ToUpper() });
+        tokenInfo = _objectMapper.Map<ExplorerTokenInfoResponse, TokenInfoDto>(tokenResponse);
+        tokenInfo.LastUpdateTime = DateTime.UtcNow.ToUtcMilliSeconds();
+        await _graphQlProvider.SetTokenInfoAsync(tokenInfo);
+        return tokenInfo;
     }
 
     public async Task<string> GetTokenDecimalAsync(string chainId, string symbol)
