@@ -100,13 +100,17 @@ public class DAOAppService : ApplicationService, IDAOAppService
     {
         var (item1, daoList) = await _daoProvider.GetDAOListAsync(input);
         var items = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>(daoList);
-        // var symbols = items.Select(x => x.Symbol.ToUpper()).Distinct().ToList();
+        var symbols = items.Select(x => x.Symbol.ToUpper()).Distinct().ToList();
+        var tokenInfos = new Dictionary<string, TokenInfoDto>();
+        foreach (var symbol in symbols)
+        {
+            tokenInfos[symbol] = await _explorerProvider.GetTokenInfoAsync(input.ChainId, symbol);
+        }
         // var holders = symbols.IsNullOrEmpty() ? new Dictionary<string, long>() 
         //     : await _graphQlProvider.GetHoldersAsync(symbols, input.ChainId, ZeroSkipCount, symbols.Count);
         foreach (var dto in items.Where(x => !x.Symbol.IsNullOrEmpty()).ToList())
         {
-            var tokenInfo = await _explorerProvider.GetTokenInfoAsync(input.ChainId, dto.Symbol);
-            dto.SymbolHoldersNum = long.Parse(tokenInfo.Holders);
+            dto.SymbolHoldersNum = tokenInfos.TryGetValue(dto.Symbol.ToUpper(), out var tokenInfo) ? long.Parse(tokenInfo.Holders) : 0L;
             dto.ProposalsNum = await _proposalProvider.GetProposalCountByDAOIds(input.ChainId, dto.DaoId);
         }
 
