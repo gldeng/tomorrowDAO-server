@@ -256,6 +256,10 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
     private static void AssemblyContentQuery(string content,
         List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>> shouldQuery)
     {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return;
+        }
         var titleMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
         var descriptionMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
         var proposalIdMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
