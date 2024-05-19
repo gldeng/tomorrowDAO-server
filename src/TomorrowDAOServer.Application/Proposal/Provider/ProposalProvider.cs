@@ -256,6 +256,11 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
     private static void AssemblyContentQuery(string content,
         List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>> shouldQuery)
     {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return;
+        }
+
         var matchQueries = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>
         {
             q => q.Match(m => m.Field(f => f.ProposalTitle).Query(content)),
@@ -264,7 +269,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             q => q.Match(m => m.Field(f => f.Proposer).Query(content))
         };
     
-        shouldQuery.Add(s => s.Bool(sb => sb.Should(matchQueries)));
+        shouldQuery.Add(s => s.Bool(sb => sb.Should(matchQueries).MinimumShouldMatch(1)));
     }
 
     private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetDescendingDeployTimeSortDescriptor()
