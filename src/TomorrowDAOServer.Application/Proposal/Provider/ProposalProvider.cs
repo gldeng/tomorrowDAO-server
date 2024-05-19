@@ -94,7 +94,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
 
         if (shouldQuery.Any())
         {
-            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery).MinimumShouldMatch(1)));
+            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
         }
 
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
@@ -256,20 +256,24 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
     private static void AssemblyContentQuery(string content,
         List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>> shouldQuery)
     {
-        if (string.IsNullOrWhiteSpace(content))
-        {
-            return;
-        }
-
-        var matchQueries = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>
-        {
-            q => q.Match(m => m.Field(f => f.ProposalTitle).Query(content)),
-            q => q.Match(m => m.Field(f => f.ProposalDescription).Query(content)),
-            q => q.Match(m => m.Field(f => f.ProposalId).Query(content)),
-            q => q.Match(m => m.Field(f => f.Proposer).Query(content))
-        };
-    
-        shouldQuery.Add(s => s.Bool(sb => sb.Should(matchQueries).MinimumShouldMatch(1)));
+        var titleMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+        var descriptionMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+        var proposalIdMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+        var proposerMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
+        
+        titleMustQuery.Add(q => q.
+            Match(m => m.Field(f => f.ProposalTitle).Query(content)));
+        descriptionMustQuery.Add(q => q.
+            Match(m => m.Field(f => f.ProposalDescription).Query(content)));
+        proposalIdMustQuery.Add(q => q.
+            Match(m => m.Field(f => f.ProposalId).Query(content)));
+        proposerMustQuery.Add(q => q.
+            Match(m => m.Field(f => f.Proposer).Query(content)));
+        
+        shouldQuery.Add(s => s.Bool(sb => sb.Must(titleMustQuery)));
+        shouldQuery.Add(s => s.Bool(sb => sb.Must(descriptionMustQuery)));
+        shouldQuery.Add(s => s.Bool(sb => sb.Must(proposalIdMustQuery)));
+        shouldQuery.Add(s => s.Bool(sb => sb.Must(proposerMustQuery)));
     }
 
     private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetDescendingDeployTimeSortDescriptor()
