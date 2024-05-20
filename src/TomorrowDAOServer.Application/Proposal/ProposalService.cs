@@ -283,7 +283,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     {
         try
         {
-            var skipCount = 1;
+            var skipCount = 0;
             if (input != null && input.PageInfo != null && !input.PageInfo.ProposalSkipCount.IsNullOrEmpty() &&
                 input.PageInfo.ProposalSkipCount.ContainsKey(proposalSource))
             {
@@ -315,7 +315,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 new ExplorerProposalListRequest
                 {
                     PageSize = input.MaxResultCount,
-                    PageNum = skipCount,
+                    PageNum = skipCount == 0 ? 1 : skipCount,
                     ProposalType = proposalType.ToString(),
                     Status = proposalStatus,
                     IsContract = 0,

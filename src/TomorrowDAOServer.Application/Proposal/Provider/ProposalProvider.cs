@@ -22,11 +22,11 @@ public interface IProposalProvider
         long endBlockHeight, int maxResultCount);
 
     public Task<Tuple<long, List<ProposalIndex>>> GetProposalListAsync(QueryProposalListInput input);
-    
+
     public Task<ProposalIndex> GetProposalByIdAsync(string chainId, string proposalId);
-    
+
     public Task<List<ProposalIndex>> GetProposalByIdsAsync(string chainId, List<string> proposalIds);
-    
+
     public Task<long> GetProposalCountByDAOIds(string chainId, string DAOId);
 
     public Task BulkAddOrUpdateAsync(List<ProposalIndex> list);
@@ -92,13 +92,10 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
 
         AssemblyContentQuery(input.Content, shouldQuery);
 
-        if (shouldQuery.Any())
-        {
-            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
-        }
-
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
-            f.Bool(b => b.Must(mustQuery));
+            f.Bool(b => shouldQuery.Any()
+                ? b.Should(shouldQuery).MinimumShouldMatch(1).Must(mustQuery)
+                : b.Must(mustQuery));
 
         //add sorting
         var sortDescriptor = GetDescendingDeployTimeSortDescriptor();
@@ -111,13 +108,13 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
     public async Task<ProposalIndex> GetProposalByIdAsync(string chainId, string proposalId)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        
+
         mustQuery.Add(q => q.Term(i =>
             i.Field(f => f.ChainId).Value(chainId)));
-        
+
         mustQuery.Add(q => q.Term(i =>
             i.Field(f => f.ProposalId).Value(proposalId)));
-      
+
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
             f.Bool(b => b.Must(mustQuery));
 
@@ -127,25 +124,27 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
     public async Task<List<ProposalIndex>> GetProposalByIdsAsync(string chainId, List<string> proposalIds)
     {
         var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        
+
         mustQuery.Add(q => q.Term(i =>
             i.Field(f => f.ChainId).Value(chainId)));
-        
+
         mustQuery.Add(q => q.Terms(i =>
             i.Field(f => f.ProposalId).Terms(proposalIds)));
-      
+
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
             f.Bool(b => b.Must(mustQuery));
 
         return (await _proposalIndexRepository.GetListAsync(Filter)).Item2;
     }
 
-    public async Task<Tuple<long, List<ProposalIndex>>> QueryProposalsByProposerAsync(QueryProposalByProposerRequest request)
+    public async Task<Tuple<long, List<ProposalIndex>>> QueryProposalsByProposerAsync(
+        QueryProposalByProposerRequest request)
     {
         if (request == null || request.Proposer.IsNullOrWhiteSpace())
         {
             throw new UserFriendlyException("");
         }
+
         var mustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
 
         mustQuery.Add(q => q.Term(i =>
@@ -156,19 +155,19 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             mustQuery.Add(q => q.Term(i =>
                 i.Field(f => f.ChainId).Value(request.ChainId)));
         }
-        
+
         if (!request.DaoId.IsNullOrWhiteSpace())
         {
             mustQuery.Add(q => q.Term(i =>
                 i.Field(f => f.DAOId).Value(request.DaoId)));
         }
-        
+
         if (request.ProposalStage != null)
         {
             mustQuery.Add(q => q.Term(i =>
                 i.Field(f => f.ProposalStage).Value(request.ProposalStage)));
         }
-        
+
         if (request.ProposalStatus != null)
         {
             mustQuery.Add(q => q.Term(i =>
@@ -192,16 +191,16 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             i.Field(f => f.ChainId).Terms(chainId)));
         mustQuery.Add(q => q.Terms(i =>
             i.Field(f => f.DAOId).Terms(DAOId)));
-        
+
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
             f.Bool(b => b.Must(mustQuery));
-        
+
         return (await _proposalIndexRepository.CountAsync(Filter)).Count;
     }
 
     public async Task BulkAddOrUpdateAsync(List<ProposalIndex> list)
     {
-       await _proposalIndexRepository.BulkAddOrUpdateAsync(list);
+        await _proposalIndexRepository.BulkAddOrUpdateAsync(list);
     }
 
     public async Task<List<ProposalIndex>> GetNonFinishedProposalListAsync(int skipCount, List<ProposalStage> stageList)
@@ -215,10 +214,11 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
             f.Bool(b => b.Must(mustQuery));
 
-        var tuple = await _proposalIndexRepository.GetListAsync(Filter, skip: skipCount, sortType: SortOrder.Ascending, sortExp: o => o.BlockHeight);
+        var tuple = await _proposalIndexRepository.GetListAsync(Filter, skip: skipCount, sortType: SortOrder.Ascending,
+            sortExp: o => o.BlockHeight);
         return tuple.Item2;
     }
-    
+
     private static void AssemblyBaseQuery(QueryProposalListInput input,
         List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>> mustQuery)
     {
@@ -227,7 +227,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             mustQuery.Add(q => q.Term(i =>
                 i.Field(f => f.ChainId).Value(input.ChainId)));
         }
-        
+
         if (!input.DaoId.IsNullOrEmpty())
         {
             mustQuery.Add(q => q.Term(i =>
@@ -239,13 +239,13 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
             mustQuery.Add(q => q.Term(i =>
                 i.Field(f => f.GovernanceMechanism).Value(input.GovernanceMechanism)));
         }
-        
+
         if (input.ProposalType != null)
         {
             mustQuery.Add(q => q.Term(i =>
                 i.Field(f => f.ProposalType).Value(input.ProposalType)));
         }
-        
+
         if (input.ProposalStatus != null)
         {
             mustQuery.Add(q => q.Term(i =>
@@ -260,24 +260,11 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         {
             return;
         }
-        var titleMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        var descriptionMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        var proposalIdMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        var proposerMustQuery = new List<Func<QueryContainerDescriptor<ProposalIndex>, QueryContainer>>();
-        
-        titleMustQuery.Add(q => q.
-            Match(m => m.Field(f => f.ProposalTitle).Query(content)));
-        descriptionMustQuery.Add(q => q.
-            Match(m => m.Field(f => f.ProposalDescription).Query(content)));
-        proposalIdMustQuery.Add(q => q.
-            Match(m => m.Field(f => f.ProposalId).Query(content)));
-        proposerMustQuery.Add(q => q.
-            Match(m => m.Field(f => f.Proposer).Query(content)));
-        
-        shouldQuery.Add(s => s.Bool(sb => sb.Must(titleMustQuery)));
-        shouldQuery.Add(s => s.Bool(sb => sb.Must(descriptionMustQuery)));
-        shouldQuery.Add(s => s.Bool(sb => sb.Must(proposalIdMustQuery)));
-        shouldQuery.Add(s => s.Bool(sb => sb.Must(proposerMustQuery)));
+
+        shouldQuery.Add(q => q.Match(m => m.Field(f => f.ProposalId).Query(content)));
+        shouldQuery.Add(q => q.Match(m => m.Field(f => f.ProposalTitle).Query(content)));
+        shouldQuery.Add(q => q.Match(m => m.Field(f => f.ProposalDescription).Query(content)));
+        shouldQuery.Add(q => q.Match(m => m.Field(f => f.Proposer).Query(content)));
     }
 
     private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetDescendingDeployTimeSortDescriptor()
@@ -287,7 +274,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         sortDescriptor.Descending(a => a.DeployTime);
         return _ => sortDescriptor;
     }
-    
+
     private static Func<SortDescriptor<ProposalIndex>, IPromise<IList<ISort>>> GetAscendingDeployTimeSortDescriptor()
     {
         //use default
