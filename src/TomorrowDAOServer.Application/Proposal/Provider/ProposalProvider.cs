@@ -94,7 +94,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
 
         if (shouldQuery.Any())
         {
-            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
+            mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery).MinimumShouldMatch(1)));
         }
 
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) =>
