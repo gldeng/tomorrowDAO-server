@@ -151,7 +151,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             && proposal.ProposalSource != ProposalSourceEnum.ONCHAIN_ASSOCIATION)
         {
             proposal.MinimalRequiredThreshold =
-                Convert.ToInt64(Math.Ceiling((decimal)proposal.MinimalRequiredThreshold / 10000 * councilMemberCount));
+                Convert.ToInt64(Math.Ceiling((decimal)proposal.MinimalRequiredThreshold / CommonConstant.AbstractVoteTotal * councilMemberCount));
         }
 
         return Task.CompletedTask;
@@ -170,6 +170,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             else
             {
                 //TODO HC Count
+                return CommonConstant.HCCount;
             }
         }
         catch (Exception e)

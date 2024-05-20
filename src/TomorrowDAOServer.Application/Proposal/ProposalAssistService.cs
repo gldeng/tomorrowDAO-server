@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
@@ -30,10 +31,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
     private readonly IVoteProvider _voteProvider;
     private readonly IProposalProvider _proposalProvider;
     private readonly IGraphQLProvider _graphQlProvider;
-    private const int AbstractVoteTotal = 10000;
     private Dictionary<string, VoteMechanism> _voteMechanisms = new();
-    //todo temporary count to make hc proposal not approved, real query when next version
-    private const int HCCount = 3;
 
     public ProposalAssistService(ILogger<ProposalAssistService> logger, IObjectMapper objectMapper, IVoteProvider voteProvider,
         IProposalProvider proposalProvider, IGraphQLProvider graphQlProvider)
@@ -213,9 +211,9 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
 
         var enoughVoter = totalVoter >= GetRealVoterThreshold(proposal, bpCount);
         var enoughVote = rejectVote + abstainVote + approveVote >= proposal.MinimalVoteThreshold;
-        var isReject = rejectVote * AbstractVoteTotal > proposal.MaximalRejectionThreshold * totalVote;
-        var isAbstained = abstainVote * AbstractVoteTotal > proposal.MaximalAbstentionThreshold *  totalVote;
-        var isApproved = approveVote * AbstractVoteTotal > proposal.MinimalApproveThreshold *  totalVote;
+        var isReject = rejectVote * CommonConstant.AbstractVoteTotal > proposal.MaximalRejectionThreshold * totalVote;
+        var isAbstained = abstainVote * CommonConstant.AbstractVoteTotal > proposal.MaximalAbstentionThreshold *  totalVote;
+        var isApproved = approveVote * CommonConstant.AbstractVoteTotal > proposal.MinimalApproveThreshold *  totalVote;
 
         if (!TimeEnd(activeEndTime))
         {
@@ -278,8 +276,8 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             return proposalIndex.MinimalRequiredThreshold;
         }
 
-        var minCount =  (proposalIndex.IsNetworkDAO ? bpCount : HCCount) * proposalIndex.MinimalRequiredThreshold; 
-        return minCount / AbstractVoteTotal + (minCount % AbstractVoteTotal == 0 ? 0 : 1);
+        var minCount =  (proposalIndex.IsNetworkDAO ? bpCount : CommonConstant.HCCount) * proposalIndex.MinimalRequiredThreshold; 
+        return minCount / CommonConstant.AbstractVoteTotal + (minCount % CommonConstant.AbstractVoteTotal == 0 ? 0 : 1);
     }
 
     private static bool IsDateNull(DateTime? time)
