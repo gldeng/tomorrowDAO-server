@@ -207,11 +207,14 @@ public class ExplorerProvider : IExplorerProvider, ISingletonDependency
             case ProposalStatus.Executed:
                 return ProposalStatusEnum.Released.ToString().ToLower();
             case ProposalStatus.Expired:
-            case ProposalStatus.Vetoed:
                 return ProposalStatusEnum.Expired.ToString().ToLower();
-            case ProposalStatus.Empty:
+            // can not find determinant status to map between network dao and tmr dao
+            // so return empty list temporary
             case ProposalStatus.Rejected:
             case ProposalStatus.Abstained:
+            case ProposalStatus.Vetoed:
+                return string.Empty;
+            case ProposalStatus.Empty:
             default:
                 return ProposalStatusAll;
         }

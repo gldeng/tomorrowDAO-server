@@ -302,8 +302,14 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
                 return new Tuple<long, List<ProposalDto>>(total, proposalDtos);
             }
 
+            // can not find determinant status to map between network dao and tmr dao
+            // so return empty list in
             var proposalType = _explorerProvider.GetProposalType(proposalSource);
             var proposalStatus = _explorerProvider.GetProposalStatus(input.ProposalStatus, null);
+            if (string.IsNullOrEmpty(proposalStatus))
+            {
+                return new Tuple<long, List<ProposalDto>>(0, new List<ProposalDto>());
+            }
             var explorerrResponse = await _explorerProvider.GetProposalPagerAsync(CommonConstant.MainChainId,
                 new ExplorerProposalListRequest
                 {
