@@ -83,7 +83,6 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
                             _objectMapper.Map(ProcessActiveProposalStage(proposal, voteInfo, bpCount), proposal);
                             break;
                         case ProposalStage.Pending:
-                            // executeStartTime ended
                             if (!vetoProposalId.IsNullOrEmpty())
                             {
                                 proposal.ProposalStatus = ProposalStatus.Challenged;
@@ -100,11 +99,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
                                         break;
                                 }
                             }
-                            else if (!IsDateNull(executeTime))
-                            {
-                                proposal.ProposalStatus = ProposalStatus.Executed;
-                                proposal.ProposalStage = ProposalStage.Finished;
-                            }else if (TimeEnd(executeStartTime))
+                            else if (TimeEnd(executeStartTime))
                             {
                                 proposal.ProposalStatus = ProposalStatus.Approved;
                                 proposal.ProposalStage = ProposalStage.Execute;
