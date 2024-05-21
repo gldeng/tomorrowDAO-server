@@ -65,7 +65,7 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
             var vetoProposalId = proposal.VetoProposalId;
             var proposalType = proposal.ProposalType;
             var proposalStage = proposal.ProposalStage;
-            var executeEndTime = proposal.ExecuteEndTime;
+            var executeStartTime = proposal.ExecuteStartTime;
             var executeTime = proposal.ExecuteTime;
 
             voteInfos.TryGetValue(proposalId, out var voteInfo);
@@ -100,14 +100,14 @@ public class ProposalAssistService : TomorrowDAOServerAppService, IProposalAssis
                                         break;
                                 }
                             }
-                            else if (executeTime != null)
+                            else if (!IsDateNull(executeTime))
                             {
                                 proposal.ProposalStatus = ProposalStatus.Executed;
                                 proposal.ProposalStage = ProposalStage.Finished;
-                            }else if (TimeEnd(executeEndTime))
+                            }else if (TimeEnd(executeStartTime))
                             {
-                                proposal.ProposalStatus = ProposalStatus.Expired;
-                                proposal.ProposalStage = ProposalStage.Finished;
+                                proposal.ProposalStatus = ProposalStatus.Approved;
+                                proposal.ProposalStage = ProposalStage.Execute;
                             }
                             break;
                         case ProposalStage.Execute:
