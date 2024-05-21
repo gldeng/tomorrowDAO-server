@@ -66,13 +66,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _graphQlProvider = graphQlProvider;
     }
 
-    public async Task<ProposalPagedResultDto> QueryProposalListAsync(QueryProposalListInput input)
+    public async Task<ProposalPagedResultDto<ProposalDto>> QueryProposalListAsync(QueryProposalListInput input)
     {
         var councilMemberCountTask = GetHighCouncilMemberCountAsync(input.IsNetworkDao, input.ChainId, input.DaoId);
         var (total, proposalList) = await GetProposalListFromMultiSourceAsync(input);
         if (proposalList.IsNullOrEmpty())
         {
-            return new ProposalPagedResultDto();
+            return new ProposalPagedResultDto<ProposalDto>();
         }
 
         //query proposal vote infos
@@ -130,7 +130,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             proposal.Decimals = symbolDecimal;
         }
 
-        var proposalPagedResultDto = new ProposalPagedResultDto
+        var proposalPagedResultDto = new ProposalPagedResultDto<ProposalDto>
         {
             Items = proposalList,
             TotalCount = total,
@@ -607,7 +607,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         return voteHistoryDto;
     }
 
-    public async Task<ProposalPagedResultDto> QueryExecutableProposalsAsync(QueryExecutableProposalsInput input)
+    public async Task<ProposalPagedResultDto<ProposalBasicDto>> QueryExecutableProposalsAsync(QueryExecutableProposalsInput input)
     {
         _logger.LogInformation("query executable proposals,  daoid={0}, proposalor={1}", input.DaoId, input.Proposer);
         var proposalIndex =
@@ -623,13 +623,13 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             });
         if (proposalIndex == null || proposalIndex.Item2.IsNullOrEmpty())
         {
-            return new ProposalPagedResultDto();
+            return new ProposalPagedResultDto<ProposalBasicDto>();
         }
         _logger.LogInformation("query executable proposals result:{0}", JsonConvert.SerializeObject(proposalIndex));
         
         var proposalDtoList = _objectMapper.Map<List<ProposalIndex>, List<ProposalBasicDto>>(proposalIndex.Item2);
 
-        return new ProposalPagedResultDto
+        return new ProposalPagedResultDto<ProposalBasicDto>
         {
             Items = proposalDtoList,
             TotalCount = proposalIndex.Item1,
