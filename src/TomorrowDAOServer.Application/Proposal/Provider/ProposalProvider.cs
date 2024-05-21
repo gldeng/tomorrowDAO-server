@@ -168,11 +168,11 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
                 i.Field(f => f.ProposalStage).Value(request.ProposalStage)));
         }
 
-        if (request.ProposalStatus != null)
-        {
-            mustQuery.Add(q => q.Term(i =>
-                i.Field(f => f.ProposalStatus).Value(request.ProposalStatus)));
-        }
+        // if (request.ProposalStatus != null)
+        // {
+        //     mustQuery.Add(q => q.Term(i =>
+        //         i.Field(f => f.ProposalStatus).Value(request.ProposalStatus)));
+        // }
 
         QueryContainer Filter(QueryContainerDescriptor<ProposalIndex> f) => f.Bool(b => b.Must(mustQuery));
 
