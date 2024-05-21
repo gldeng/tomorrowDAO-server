@@ -627,11 +627,11 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
         _logger.LogInformation("query executable proposals result:{0}", JsonConvert.SerializeObject(proposalIndex));
         
-        var ProposalDtoList = _objectMapper.Map<List<ProposalIndex>, List<ProposalDto>>(proposalIndex.Item2);
+        var proposalDtoList = _objectMapper.Map<List<ProposalIndex>, List<ProposalBasicDto>>(proposalIndex.Item2);
 
         return new ProposalPagedResultDto
         {
-            Items = ProposalDtoList,
+            Items = proposalDtoList,
             TotalCount = proposalIndex.Item1,
         };
     }
