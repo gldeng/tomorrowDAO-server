@@ -24,6 +24,7 @@ using Nito.AsyncEx;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Common.Enum;
 using TomorrowDAOServer.Common.Provider;
+using TomorrowDAOServer.Contract;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Providers;
@@ -47,10 +48,12 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     private readonly ILogger<ProposalProvider> _logger;
     private readonly IExplorerProvider _explorerProvider;
     private readonly IGraphQLProvider _graphQlProvider;
+    private readonly IScriptService _scriptService;
     private const int ProposalOnceWithdrawMax = 500;
+    private Dictionary<string, Tuple<List<string>, long>> _hcDic = new();
 
     public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider,
-        IExplorerProvider explorerProvider, IGraphQLProvider graphQlProvider,
+        IExplorerProvider explorerProvider, IGraphQLProvider graphQlProvider, IScriptService scriptService,
         IProposalAssistService proposalAssistService,
         IDAOProvider DAOProvider, IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor,
         ILogger<ProposalProvider> logger)
@@ -64,6 +67,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _proposalAssistService = proposalAssistService;
         _explorerProvider = explorerProvider;
         _graphQlProvider = graphQlProvider;
+        _scriptService = scriptService;
     }
 
     public async Task<ProposalPagedResultDto<ProposalDto>> QueryProposalListAsync(QueryProposalListInput input)
@@ -648,8 +652,19 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             return true;
         }
 
-        // HC can not vote this version
-        return daoIndex.IsNetworkDAO && (await _graphQlProvider.GetBPAsync(daoIndex.ChainId)).Contains(address);
+        if (daoIndex.IsNetworkDAO)
+        {
+            return (await _graphQlProvider.GetBPAsync(daoIndex.ChainId)).Contains(address);
+        }
+
+        if (_hcDic.TryGetValue(daoIndex.Id, out var value) && DateTime.UtcNow.ToUtcMilliSeconds() - value.Item2 <= 10 * 60 * 1000)
+        {
+            return value.Item1.Contains(address);
+        }
+
+        var currentHc = await _scriptService.GetCurrentHCAsync(daoIndex.ChainId, daoIndex.Id);
+        _hcDic[daoIndex.Id] = new Tuple<List<string>, long>(currentHc, DateTime.UtcNow.ToUtcMilliSeconds());
+        return currentHc.Contains(address);
     }
 
     private static bool CanWithdraw(DateTime endTime, List<string> votingItemIdList, string proposalId, bool isUniqueVote = false)
