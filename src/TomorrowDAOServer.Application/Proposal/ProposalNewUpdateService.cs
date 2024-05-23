@@ -42,7 +42,9 @@ public class ProposalNewUpdateService : ScheduleSyncDataService
         do
         {
             queryList = await _proposalProvider.GetNeedChangeProposalListAsync(skipCount);
-            var tasks = queryList.Select(async proposal =>
+            _logger.LogInformation(
+                "NeedChangeProposalList skipCount {skipCount} count: {count}", skipCount, queryList?.Count);
+            var tasks = queryList!.Select(async proposal =>
             {
                 var result = await _scriptService.GetProposalInfoAsync(chainId, proposal.ProposalId);
                 if (result != null)
