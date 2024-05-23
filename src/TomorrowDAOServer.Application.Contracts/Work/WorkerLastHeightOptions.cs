@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer.Work;
 
 public class WorkerLastHeightOptions
 {
+    //<worker type, <chainId, block height>>
     public IDictionary<string, IDictionary<string, long>> WorkerLastHeight { get; set; }
 
     public IDictionary<string, long> GetHeightSettings(WorkerBusinessType businessType)
