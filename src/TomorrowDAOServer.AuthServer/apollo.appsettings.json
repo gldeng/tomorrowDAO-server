@@ -1,0 +1,11 @@
+{
+  "ClientId": "TomorrowDAOServer_AuthServer",
+  "apollo": {
+    "UseApollo" : false,
+    "AppId": "tmrwdao-server",
+    "MetaServer": "http://127.0.0.1:8090,http://127.0.0.1:8091",
+    "Namespaces": [
+      "auth.server.appsettings.json"
+    ]
+  }
+}

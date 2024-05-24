@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>TomorrowDAOServer</RootNamespace>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\TomorrowDAOServer.Domain\TomorrowDAOServer.Domain.csproj" />
+    <ProjectReference Include="..\TomorrowDAOServer.Application.Contracts\TomorrowDAOServer.Application.Contracts.csproj" />
+    <ProjectReference Include="..\TomorrowDAOServer.Grains\TomorrowDAOServer.Grains.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GraphQL" Version="7.4.1" />
+    <PackageReference Include="GraphQL.Client.Abstractions" Version="6.0.0" />
+    <PackageReference Include="GraphQL.SystemTextJson" Version="7.4.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.25.1" />
+    <PackageReference Include="Volo.Abp.Account.Application" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.BlobStoring" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.Core" Version="7.0.2" />
+    <PackageReference Include="Volo.Abp.Identity.Application" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="7.0.0" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="7.0.0" />
+    <PackageReference Include="AElf.Contracts.Election" Version="1.6.0" />
+    <PackageReference Include="AElf.Contracts.Treasury" Version="1.6.0" />
+    <PackageReference Include="AElf.Contracts.Consensus.AEDPoS" Version="1.6.0" />
+    <PackageReference Include="AElf.Contracts.Parliament" Version="1.6.0" />
+    <PackageReference Include="AElf.Contracts.Association" Version="1.6.0" />
+    <PackageReference Include="AElf.Contracts.Referendum" Version="1.6.0" />
+  </ItemGroup>
+</Project>
