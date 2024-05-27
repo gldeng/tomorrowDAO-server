@@ -151,7 +151,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
         return _explorerProvider.GetProposalPagerAsync(CommonConstant.MainChainId, new ExplorerProposalListRequest 
         {
             ProposalType = type.ToString(),
-            Status = "all", IsContract = 0, Address = null
+            Status = "all", IsContract = 0
         });
     }
 }
