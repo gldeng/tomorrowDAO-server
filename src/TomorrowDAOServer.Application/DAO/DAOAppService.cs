@@ -119,7 +119,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
             }
 
             dao.HighCouncilMemberCount = (await _graphQlProvider.GetBPAsync(input.ChainId)).Count;
-            if (DateTime.UtcNow.ToUtcMilliSeconds() - ProposalCountCache.Item2 <= 10 * 60 * 1000)
+            if (DateTime.UtcNow.ToUtcMilliSeconds() - ProposalCountCache.Item2 >= 10 * 60 * 1000)
             {
                 var parliamentTask = GetCountTask(Common.Enum.ProposalType.Parliament);
                 var associationTask = GetCountTask(Common.Enum.ProposalType.Association);
@@ -151,7 +151,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
         return _explorerProvider.GetProposalPagerAsync(CommonConstant.MainChainId, new ExplorerProposalListRequest 
         {
             ProposalType = type.ToString(),
-            Status = "all", IsContract = 0, Address = null, Search = string.Empty
+            Status = "all", IsContract = 0
         });
     }
 }
