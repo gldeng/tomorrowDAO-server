@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Election.Dto;
@@ -14,6 +15,7 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Auditing;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Dtos.Explorer;
+using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal.Provider;
 using TomorrowDAOServer.Providers;
 using TomorrowDAOServer.Vote.Provider;
@@ -30,21 +32,22 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private readonly IGraphQLProvider _graphQlProvider;
     private readonly IVoteProvider _voteProvider;
     private readonly IExplorerProvider _explorerProvider;
+    private readonly IOptionsMonitor<TestDaoOption> _testDaoOptions;
     private const int ZeroSkipCount = 0;
     private const int GetMemberListMaxResultCount = 100;
     private const int CandidateTermNumber = 0;
     private ValueTuple<long, long> ProposalCountCache = new(0, 0);
-    
-    public DAOAppService(IDAOProvider daoProvider,
-        IElectionProvider electionProvider,
-        IProposalProvider proposalProvider, IExplorerProvider explorerProvider,
-        IGraphQLProvider graphQlProvider, IVoteProvider voteProvider)
+
+    public DAOAppService(IDAOProvider daoProvider, IElectionProvider electionProvider,
+        IProposalProvider proposalProvider, IExplorerProvider explorerProvider, IGraphQLProvider graphQlProvider,
+        IVoteProvider voteProvider, IOptionsMonitor<TestDaoOption> testDaoOptions)
     {
         _daoProvider = daoProvider;
         _electionProvider = electionProvider;
         _proposalProvider = proposalProvider;
         _graphQlProvider = graphQlProvider;
         _voteProvider = voteProvider;
+        _testDaoOptions = testDaoOptions;
         _explorerProvider = explorerProvider;
     }
 
@@ -57,6 +60,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
             //todo hc info
             return daoInfo;
         }
+
         var bpInfo = await _graphQlProvider.GetBPWithRoundAsync(input.ChainId);
         daoInfo.HighCouncilTermNumber = bpInfo.Round;
         daoInfo.HighCouncilMemberCount = bpInfo.AddressList.Count;
@@ -104,12 +108,17 @@ public class DAOAppService : ApplicationService, IDAOAppService
         {
             tokenInfos[symbol] = await _explorerProvider.GetTokenInfoAsync(input.ChainId, symbol);
         }
-        
+
+        //filter out test DAOs
+        items.RemoveAll(dao => _testDaoOptions.CurrentValue.FilteredDaoNames.Contains(dao.Name));
+
         foreach (var dao in items)
         {
             if (!dao.Symbol.IsNullOrEmpty())
             {
-                dao.SymbolHoldersNum = tokenInfos.TryGetValue(dao.Symbol.ToUpper(), out var tokenInfo) ? long.Parse(tokenInfo.Holders) : 0L;
+                dao.SymbolHoldersNum = tokenInfos.TryGetValue(dao.Symbol.ToUpper(), out var tokenInfo)
+                    ? long.Parse(tokenInfo.Holders)
+                    : 0L;
             }
 
             dao.ProposalsNum = await _proposalProvider.GetProposalCountByDAOIds(input.ChainId, dao.DaoId);
@@ -125,7 +134,8 @@ public class DAOAppService : ApplicationService, IDAOAppService
                 var associationTask = GetCountTask(Common.Enum.ProposalType.Association);
                 var referendumTask = GetCountTask(Common.Enum.ProposalType.Referendum);
                 await Task.WhenAll(parliamentTask, associationTask, referendumTask);
-                dao.ProposalsNum += (await parliamentTask).Total + (await associationTask).Total + (await referendumTask).Total;
+                dao.ProposalsNum += (await parliamentTask).Total + (await associationTask).Total +
+                                    (await referendumTask).Total;
                 ProposalCountCache = new ValueTuple<long, long>(dao.ProposalsNum, DateTime.UtcNow.ToUtcMilliSeconds());
             }
             else
@@ -148,7 +158,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
 
     private Task<ExplorerProposalResponse> GetCountTask(Common.Enum.ProposalType type)
     {
-        return _explorerProvider.GetProposalPagerAsync(CommonConstant.MainChainId, new ExplorerProposalListRequest 
+        return _explorerProvider.GetProposalPagerAsync(CommonConstant.MainChainId, new ExplorerProposalListRequest
         {
             ProposalType = type.ToString(),
             Status = "all", IsContract = 0
