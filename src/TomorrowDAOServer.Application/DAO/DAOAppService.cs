@@ -111,7 +111,6 @@ public class DAOAppService : ApplicationService, IDAOAppService
             return new PagedResultDto<DAOListDto> { Items = await GetNormalSearchList(input, excludeNames) };
         }
 
-
         List<DAOListDto> searchByNameList;
         if (end <= topCount)
         {
@@ -120,7 +119,8 @@ public class DAOAppService : ApplicationService, IDAOAppService
         }
 
         searchByNameList = await GetNameSearchList(input, daoOption.TopDaoNames.Skip(begin).Take(topCount - begin).ToList());
-        input.MaxResultCount = end - (topCount - begin);
+        input.SkipCount = 0;
+        input.MaxResultCount = end - topCount;
         var normalSearchList = await GetNormalSearchList(input, excludeNames);
         var combineList = new List<DAOListDto>();
         combineList.AddRange(searchByNameList);
