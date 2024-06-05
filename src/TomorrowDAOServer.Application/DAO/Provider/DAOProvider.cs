@@ -8,6 +8,7 @@ using Nest;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.DAO.Indexer;
+using TomorrowDAOServer.Enums;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.DAO.Provider;
@@ -19,6 +20,8 @@ public interface IDAOProvider
     Task<DAOIndex> GetAsync(GetDAOInfoInput input);
 
     Task<Tuple<long, List<DAOIndex>>> GetDAOListAsync(QueryDAOListInput input);
+    Task<Tuple<long, List<DAOIndex>>> GetMyOwneredDAOListAsync(QueryMyDAOListInput input, string address);
+    Task<DAOIndex> GetNetworkDAOAsync(string chainId);
 }
 
 public class DAOProvider : IDAOProvider, ISingletonDependency
@@ -112,5 +115,32 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
         QueryContainer Filter(QueryContainerDescriptor<DAOIndex> f) => f.Bool(b => b.Must(mustQuery));
         return await _daoIndexRepository.GetSortListAsync(Filter, skip: input.SkipCount, limit: input.MaxResultCount, 
             sortFunc: _ => new SortDescriptor<DAOIndex>().Descending(index => index.CreateTime));
+    }
+
+    public async Task<Tuple<long, List<DAOIndex>>> GetMyOwneredDAOListAsync(QueryMyDAOListInput input, string address)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<DAOIndex>, QueryContainer>>
+        {
+            q => 
+                q.Term(i => i.Field(t => t.ChainId).Value(input.ChainId)),
+            q => 
+                q.Term(i => i.Field(t => t.Creator).Value(address))
+        };
+        QueryContainer Filter(QueryContainerDescriptor<DAOIndex> f) => f.Bool(b => b.Must(mustQuery));
+        return await _daoIndexRepository.GetSortListAsync(Filter, skip: input.SkipCount, limit: input.MaxResultCount, 
+            sortFunc: _ => new SortDescriptor<DAOIndex>().Descending(index => index.CreateTime));
+    }
+
+    public async Task<DAOIndex> GetNetworkDAOAsync(string chainId)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<DAOIndex>, QueryContainer>>
+        {
+            q => 
+                q.Term(i => i.Field(t => t.ChainId).Value(chainId)),
+            q => 
+                q.Term(i => i.Field(t => t.IsNetworkDAO).Value(true))
+        };
+        QueryContainer Filter(QueryContainerDescriptor<DAOIndex> f) => f.Bool(b => b.Must(mustQuery));
+        return await _daoIndexRepository.GetAsync(Filter);
     }
 }

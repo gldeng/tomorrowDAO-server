@@ -18,6 +18,7 @@ using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal.Provider;
 using TomorrowDAOServer.Providers;
+using TomorrowDAOServer.User;
 using TomorrowDAOServer.Vote.Provider;
 
 namespace TomorrowDAOServer.DAO;
@@ -33,6 +34,7 @@ public class DAOAppService : ApplicationService, IDAOAppService
     private readonly IVoteProvider _voteProvider;
     private readonly IExplorerProvider _explorerProvider;
     private readonly IOptionsMonitor<TestDaoOption> _testDaoOptions;
+    private readonly IUserService _userService;
     private const int ZeroSkipCount = 0;
     private const int GetMemberListMaxResultCount = 100;
     private const int CandidateTermNumber = 0;
@@ -154,6 +156,42 @@ public class DAOAppService : ApplicationService, IDAOAppService
     public async Task<List<string>> GetBPList(string chainId)
     {
         return await _graphQlProvider.GetBPAsync(chainId);
+    }
+
+    public async Task<List<MyDAOListDto>> GetMyDAOListAsync(QueryMyDAOListInput input)
+    {
+        var result = new List<MyDAOListDto>();
+        var address = await _userService.GetCurrentUserAddressAsync(input.ChainId);
+        if (address.IsNullOrEmpty())
+        {
+            return result;
+        }
+
+        switch (input.Type)
+        {
+            case MyDAOType.Managed:
+                // todo no hc currently, just get bp
+                var bpList = await _graphQlProvider.GetBPAsync(input.ChainId);
+                if (bpList.Contains(address))
+                {
+                    result.Add(new MyDAOListDto
+                    {
+                        Type = MyDAOType.Managed,
+                        List = new List<DAOListDto> { ObjectMapper.Map<DAOIndex, DAOListDto>(await _daoProvider.GetNetworkDAOAsync(input.ChainId)) }
+                    });
+                }
+                break;
+            case MyDAOType.Owned:
+                result.Add( new MyDAOListDto
+                {
+                    Type = MyDAOType.Owned,
+                    List = ObjectMapper.Map<List<DAOIndex>, List<DAOListDto>>((await _daoProvider.GetMyOwneredDAOListAsync(input, address)).Item2)
+                });
+                break;
+            case MyDAOType.Participated:
+        }
+
+        return result;
     }
 
     private Task<ExplorerProposalResponse> GetCountTask(Common.Enum.ProposalType type)
