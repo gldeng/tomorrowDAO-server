@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using TomorrowDAOServer.Common.GraphQL;
 using GraphQL;
+using Microsoft.Extensions.Logging;
 using Nest;
 using TomorrowDAOServer.Common;
+using TomorrowDAOServer.Common.Dtos;
 using TomorrowDAOServer.DAO.Dtos;
 using TomorrowDAOServer.DAO.Indexer;
-using TomorrowDAOServer.Options;
-using TomorrowDAOServer.Enums;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.DAO.Provider;
@@ -24,18 +24,21 @@ public interface IDAOProvider
     Task<Tuple<long, List<DAOIndex>>> GetDAOListByNameAsync(string chainId, List<string> names);
     Task<Tuple<long, List<DAOIndex>>> GetMyOwneredDAOListAsync(QueryMyDAOListInput input, string address);
     Task<DAOIndex> GetNetworkDAOAsync(string chainId);
+    Task<PageResultDto<IndexerDAOInfo>> GetMyParticipatedDaoListAsync(GetParticipatedInput input);
 }
 
 public class DAOProvider : IDAOProvider, ISingletonDependency
 {
     private readonly IGraphQlHelper _graphQlHelper;
     private readonly INESTRepository<DAOIndex, string> _daoIndexRepository;
+    private readonly ILogger<DAOProvider> _logger;
 
-    public DAOProvider(IGraphQlHelper graphQlHelper,
+    public DAOProvider(IGraphQlHelper graphQlHelper, ILogger<DAOProvider> logger,
         INESTRepository<DAOIndex, string> daoIndexRepository)
     {
         _graphQlHelper = graphQlHelper;
         _daoIndexRepository = daoIndexRepository;
+        _logger = logger;
     }
 
     public async Task<List<IndexerDAOInfo>> GetSyncDAOListAsync(GetChainBlockHeightInput input)
@@ -167,5 +170,76 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
         };
         QueryContainer Filter(QueryContainerDescriptor<DAOIndex> f) => f.Bool(b => b.Must(mustQuery));
         return await _daoIndexRepository.GetAsync(Filter);
+    }
+
+    public async Task<PageResultDto<IndexerDAOInfo>> GetMyParticipatedDaoListAsync(GetParticipatedInput input)
+    {
+        try
+        {
+            var response =  await _graphQlHelper.QueryAsync<IndexerCommonResult<PageResultDto<IndexerDAOInfo>>>(new GraphQLRequest
+            {
+                Query = @"
+			        query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$address:String!) {
+                        data:getMyParticipated(input: {chainId:$chainId,skipCount:$skipCount,maxResultCount:$maxResultCount,address:$address})
+                        {
+                            totalCount,
+                            data{
+                                id,
+                                chainId,
+                                blockHeight,
+                                creator,
+                                metadata {
+                                    name,
+                                    logoUrl,
+                                    description,
+                                    socialMedia
+                                },
+                                governanceToken,
+                                isHighCouncilEnabled,
+                                highCouncilAddress,
+                                maxHighCouncilMemberCount,
+                                maxHighCouncilCandidateCount,
+                                electionPeriod,
+                                stakingAmount,
+                                highCouncilTermNumber,
+                                fileInfoList,
+                                isTreasuryContractNeeded,
+                                subsistStatus,
+                                treasuryContractAddress,
+                                treasuryAccountAddress,
+                                isTreasuryPause,
+                                treasuryPauseExecutor,
+                                voteContractAddress,
+                                electionContractAddress,
+                                governanceContractAddress,
+                                timelockContractAddress,
+                                activeTimePeriod,
+                                vetoActiveTimePeriod,
+                                pendingTimePeriod,
+                                executeTimePeriod,
+                                vetoExecuteTimePeriod,
+                                createTime,
+                                isNetworkDAO,
+                                voterCount
+                            }
+                        }
+                    }",
+                Variables = new
+                {
+                    chainId = input.ChainId,
+                    skipCount = input.SkipCount,
+                    maxResultCount = input.MaxResultCount,
+                    address = input.Address
+                }
+            });
+            return response?.Data ?? new PageResultDto<IndexerDAOInfo>();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetMyParticipatedDaoListAsyncException chainId {chainId}, address {address}, skipCount {skipCount}, maxResultCount {maxResultCount}", 
+                input.ChainId, input.Address, input.SkipCount, input.MaxResultCount);
+            return new PageResultDto<IndexerDAOInfo>();
+        }
+        
     }
 }

@@ -48,7 +48,6 @@ public class DaoController
     }
 
     [HttpGet("my-dao-list")]
-    [Authorize]
     public async Task<List<MyDAOListDto>> MyDAOList(QueryMyDAOListInput input)
     {
         return await _daoAppService.GetMyDAOListAsync(input);
