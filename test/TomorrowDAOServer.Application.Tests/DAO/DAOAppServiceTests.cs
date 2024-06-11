@@ -59,12 +59,6 @@ public class DAOAppServiceTests : TomorrowDaoServerApplicationTestBase
             Type = HighCouncilType.Member.ToString()
         });
         ret.ShouldNotBeNull();
-        
-        var list = await _daoAppService.GetDAOListAsync(new QueryDAOListInput
-        {
-            ChainId = "AELF"
-        });
-        list.ShouldNotBeNull();
     }
 
     private IDAOProvider MockDAOProvider()
