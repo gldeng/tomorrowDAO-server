@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,7 +9,6 @@ using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using TomorrowDAOServer.Common.AElfSdk.Dtos;
 using TomorrowDAOServer.Options;
@@ -19,26 +19,27 @@ namespace TomorrowDAOServer.Common.AElfSdk;
 
 public interface IContractProvider
 {
-    
     Task<(Hash transactionId, Transaction transaction)> CreateCallTransactionAsync(string chainId,
         string contractName, string methodName, IMessage param);
-    
+
     Task<(Hash transactionId, Transaction transaction)> CreateTransactionAsync(string chainId, string senderPublicKey,
         string contractName, string methodName,
         IMessage param);
 
     string ContractAddress(string chainId, string contractName);
-    
+
     // Task SendTransactionAsync(string chainId, Transaction transaction);
 
     Task<T> CallTransactionAsync<T>(string chainId, Transaction transaction) where T : class;
 
     Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, string chainId);
+
+    Task<string> GetTreasuryAddressAsync(string chainId, string daoId);
 }
 
 public class ContractProvider : IContractProvider, ISingletonDependency
 {
-    private readonly JsonSerializerSettings _settings = JsonSettingsBuilder.New().WithAElfTypesConverters().Build(); 
+    private readonly JsonSerializerSettings _settings = JsonSettingsBuilder.New().WithAElfTypesConverters().Build();
     private readonly Dictionary<string, AElfClient> _clients = new();
     private readonly Dictionary<string, SenderAccount> _accounts = new();
     private readonly Dictionary<string, string> _emptyDict = new();
@@ -47,7 +48,7 @@ public class ContractProvider : IContractProvider, ISingletonDependency
 
     private readonly IOptionsMonitor<ChainOptions> _chainOptions;
     private readonly ILogger<ContractProvider> _logger;
-    
+
     public static readonly JsonSerializerSettings DefaultJsonSettings = JsonSettingsBuilder.New()
         .WithCamelCasePropertyNamesResolver()
         .WithAElfTypesConverters()
@@ -83,23 +84,21 @@ public class ContractProvider : IContractProvider, ISingletonDependency
         return _clients[chainId];
     }
 
-    
+
     public string ContractAddress(string chainId, string contractName)
     {
         _ = _chainOptions.CurrentValue.ChainInfos.TryGetValue(chainId, out var chainInfo);
         var contractAddress = _contractAddress.GetOrAdd(chainId, _ => new Dictionary<string, string>());
         return contractAddress.GetOrAdd(contractName, name =>
         {
-            var address = (chainInfo?.ContractAddress ?? new Dictionary<string, Dictionary<string, string>>())
-                .GetValueOrDefault(chainId, _emptyDict)
-                .GetValueOrDefault(name, null);
+            var address =
+                (chainInfo?.ContractAddress ?? new Dictionary<string, string>()).GetValueOrDefault(name, null);
             if (address.IsNullOrEmpty() && SystemContractName.All.Contains(name))
                 address = AsyncHelper
                     .RunSync(() => Client(chainId).GetContractAddressByNameAsync(HashHelper.ComputeFrom(name)))
                     .ToBase58();
 
-            AssertHelper.NotEmpty(address, "Address of contract {contractName} on {chainId} not exits.",
-                name, chainId);
+            AssertHelper.NotEmpty(address, "Address of contract {contractName} on {chainId} not exits.", name, chainId);
             return address;
         });
     }
@@ -107,6 +106,27 @@ public class ContractProvider : IContractProvider, ISingletonDependency
     public Task<TransactionResultDto> QueryTransactionResultAsync(string transactionId, string chainId)
     {
         return Client(chainId).GetTransactionResultAsync(transactionId);
+    }
+
+    public async Task<string> GetTreasuryAddressAsync(string chainId, string daoId)
+    {
+        try
+        {
+            if (chainId.IsNullOrWhiteSpace() || daoId.IsNullOrWhiteSpace())
+            {
+                return string.Empty;
+            }
+            var (_, transaction) = await CreateCallTransactionAsync(chainId,
+                "TreasuryContractAddress", CommonConstant.TreasuryMethodGetTreasuryAccountAddress, Hash.LoadFromHex(daoId));
+            var treasuryAddress =
+                await CallTransactionAsync<Address>(chainId, transaction);
+            return treasuryAddress == null ? string.Empty : treasuryAddress.ToBase58();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "get treasury address error. daoId={0}, chainId={1}", daoId, chainId);
+            return string.Empty;
+        }
     }
 
 
@@ -159,5 +179,4 @@ public class ContractProvider : IContractProvider, ISingletonDependency
 
         return (T)JsonConvert.DeserializeObject(rawTransactionResult, typeof(T), DefaultJsonSettings);
     }
-    
 }

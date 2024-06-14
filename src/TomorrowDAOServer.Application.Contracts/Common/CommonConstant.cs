@@ -14,4 +14,10 @@ public static class CommonConstant
     //todo temporary count to make hc proposal not approved, real query when next version
     public const int HCCount = 3;
     public const int AbstractVoteTotal = 10000;
+
+    public const string TreasuryContractAddressName = "TreasuryContractAddress";
+        
+    public const string ElectionMethodGetVotedCandidates = "GetVotedCandidates";
+    public const string ElectionMethodGetCandidateVote = "GetCandidateVote";
+    public const string TreasuryMethodGetTreasuryAccountAddress = "GetTreasuryAccountAddress";
 }
