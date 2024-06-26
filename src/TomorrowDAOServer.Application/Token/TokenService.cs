@@ -73,7 +73,7 @@ public class TokenService : TomorrowDAOServerAppService, ITokenService
         var tokens = list.Where(x => x.Amount > 0).Where(x => !string.IsNullOrEmpty(x.GovernanceToken))
             .Select(x => x.GovernanceToken).Distinct().ToList();
         var tokenInfoTasks = tokens.Select(x => _explorerProvider.GetTokenInfoAsync(chainId, x)).ToList();
-        var priceTasks = tokens.Select(x => GetTokenPriceAsync(x, CommonConstant.USDT)).ToList();
+        var priceTasks = tokens.Select(x => GetTokenPriceAsync(x, CommonConstant.USD)).ToList();
         var tokenInfoResults = (await Task.WhenAll(tokenInfoTasks)).ToDictionary(x => x.Symbol, x => x); 
         var priceResults = (await Task.WhenAll(priceTasks)).ToDictionary(x => x.BaseCoin, x => x);
         var sum = list.Where(x => x.Amount > 0).Sum(x => 
