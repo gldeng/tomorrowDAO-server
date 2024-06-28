@@ -14,6 +14,7 @@ namespace TomorrowDAOServer.Treasury.Provider;
 public interface ITreasuryAssetsProvider
 {
     Task<GetTreasuryFundListResult> GetTreasuryAssetsAsync(GetTreasuryAssetsInput input);
+    Task<GetTreasuryFundListResult> GetAllTreasuryAssetsAsync(GetAllTreasuryAssetsInput input);
 }
 
 public class TreasuryAssetsProvider : ITreasuryAssetsProvider, ISingletonDependency
@@ -29,11 +30,12 @@ public class TreasuryAssetsProvider : ITreasuryAssetsProvider, ISingletonDepende
 
     public async Task<GetTreasuryFundListResult> GetTreasuryAssetsAsync(GetTreasuryAssetsInput input)
     {
-        var response = await _graphQlHelper.QueryAsync<GetTreasuryFundListResult>(new GraphQLRequest
+        var response = await _graphQlHelper.QueryAsync<IndexerCommonResult<GetTreasuryFundListResult>>(new GraphQLRequest
         {
             Query = @"
-			    query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$daoId:String!,$symbols: [String]) {
-                    getTreasuryFundList(input: {chainId:$chainId,skipCount:$skipCount,maxResultCount:$maxResultCount,daoId:$daoId,symbols:$symbols}){
+			    query($chainId:String!,$skipCount:Int!,$maxResultCount:Int!,$daoId:String!,$symbols: [String],$startBlockHeight:Long!,$endBlockHeight:Long!) {
+                    data:getTreasuryFundList(input: {chainId:$chainId,skipCount:$skipCount,maxResultCount:$maxResultCount,daoId:$daoId,symbols:$symbols,startBlockHeight:$startBlockHeight,endBlockHeight:$endBlockHeight})
+                    {
                         item1,
                         item2 {
                             id,
@@ -51,11 +53,42 @@ public class TreasuryAssetsProvider : ITreasuryAssetsProvider, ISingletonDepende
             {
                 chainId = input.ChainId,
                 daoId = input.DaoId,
-                symbols = input.Symbols,
                 skipCount = input.SkipCount,
-                maxResultCount = input.MaxResultCount
+                maxResultCount = input.MaxResultCount,
+                startBlockHeight = 0,
+                endBlockHeight = 0
             }
         });
-        return response ?? new GetTreasuryFundListResult();
+        return response.Data ?? new GetTreasuryFundListResult();
+    }
+
+    public async Task<GetTreasuryFundListResult> GetAllTreasuryAssetsAsync(GetAllTreasuryAssetsInput input)
+    {
+        var response = await _graphQlHelper.QueryAsync<IndexerCommonResult<GetTreasuryFundListResult>>(new GraphQLRequest
+        {
+            Query = @"
+			    query($chainId:String!,$daoId:String!) {
+                    data:getAllTreasuryFundList(input: {chainId:$chainId,daoId:$daoId})
+                    {
+                        item1,
+                        item2 {
+                            id,
+                            chainId,
+                            blockHeight,
+                            daoId,
+                            treasuryAddress,
+                            symbol,
+                            availableFunds,
+                            lockedFunds
+                        }
+                    }
+                }",
+            Variables = new
+            {
+                chainId = input.ChainId,
+                daoId = input.DaoId,
+            }
+        });
+        return response.Data ?? new GetTreasuryFundListResult();
     }
 }
