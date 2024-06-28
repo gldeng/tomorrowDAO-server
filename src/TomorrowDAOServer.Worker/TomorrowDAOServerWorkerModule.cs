@@ -20,6 +20,7 @@ namespace TomorrowDAOServer.Worker
             // backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<ProposalExpiredWorker>());
             backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<DAOSyncWorker>());
             backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<ProposalNewUpdateWorker>());
+            backgroundWorkerManger.AddAsync(context.ServiceProvider.GetService<HighCouncilMemberSyncWorker>());
         }
     }
 }

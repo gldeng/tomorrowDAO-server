@@ -10,6 +10,7 @@ using TomorrowDAOServer.Common.GraphQL;
 using TomorrowDAOServer.DAO.Indexer;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Grains.Grain.ApplicationHandler;
+using TomorrowDAOServer.Grains.Grain.Election;
 using TomorrowDAOServer.Grains.Grain.Token;
 using Volo.Abp.DependencyInjection;
 
@@ -27,6 +28,8 @@ public interface IGraphQLProvider
     public Task<long> GetIndexBlockHeightAsync(string chainId);
     public Task<Dictionary<string, long>> GetHoldersAsync(List<string> symbols, string chainId, int skipCount, int maxResultCount);
     public Task<List<DAOAmount>> GetDAOAmountAsync(string chainId);
+    public Task SetHighCouncilMembersAsync(string chainId, string daoId, List<string> addressList);
+    public Task<List<string>> GetHighCouncilMembersAsync(string chainId, string daoId);
 }
 
 public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
@@ -218,5 +221,35 @@ public class GraphQLProvider : IGraphQLProvider, ISingletonDependency
         }
 
         return new List<DAOAmount>();
+    }
+
+    public async Task SetHighCouncilMembersAsync(string chainId, string daoId, List<string> addressList)
+    {
+        try
+        {
+            var grainId = GuidHelper.GenerateId(chainId, daoId);
+            var grain = _clusterClient.GetGrain<IHighCouncilMembersGrain>(grainId);
+            await grain.SaveHighCouncilMembersAsync(addressList);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "SetHighCouncilMembersAsync error: chain={id},DaoId={daoId}", chainId, daoId);
+        }
+    }
+
+    public async Task<List<string>> GetHighCouncilMembersAsync(string chainId, string daoId)
+    {
+        try
+        {
+            var grainId = GuidHelper.GenerateId(chainId, daoId);
+            var grain = _clusterClient.GetGrain<IHighCouncilMembersGrain>(grainId);
+            return await grain.GetHighCouncilMembersAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "SetHighCouncilMembersAsync error: chain={id},DaoId={daoId}", chainId, daoId);
+        }
+
+        return new List<string>();
     }
 }
