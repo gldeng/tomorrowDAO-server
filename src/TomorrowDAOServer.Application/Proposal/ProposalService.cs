@@ -478,6 +478,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             ChainId = input.ChainId,
             DAOId = proposalDetailDto.DAOId
         });
+        proposalDetailDto.Alias = daoIndex.Alias;
         var councilMemberCountTask =
             GetHighCouncilMemberCountAsync(daoIndex.IsNetworkDAO, input.ChainId, proposalDetailDto.DAOId, proposalIndex.GovernanceMechanism.ToString());
         var tokenInfo =
@@ -556,7 +557,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         });
 
         myProposalDto.Symbol = tokenInfo.Symbol;
-        myProposalDto.Decimal = tokenInfo.Decimals.ToString();
+        myProposalDto.Decimal = tokenInfo.Decimals;
         if (voteRecords.IsNullOrEmpty())
         {
             myProposalDto.CanVote = await CanVote(daoIndex, proposalIndex, input.Address);

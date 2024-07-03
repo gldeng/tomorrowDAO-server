@@ -13,6 +13,8 @@ public class DAOIndex : AbstractEntity<string>, IIndexBuild
 {
     [Keyword] public override string Id { get; set; }
     [Keyword] public string ChainId { get; set; }
+    [Keyword] public string Alias { get; set; }
+    [Keyword] public string AliasHexString { get; set; }
     public long BlockHeight { get; set; }
     [Keyword] public string Creator { get; set; }
     public Metadata Metadata { get; set; }
@@ -40,6 +42,7 @@ public class DAOIndex : AbstractEntity<string>, IIndexBuild
     public DateTime CreateTime { get; set; }
     public bool IsNetworkDAO { get; set; }
     public int VoterCount { get; set; }
+
     [JsonConverter(typeof(StringEnumConverter))]
     public GovernanceMechanism GovernanceMechanism { get; set; }
 }
