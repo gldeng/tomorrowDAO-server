@@ -25,7 +25,7 @@ public partial class NetworkDaoTest
         result.ShouldNotBeNull();
         result.TotalCount.ShouldBe(1);
         result.Items.ShouldNotBeNull();
-        result.Items.First().Title.ShouldBe("Title");
+        result.Items.First().Title.ShouldBe("ProposalId1 Title");
         result.Items.First().ProposalId.ShouldBe(ProposalId1);
     }
 }
