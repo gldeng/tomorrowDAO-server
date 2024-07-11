@@ -56,6 +56,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     private readonly IUserProvider _userProvider;
     private readonly IElectionProvider _electionProvider;
     private const int ProposalOnceWithdrawMax = 500;
+    private Dictionary<string, VoteMechanism> _voteMechanisms = new();
 
     public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider,
         IExplorerProvider explorerProvider, IGraphQLProvider graphQlProvider, IScriptService scriptService,
@@ -382,7 +383,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "GetProposalList from Source:{source} error, input={daoId}", proposalSource,
+            _logger.LogError(e, "GetProposalListAsync from Source:{source} error, input={daoId}", proposalSource,
                 JsonConvert.SerializeObject(input));
             return new Tuple<long, List<ProposalDto>>(0, new List<ProposalDto>());
         }
@@ -564,9 +565,19 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
             return myProposalDto;
         }
 
+        if (_voteMechanisms.IsNullOrEmpty())
+        {
+            _voteMechanisms = (await _voteProvider.GetVoteSchemeAsync(new GetVoteSchemeInput { ChainId = input.ChainId }))
+                .ToDictionary(x => x.VoteSchemeId, x => x.VoteMechanism);
+        }
+        if (!_voteMechanisms.TryGetValue(proposalIndex.VoteSchemeId, out var voteMechanism))
+        {
+            return myProposalDto;
+        }
+        
         var voteRecord = voteRecords[0];
         myProposalDto.CanVote = false;
-        if (VoteMechanism.UNIQUE_VOTE == proposalIndex.VoteMechanism)
+        if (VoteMechanism.UNIQUE_VOTE == voteMechanism)
         {
             myProposalDto.votesAmountUniqueVote = 1;
             return myProposalDto;
