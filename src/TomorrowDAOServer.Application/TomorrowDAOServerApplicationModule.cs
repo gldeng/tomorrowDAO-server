@@ -5,6 +5,7 @@ using TomorrowDAOServer.Election;
 using TomorrowDAOServer.Grains;
 using TomorrowDAOServer.Proposal;
 using TomorrowDAOServer.Options;
+using TomorrowDAOServer.ThirdPart.Exchange;
 using TomorrowDAOServer.Vote;
 using Volo.Abp.Account;
 using Volo.Abp.AutoMapper;
@@ -36,6 +37,8 @@ public class TomorrowDAOServerApplicationModule : AbpModule
         Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
         Configure<QueryContractOption>(configuration.GetSection("QueryContractOption"));
         Configure<ApiOption>(configuration.GetSection("Api"));
+        Configure<ExchangeOptions>(configuration.GetSection("Exchange"));
+        Configure<CoinGeckoOptions>(configuration.GetSection("CoinGecko"));
         Configure<AbpAutoMapperOptions>(options => { options.AddMaps<TomorrowDAOServerApplicationModule>(); });
         context.Services.AddTransient<IScheduleSyncDataService, ProposalSyncDataService>();
         // context.Services.AddTransient<IScheduleSyncDataService, ProposalUpdateService>();
@@ -45,6 +48,9 @@ public class TomorrowDAOServerApplicationModule : AbpModule
         context.Services.AddTransient<IScheduleSyncDataService, HighCouncilMemberSyncService>();
         context.Services.AddTransient<IScheduleSyncDataService, VoteRecordSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, VoteWithdrawSyncDataService>();
+        context.Services.AddTransient<IExchangeProvider, OkxProvider>();
+        context.Services.AddTransient<IExchangeProvider, BinanceProvider>();
+        context.Services.AddTransient<IExchangeProvider, CoinGeckoProvider>();
         context.Services.AddHttpClient();
         context.Services.AddMemoryCache();
         context.Services.AddSingleton(typeof(ILocalMemoryCache<>), typeof(LocalMemoryCache<>));
