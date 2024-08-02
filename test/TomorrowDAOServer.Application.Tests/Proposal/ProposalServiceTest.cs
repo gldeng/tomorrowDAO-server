@@ -193,7 +193,6 @@ public class ProposalServiceTest
         myInfo.Symbol.ShouldBeNull("ELF");
     }
 
-
     [Fact]
     public async void CanExecute_Test()
     {

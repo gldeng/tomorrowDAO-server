@@ -13,7 +13,6 @@ using TomorrowDAOServer.Dtos;
 using TomorrowDAOServer.Dtos.Explorer;
 using TomorrowDAOServer.Grains.Grain;
 using TomorrowDAOServer.Grains.Grain.Token;
-using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Providers;
 using TomorrowDAOServer.ThirdPart.Exchange;
 using Volo.Abp.ObjectMapping;
