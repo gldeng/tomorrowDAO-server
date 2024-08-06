@@ -174,7 +174,7 @@ public class TreasuryAssetsService : TomorrowDAOServerAppService, ITreasuryAsset
                     ChainId = input.ChainId,
                     Alias = input.Alias
                 });
-                if (daoIndex == null)
+                if (daoIndex == null || daoIndex.Id.IsNullOrWhiteSpace())
                 {
                     throw new UserFriendlyException("No DAO information found.");
                 }
