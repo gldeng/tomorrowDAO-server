@@ -23,6 +23,8 @@ using TomorrowDAOServer.Middleware;
 using TomorrowDAOServer.MongoDB;
 using TomorrowDAOServer.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using TomorrowDAOServer.Monitor.Http;
+using TomorrowDAOServer.Monitor.Orleans.Filters;
 using Microsoft.AspNetCore.Mvc;
 using TomorrowDAOServer.Filter;
 using Volo.Abp;
@@ -257,6 +259,7 @@ namespace TomorrowDAOServer
                     .ConfigureApplicationParts(parts =>
                         parts.AddApplicationPart(typeof(TomorrowDAOServerGrainsModule).Assembly).WithReferences())
                     .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+                    .AddMethodFilter(o)
                     .Build();
             });
         }
@@ -300,6 +303,7 @@ namespace TomorrowDAOServer
             // }
 
             app.UseMiddleware<DeviceInfoMiddleware>();
+            app.UseMiddleware<PerformanceMonitorMiddleware>();
             app.UseAuditing();
             app.UseAbpSerilogEnrichers();
             app.UseUnitOfWork();
