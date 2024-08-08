@@ -23,6 +23,10 @@ using TomorrowDAOServer.Middleware;
 using TomorrowDAOServer.MongoDB;
 using TomorrowDAOServer.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using TomorrowDAOServer.Monitor.Http;
+using TomorrowDAOServer.Monitor.Orleans.Filters;
+using Microsoft.AspNetCore.Mvc;
+using TomorrowDAOServer.Filter;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.MultiTenancy;
@@ -81,7 +85,17 @@ namespace TomorrowDAOServer
             ConfigureTokenCleanupService();
             ConfigureOrleans(context, configuration);
             ConfigureGraphQl(context, configuration);
+            // ConfigFilter(context);
             context.Services.AddAutoResponseWrapper();
+        }
+
+        private void ConfigFilter(ServiceConfigurationContext context)
+        {
+            context.Services.AddScoped<LoggingFilter>();
+            context.Services.Configure<MvcOptions>(options =>
+            {
+                options.Filters.AddService<LoggingFilter>();
+            });
         }
 
         private void ConfigureCache(IConfiguration configuration)
@@ -245,6 +259,7 @@ namespace TomorrowDAOServer
                     .ConfigureApplicationParts(parts =>
                         parts.AddApplicationPart(typeof(TomorrowDAOServerGrainsModule).Assembly).WithReferences())
                     .ConfigureLogging(builder => builder.AddProvider(o.GetService<ILoggerProvider>()))
+                    .AddMethodFilter(o)
                     .Build();
             });
         }
@@ -288,6 +303,7 @@ namespace TomorrowDAOServer
             // }
 
             app.UseMiddleware<DeviceInfoMiddleware>();
+            app.UseMiddleware<PerformanceMonitorMiddleware>();
             app.UseAuditing();
             app.UseAbpSerilogEnrichers();
             app.UseUnitOfWork();
