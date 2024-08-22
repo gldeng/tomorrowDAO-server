@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Common;
@@ -16,6 +17,9 @@ using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Proposal.Index;
+using TomorrowDAOServer.Ranking.Dto;
+using TomorrowDAOServer.Spider.Dto;
+using TomorrowDAOServer.Telegram.Dto;
 using TomorrowDAOServer.Token;
 using TomorrowDAOServer.Token.Index;
 using TomorrowDAOServer.Treasury.Dto;
@@ -44,6 +48,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             ;
         CreateMap<UserIndex, UserDto>().ReverseMap();
         CreateMap<AddressInfo, UserAddressInfo>().ReverseMap();
+        CreateMap<TelegramAppDto, TelegramAppIndex>().ReverseMap();
         CreateMap<IndexerUserToken, UserTokenDto>();
         CreateMap<IndexerProposal, ProposalIndex>();
         CreateMap<ExecuteTransactionDto, ExecuteTransaction>()
@@ -219,11 +224,28 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
                 => opt.MapFrom(source => source.TransactionId))
             .ForMember(des => des.VoteNumAfterDecimals, opt
                 => opt.MapFrom(source => source.Amount))
+            .ForMember(des => des.Points, opt
+                => opt.MapFrom(source => source.ValidRankingVote ? 10000 : 0))
+            .ForMember(des => des.VoteFor, opt
+                => opt.MapFrom(source => source.Title))
             ;
 
         CreateMap<ExplorerTokenInfoResponse, TokenInfoDto>();
         CreateMap<ProposalIndex, CommentIndex>();
         CreateMap<NewCommentInput, CommentIndex>();
         CreateMap<CommentIndex, CommentDto>();
+        CreateMap<TelegramAppIndex, RankingAppIndex>()
+            .ForMember(des => des.AppId, opt
+                => opt.MapFrom(source => source.Id))
+            .ForMember(des => des.VoteAmount, opt
+                => opt.MapFrom(source => 0))
+            ;
+        CreateMap<IndexerProposal, RankingAppIndex>();
+        CreateMap<RankingAppIndex, RankingAppDetailDto>();
+        CreateMap<ProposalIndex, RankingListDto>()
+            .ForMember(des => des.Active, opt
+                => opt.MapFrom(source => DateTime.UtcNow <= source.ActiveEndTime && DateTime.UtcNow >= source.ActiveStartTime))
+            ;
+        
     }
 }
