@@ -42,7 +42,6 @@ public class AwakenProvider : AbstractExchangeProvider
             withInfoLog: false, withDebugLog: false, param: MapHelper.ToDictionary(new AwakenRequest { Symbol = fromSymbol }));
         AssertHelper.IsTrue(res.Success, "QueryAwakenPriceFailed, msg={Msg}", res.Message);
         AssertHelper.NotEmpty(res.Data, "QueryAwakenPriceEmpty");
-
         return new TokenExchangeDto
         {
             FromSymbol = fromSymbol, ToSymbol = toSymbol, Exchange = res.Data.SafeToDecimal(),
@@ -54,7 +53,6 @@ public class AwakenProvider : AbstractExchangeProvider
     {
         return _exchangeOptions.CurrentValue.Awaken.BaseUrl;
     }
-
 }
 
 public class AwakenRequest
