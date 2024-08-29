@@ -28,6 +28,7 @@ public abstract partial class
     protected const string ProposalId3 = "bf0cc1d7f7adcc2a43a6cc08cc303719aad51196da7570ebd62eca8ed1100cf6";
     protected const string DAOId = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
     protected const string PrivateKey1 = "87ec6028d6c4fa6fd43a1a68c589e737dc8bf4b8968373068dc39a91f70fbeb1";
+    protected const string DAOName = "DAOName";
 
     protected const string PublicKey1 =
         "04f5db833e5377cab193e3fc663209ac3293ef67736021ee9cebfd1b95a058a5bb400aaeb02ed15dc93177c9bcf38057c4b8069f46601a2180e892a555345c89cf";
@@ -138,7 +139,8 @@ public abstract partial class
                             { "CaAddress", Address1},
                             { "AElf.ContractNames.Treasury", "AElfTreasuryContractAddress" },
                             {"AElf.ContractNames.Token", "AElfContractNamesToken"},
-                            {"VoteContractAddress", "VoteContractAddress"}
+                            {"VoteContractAddress", "VoteContractAddress"},
+                            {"AElf.Contracts.ProxyAccountContract", "ProxyAccountContract"}
                         }
                     }
                 },
@@ -152,7 +154,8 @@ public abstract partial class
                             { "CaAddress", "CAContractAddress" },
                             { "TreasuryContractAddress", "TreasuryContractAddress" },
                             {"AElf.ContractNames.Token", "AElfContractNamesToken"},
-                            {"VoteContractAddress", "VoteContractAddress"}
+                            {"VoteContractAddress", "VoteContractAddress"},
+                            {"AElf.Contracts.ProxyAccountContract", "ProxyAccountContract"}
                         }
                     }
                 },
@@ -166,7 +169,8 @@ public abstract partial class
                             { "CaAddress", Address1 },
                             { "TreasuryContractAddress", TreasuryContractAddress },
                             {"AElf.ContractNames.Token", Address1},
-                            {"VoteContractAddress", Address2}
+                            {"VoteContractAddress", Address2},
+                            {"AElf.Contracts.ProxyAccountContract", "ProxyAccountContract"}
                         }
                     }
                 }
