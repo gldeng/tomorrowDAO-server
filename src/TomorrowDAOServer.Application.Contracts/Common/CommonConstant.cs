@@ -9,6 +9,7 @@ public static class CommonConstant
     public const string Comma = ",";
     public const string Underline = "_";
     public const string Middleline = "-";
+    public const string Colon = ":";
 
     public const string EmptyString = "";
     public const string ELF = "ELF";
@@ -46,6 +47,7 @@ public static class CommonConstant
     public const string VoteEventVoted = "Voted";
     public const string MemoPattern = @"##GameRanking\s*:\s*\{([^}]+)\}";
     public const string DescriptionBegin = "##GameRanking:";
+    public const string DescriptionPattern = @"^##GameRanking:(?:\s*[a-zA-Z0-9&'’\-]+(?:\s*,\s*[a-zA-Z0-9&'’\-]+)*)?$";
     public const string DayFormatString = "yyyyMMdd";
     public const long TenMinutes = 10 * 60 * 1000;
     public const long OneDay = 24 * 60 * 60 * 1000;
@@ -63,4 +65,8 @@ public static class CommonConstant
             { "b39d3b9a1cea1ff57735520fdaa414bf9c1fc05f5d00cf41326809051882f2ac", VoteMechanism.TOKEN_BALLOT }
         }}
     };
+    
+    // Hub
+    public const string ReceivePointsProduce = "ReceivePointsProduce";
+    public const string RequestPointsProduce = "RequestPointsProduce";
 }
