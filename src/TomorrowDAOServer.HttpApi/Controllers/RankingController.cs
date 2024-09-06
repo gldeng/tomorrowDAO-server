@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using TomorrowDAOServer.Common.Dtos;
 using TomorrowDAOServer.Ranking;
 using TomorrowDAOServer.Ranking.Dto;
 using Volo.Abp;
+using Volo.Abp.AspNetCore.Mvc;
 
 namespace TomorrowDAOServer.Controllers;
 
@@ -12,7 +14,7 @@ namespace TomorrowDAOServer.Controllers;
 [Area("app")]
 [ControllerName("Ranking")]
 [Route("api/app/ranking")]
-public class RankingController
+public class RankingController : AbpController
 {
     private readonly IRankingAppService _rankingAppService;
 
@@ -52,5 +54,19 @@ public class RankingController
     public async Task<RankingVoteRecord> GetVoteStatusAsync(GetVoteStatusInput input)
     {
         return await _rankingAppService.GetVoteStatusAsync(input);
+    }
+    
+    [HttpGet("move-history-data")]
+    [Authorize]
+    public async Task HistoryDataAsync(string chainId, string type)
+    {
+        await _rankingAppService.MoveHistoryDataAsync(chainId, type);
+    }
+
+    [HttpPost("like")]
+    [Authorize]
+    public async Task<long> LikeAsync(RankingAppLikeInput input)
+    {
+        return await _rankingAppService.LikeAsync(input);
     }
 }

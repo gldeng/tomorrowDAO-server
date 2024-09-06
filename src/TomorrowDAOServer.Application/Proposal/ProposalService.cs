@@ -23,6 +23,8 @@ using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Contract;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Election.Provider;
+using TomorrowDAOServer.Ranking;
+using TomorrowDAOServer.Ranking.Provider;
 using TomorrowDAOServer.Token;
 using TomorrowDAOServer.User.Provider;
 using TomorrowDAOServer.Vote;
@@ -52,13 +54,14 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
     private readonly IElectionProvider _electionProvider;
     private readonly IOptionsMonitor<RankingOptions> _rankingOptions;
     private const int ProposalOnceWithdrawMax = 500;
+    private readonly IRankingAppPointsRedisProvider _rankingAppPointsRedisProvider;
     private Dictionary<string, VoteMechanism> _voteMechanisms = new();
 
     public ProposalService(IObjectMapper objectMapper, IProposalProvider proposalProvider, IVoteProvider voteProvider,
         IGraphQLProvider graphQlProvider, IScriptService scriptService, IProposalAssistService proposalAssistService,
         IDAOProvider DAOProvider, IOptionsMonitor<ProposalTagOptions> proposalTagOptionsMonitor,
         ILogger<ProposalProvider> logger, IUserProvider userProvider, IElectionProvider electionProvider, ITokenService tokenService, 
-        IOptionsMonitor<RankingOptions> rankingOptions)
+        IOptionsMonitor<RankingOptions> rankingOptions, IRankingAppPointsRedisProvider rankingAppPointsRedisProvider)
     {
         _objectMapper = objectMapper;
         _proposalProvider = proposalProvider;
@@ -69,6 +72,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         _electionProvider = electionProvider;
         _tokenService = tokenService;
         _rankingOptions = rankingOptions;
+        _rankingAppPointsRedisProvider = rankingAppPointsRedisProvider;
         _DAOProvider = DAOProvider;
         _proposalAssistService = proposalAssistService;
         _graphQlProvider = graphQlProvider;
@@ -158,7 +162,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
 
             if (voteSchemeDic.TryGetValue(proposal.VoteSchemeId, out var voteMechanism))
             {
-                proposal.VoteMechanismName = voteMechanism.ToString();
+                proposal.VoteMechanismName = voteMechanism.VoteMechanism.ToString();
                 CalculateRealVoteCountAsync(proposal, voteMechanism.VoteMechanism, tokenInfo.Symbol, tokenInfo.Decimals);
             }
 
@@ -309,7 +313,7 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         CalculateHcRealVoterCountAsync(proposalDetailDto, councilMemberCount);
         if (voteSchemeDic.TryGetValue(proposalDetailDto.VoteSchemeId, out var indexerVoteScheme))
         {
-            proposalDetailDto.VoteMechanismName = indexerVoteScheme.ToString();
+            proposalDetailDto.VoteMechanismName = indexerVoteScheme.VoteMechanism.ToString();
             CalculateRealVoteCountAsync(proposalDetailDto, indexerVoteScheme.VoteMechanism, symbol, symbolDecimal);
         }
 
@@ -469,8 +473,8 @@ public class ProposalService : TomorrowDAOServerAppService, IProposalService
         var isRankingDao = _rankingOptions.CurrentValue.DaoIds.Contains(input.DAOId);
         var totalPoints = 0L;
         if (isRankingDao)
-        { 
-            totalPoints = await _voteProvider.GetVotePoints(input.ChainId, input.DAOId, input.Address) * 10000;
+        {
+            totalPoints = await _rankingAppPointsRedisProvider.GetUserAllPointsAsync(input.Address);
         }
         var voteResult = await _voteProvider.GetPageVoteRecordAsync(new GetPageVoteRecordInput
         {
