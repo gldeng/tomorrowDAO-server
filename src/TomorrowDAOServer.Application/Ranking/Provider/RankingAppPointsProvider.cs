@@ -87,7 +87,8 @@ public class RankingAppPointsProvider : IRankingAppPointsProvider, ISingletonDep
 
     public async Task AddOrUpdateUserPointsIndexAsync(VoteAndLikeMessageEto message)
     {
-        if (message.PointsType == PointsType.All)
+        var pointsType = message.PointsType;
+        if (pointsType == PointsType.All)
         {
             return;
         }
@@ -96,7 +97,7 @@ public class RankingAppPointsProvider : IRankingAppPointsProvider, ISingletonDep
         try
         {
             var userPointsIndex = await GetRankingUserPointsIndexByAliasAsync(message.ChainId, message.ProposalId,
-                message.Address, message.Alias, message.PointsType);
+                message.Address, message.Alias, pointsType);
             if (userPointsIndex == null || userPointsIndex.Id == Guid.Empty)
             {
                 userPointsIndex = _objectMapper.Map<VoteAndLikeMessageEto, RankingAppUserPointsIndex>(message);
@@ -106,10 +107,24 @@ public class RankingAppPointsProvider : IRankingAppPointsProvider, ISingletonDep
             {
                 userPointsIndex.Amount += message.Amount;
             }
+
+            long deltaPoints = 0;
             
-            userPointsIndex.Points += message.PointsType == PointsType.Vote
-                ? _rankingAppPointsCalcProvider.CalculatePointsFromVotes(message.Amount)
-                : _rankingAppPointsCalcProvider.CalculatePointsFromLikes(message.Amount);
+            switch (pointsType)
+            {
+                case PointsType.Vote:
+                    deltaPoints = _rankingAppPointsCalcProvider.CalculatePointsFromVotes(message.Amount);
+                    break;
+                case PointsType.Like:
+                    deltaPoints = _rankingAppPointsCalcProvider.CalculatePointsFromLikes(message.Amount);
+                    break;
+                case PointsType.InviteVote:
+                case PointsType.BeInviteVote:
+                    deltaPoints = _rankingAppPointsCalcProvider.CalculatePointsFromReferralVotes(message.Amount);
+                    break;
+            }
+            
+            userPointsIndex.Points += deltaPoints;
             userPointsIndex.UpdateTime = DateTime.Now;
 
             await AddOrUpdateUserPointsIndexAsync(userPointsIndex);
@@ -160,8 +175,11 @@ public class RankingAppPointsProvider : IRankingAppPointsProvider, ISingletonDep
         var mustQuery = new List<Func<QueryContainerDescriptor<RankingAppUserPointsIndex>, QueryContainer>>();
 
         mustQuery.Add(q => q.Term(i => i.Field(f => f.ChainId).Value(chainId)));
-        mustQuery.Add(q => q.Term(i => i.Field(f => f.ProposalId).Value(proposalId)));
         mustQuery.Add(q => q.Term(i => i.Field(f => f.Address).Value(address)));
+        if (!proposalId.IsNullOrEmpty())
+        {
+            mustQuery.Add(q => q.Term(i => i.Field(f => f.ProposalId).Value(proposalId)));
+        }
 
         if (!alias.IsNullOrWhiteSpace())
         {
