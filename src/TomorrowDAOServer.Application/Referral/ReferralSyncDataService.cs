@@ -112,7 +112,7 @@ public class ReferralSyncDataService : ScheduleSyncDataService
 
         } while (!queryList.IsNullOrEmpty());
 
-        return returnTime;
+        return lastEndTime;
     }
 
     public override async Task<List<string>> GetChainIdsAsync()
