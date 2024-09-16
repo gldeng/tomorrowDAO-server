@@ -18,6 +18,7 @@ public interface IUserBalanceProvider
     Task<List<UserBalance>> GetSyncUserBalanceListAsync(GetChainBlockHeightInput input);
     Task BulkAddOrUpdateAsync(List<UserBalanceIndex> list);
     Task<UserBalanceIndex> GetByIdAsync(string id);
+    Task<List<UserBalanceIndex>> GetAllUserBalanceAsync(string chainId, string symbol, List<string> addressList);
 }
 
 public class UserBalanceProvider : IUserBalanceProvider, ISingletonDependency
@@ -93,4 +94,18 @@ public class UserBalanceProvider : IUserBalanceProvider, ISingletonDependency
 
         return await _userBalanceRepository.GetAsync(Filter);
     }
+
+    public async Task<List<UserBalanceIndex>> GetAllUserBalanceAsync(string chainId, string symbol, List<string> addressList)
+    {
+        var mustQuery = new List<Func<QueryContainerDescriptor<UserBalanceIndex>, QueryContainer>>
+        {
+            q => q.Term(i => i.Field(t => t.ChainId).Value(chainId)),
+            q => q.Term(i => i.Field(t => t.Symbol).Value(symbol)),
+            q => q.Terms(i => i.Field(t => t.Address).Terms(addressList))
+        };
+        QueryContainer Filter(QueryContainerDescriptor<UserBalanceIndex> f) => f.Bool(b => b.Must(mustQuery));
+        return await IndexHelper.GetAllIndex(Filter, _userBalanceRepository);
+    }
+    
+    
 }

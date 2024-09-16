@@ -175,7 +175,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         }
 
         var userBalance = await _userBalanceProvider.GetByIdAsync(GuidHelper.GenerateGrainId(address,
-            input.ChainId, GetVotigramSymbol(input.ChainId)));
+            input.ChainId, CommonConstant.GetVotigramSymbol(input.ChainId)));
         if (userBalance == null || userBalance.Amount <= 0)
         {
             throw new UserFriendlyException("NFT amount not enough.");
@@ -740,16 +740,5 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
 
         var caHolderInfos = await _portkeyProvider.GetHolderInfosAsync(caHash);
         return caHolderInfos?.CaHolderInfo?.FirstOrDefault(x => x.ChainId == chainId)?.CaHash ?? string.Empty;
-    }
-
-    private string GetVotigramSymbol(string chainId)
-    {
-        return chainId switch
-        {
-            CommonConstant.MainNetSideChainId => CommonConstant.VotigramCollectionSymbolMainNet,
-            CommonConstant.MainChainId => string.Empty,
-            CommonConstant.TestNetSideChainId => CommonConstant.VotigramCollectionSymbolTestNet,
-            _ => string.Empty
-        };
     }
 }

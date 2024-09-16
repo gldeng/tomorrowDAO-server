@@ -69,6 +69,8 @@ public static class CommonConstant
     // Hub
     public const string ReceivePointsProduce = "ReceivePointsProduce";
     public const string RequestPointsProduce = "RequestPointsProduce";
+    public const string RequestUserBalanceProduce = "RequestUserBalanceProduce";
+    public const string ReceiveUserBalanceProduce = "ReceiveUserBalanceProduce";
     
     // Referral
     public const string CreateAccountMethodName = "CreateCAHolder";
@@ -79,4 +81,15 @@ public static class CommonConstant
     // Votigram
     public const string VotigramCollectionSymbolTestNet = "TOMORROWPASSTEST-1"; 
     public const string VotigramCollectionSymbolMainNet = "TOMORROWPASS-1"; 
+    
+    public static string GetVotigramSymbol(string chainId)
+    {
+        return chainId switch
+        {
+            MainNetSideChainId => VotigramCollectionSymbolMainNet,
+            MainChainId => string.Empty,
+            TestNetSideChainId => VotigramCollectionSymbolTestNet,
+            _ => string.Empty
+        };
+    }
 }
