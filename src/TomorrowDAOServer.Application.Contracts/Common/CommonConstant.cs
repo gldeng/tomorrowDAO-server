@@ -75,4 +75,8 @@ public static class CommonConstant
     public const string ProjectCode = "13027";
     public const string OrganicTraffic = "OrganicTraffic";
     public const string OrganicTrafficBeforeProjectCode = "OrganicTrafficBeforeProjectCode";
+    
+    // Votigram
+    public const string VotigramCollectionSymbolTestNet = "TOMORROWPASSTEST-1"; 
+    public const string VotigramCollectionSymbolMainNet = "TOMORROWPASS-1"; 
 }

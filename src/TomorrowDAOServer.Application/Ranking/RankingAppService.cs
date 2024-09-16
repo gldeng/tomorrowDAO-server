@@ -67,6 +67,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
     private readonly IOptionsMonitor<TelegramOptions> _telegramOptions;
     private readonly IReferralInviteProvider _referralInviteProvider;
     private readonly IPortkeyProvider _portkeyProvider;
+    private readonly IUserBalanceProvider _userBalanceProvider;
     private List<RankingAppIndex> _defaultRankingAppListCache = new();
 
     public RankingAppService(IRankingAppProvider rankingAppProvider, ITelegramAppsProvider telegramAppsProvider,
@@ -79,7 +80,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         IMessagePublisherService messagePublisherService, 
         IRankingAppPointsCalcProvider rankingAppPointsCalcProvider, 
         IOptionsMonitor<TelegramOptions> telegramOptions, IReferralInviteProvider referralInviteProvider, 
-        IUserAppService userAppService, IPortkeyProvider portkeyProvider)
+        IUserAppService userAppService, IPortkeyProvider portkeyProvider, IUserBalanceProvider userBalanceProvider)
     {
         _rankingAppProvider = rankingAppProvider;
         _telegramAppsProvider = telegramAppsProvider;
@@ -99,6 +100,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         _referralInviteProvider = referralInviteProvider;
         _userAppService = userAppService;
         _portkeyProvider = portkeyProvider;
+        _userBalanceProvider = userBalanceProvider;
         _voteProvider = voteProvider;
         _rankingAppPointsRedisProvider = rankingAppPointsRedisProvider;
     }
@@ -170,6 +172,13 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         if (address.IsNullOrWhiteSpace())
         {
             throw new UserFriendlyException("User Address Not Found.");
+        }
+
+        var userBalance = await _userBalanceProvider.GetByIdAsync(GuidHelper.GenerateGrainId(address,
+            input.ChainId, GetVotigramSymbol(input.ChainId)));
+        if (userBalance == null || userBalance.Amount <= 0)
+        {
+            throw new UserFriendlyException("NFT amount not enough.");
         }
 
         _logger.LogInformation("Ranking vote, parse rawTransaction. {0}", address);
@@ -731,6 +740,16 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
 
         var caHolderInfos = await _portkeyProvider.GetHolderInfosAsync(caHash);
         return caHolderInfos?.CaHolderInfo?.FirstOrDefault(x => x.ChainId == chainId)?.CaHash ?? string.Empty;
+    }
 
+    private string GetVotigramSymbol(string chainId)
+    {
+        return chainId switch
+        {
+            CommonConstant.MainNetSideChainId => CommonConstant.VotigramCollectionSymbolMainNet,
+            CommonConstant.MainChainId => string.Empty,
+            CommonConstant.TestNetSideChainId => CommonConstant.VotigramCollectionSymbolTestNet,
+            _ => string.Empty
+        };
     }
 }

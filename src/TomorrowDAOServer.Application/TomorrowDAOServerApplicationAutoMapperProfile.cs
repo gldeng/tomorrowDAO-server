@@ -28,6 +28,7 @@ using TomorrowDAOServer.Token.Dto;
 using TomorrowDAOServer.Token.Index;
 using TomorrowDAOServer.Treasury.Dto;
 using TomorrowDAOServer.User.Dtos;
+using TomorrowDAOServer.Users.Indexer;
 using TomorrowDAOServer.Vote;
 using TomorrowDAOServer.Vote.Dto;
 using TomorrowDAOServer.Vote.Index;
@@ -273,5 +274,6 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.ReferralCode, opt
                 => opt.MapFrom(source => source.InviteCode))
             ;
+        CreateMap<UserBalance, UserBalanceIndex>();
     }
 }

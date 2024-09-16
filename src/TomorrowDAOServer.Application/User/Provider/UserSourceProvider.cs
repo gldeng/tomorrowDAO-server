@@ -21,6 +21,10 @@ public class UserSourceProvider : IUserSourceProvider, ISingletonDependency
 
     public async Task AddOrUpdateAsync(UserSourceIndex index)
     {
+        if (index == null)
+        {
+            return;
+        }
         await _userSourceRepository.AddOrUpdateAsync(index);
     }
 }
