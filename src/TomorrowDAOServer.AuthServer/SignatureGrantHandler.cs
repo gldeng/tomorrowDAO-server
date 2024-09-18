@@ -91,7 +91,7 @@ public class SignatureGrantHandler : ITokenExtensionGrant
 
                               signature:
                               """+string.Join("-", address, timestampVal);
-            _logger.LogError("newSignText:{newSignText}",newSignText);
+            _logger.LogInformation("newSignText:{newSignText}",newSignText);
             if (!CryptoHelper.RecoverPublicKey(signature, HashHelper.ComputeFrom(Encoding.UTF8.GetBytes(newSignText).ToHex()).ToByteArray(),
                     out var managerPublicKey))
             {
