@@ -408,7 +408,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
                 mustQuery.Add(q => q.Term(i =>
                     i.Field(f => f.ProposalStatus).Value(proposalStatus)));
                 mustQuery.Add(q => q.DateRange(d => d
-                    .Field(f => f.ActiveStartTime).LessThanOrEquals(DateTime.UtcNow)));
+                    .Field(f => f.ActiveStartTime).GreaterThanOrEquals(DateTime.UtcNow)));
                 break;
             default:
                 mustQuery.Add(q => q.Term(i =>
