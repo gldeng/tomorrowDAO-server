@@ -1,55 +1,82 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using TomorrowDAOServer.Common;
-using TomorrowDAOServer.Grains.Grain.Users;
-using Orleans;
-using Volo.Abp;
-using Volo.Abp.Auditing;
+using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Enums;
+using TomorrowDAOServer.Options;
+using TomorrowDAOServer.User.Dtos;
+using TomorrowDAOServer.User.Provider;
 using Volo.Abp.Users;
 
 namespace TomorrowDAOServer.User;
 
-[RemoteService(IsEnabled = false)]
-[DisableAuditing]
 public class UserService : TomorrowDAOServerAppService, IUserService
 {
-    private readonly IClusterClient _clusterClient;
+    private readonly IUserProvider _userProvider;
+    private readonly IOptionsMonitor<UserOptions> _userOptions;
+    private readonly IUserVisitProvider _userVisitProvider;
+    private readonly IUserVisitSummaryProvider _userVisitSummaryProvider;
 
-    public UserService(IClusterClient clusterClient)
+    public UserService(IUserProvider userProvider, IOptionsMonitor<UserOptions> userOptions,
+        IUserVisitProvider userVisitProvider, IUserVisitSummaryProvider userVisitSummaryProvider)
     {
-        _clusterClient = clusterClient;
+        _userProvider = userProvider;
+        _userOptions = userOptions;
+        _userVisitProvider = userVisitProvider;
+        _userVisitSummaryProvider = userVisitSummaryProvider;
     }
 
-    public async Task<string> GetCurrentUserAddressAsync(string chainId)
+    public async Task<UserSourceReportResultDto> UserSourceReportAsync(string chainId, string source)
     {
-        var userId = CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty;
-        if (userId != Guid.Empty)
+        var address = await _userProvider.GetAndValidateUserAddressAsync(
+            CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty, chainId);
+        var userSourceList = _userOptions.CurrentValue.UserSourceList;
+        if (!userSourceList.Contains(source, StringComparer.OrdinalIgnoreCase))
         {
-            return await GetUserAddressAsync(chainId, userId);
+            return new UserSourceReportResultDto
+            {
+                Success = false, Reason = "Invalid source."
+            };
         }
-
-        return null;
-    }
-
-    private async Task<string> GetUserAddressAsync(string chainId, Guid userId)
-    {
-        if (chainId.IsNullOrEmpty() || userId == Guid.Empty)
+        var matchedSource = userSourceList.FirstOrDefault(s => 
+            string.Equals(s, source, StringComparison.OrdinalIgnoreCase));
+        var now = TimeHelper.GetTimeStampInMilliseconds();
+        var visitType = UserVisitType.Votigram;
+        await _userVisitProvider.AddOrUpdateAsync(new UserVisitIndex
         {
-            return null;
+            Id = GuidHelper.GenerateId(address, chainId, visitType.ToString(), matchedSource, now.ToString()),
+            ChainId = chainId,
+            Address = address,
+            UserVisitType = visitType,
+            Source = matchedSource!,
+            VisitTime = now
+        });
+        var summaryId = GuidHelper.GenerateId(address, chainId, visitType.ToString(), matchedSource);
+        var visitSummaryIndex = await _userVisitSummaryProvider.GetByIdAsync(summaryId);
+        if (visitSummaryIndex == null)
+        {
+            visitSummaryIndex = new UserVisitSummaryIndex
+            {
+                Id = summaryId,
+                ChainId = chainId,
+                Address = address,
+                UserVisitType = visitType,
+                Source = matchedSource!,
+                CreateTime = now,
+                ModificationTime = now
+            };
         }
-
-        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-        var grainResultDto = await userGrain.GetUser();
-
-        AssertHelper.IsTrue(grainResultDto.Success, "Get user fail, chainId  {chainId} userId {userId}",
-            chainId, userId);
-
-        var addressInfos = grainResultDto.Data.AddressInfos;
-
-        return addressInfos?
-            .Where(info => info.ChainId.Equals(chainId))
-            .Select(info => info.Address)
-            .FirstOrDefault();
+        else
+        {
+            visitSummaryIndex.ModificationTime = now;
+        }
+        await _userVisitSummaryProvider.AddOrUpdateAsync(visitSummaryIndex);
+        
+        return new UserSourceReportResultDto
+        {
+            Success = true
+        };
     }
 }
