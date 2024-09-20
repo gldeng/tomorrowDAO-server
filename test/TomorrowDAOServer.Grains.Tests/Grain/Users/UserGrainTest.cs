@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Grains.Grain.Users;
-using TomorrowDAOServer.User;
 using TomorrowDAOServer.User.Dtos;
 using Xunit;
 using Xunit.Abstractions;
@@ -24,8 +23,7 @@ public partial class UserGrainTest : TomorrowDAOServerGrainsTestsBase
     protected override void AfterAddApplication(IServiceCollection services)
     {
         base.AfterAddApplication(services);
-        services.AddSingleton(MockUserAppService());
-        services.AddSingleton(MockUserProvider());
+        //services.AddSingleton(MockUserAppService());
     }
     
     [Fact]
@@ -39,13 +37,11 @@ public partial class UserGrainTest : TomorrowDAOServerGrainsTestsBase
             UserId = UserId,
             UserName = "UserName",
             CaHash = Address1,
-            AddressInfos = new List<AddressInfo> {
-                new()
+            AddressInfos = new List<AddressInfo>() {new AddressInfo
                 {
                     ChainId = ChainIdAELF,
                     Address = Address1
-                }, 
-                new()
+                }, new AddressInfo
                 {
                     ChainId = ChainIdtDVW,
                     Address = Address2
@@ -58,7 +54,7 @@ public partial class UserGrainTest : TomorrowDAOServerGrainsTestsBase
         grainResultDto.Success.ShouldBeTrue();
         grainResultDto.Data.ShouldNotBeNull();
         grainResultDto.Data.UserId.ShouldBe(UserId);
-        
+
         var resultDto = await grain.GetUser();
         resultDto.ShouldNotBeNull();
         resultDto.Success.ShouldBeTrue();

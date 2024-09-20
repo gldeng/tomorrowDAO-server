@@ -22,7 +22,6 @@ public class RankingOptions
     public long PointsFirstReferralVote { get; set; } = 50000;
     public List<string> AllReferralActiveTime { get; set; } = new();
     public string ReferralDomain { get; set; }
-    public List<string> ReferralPointsAddressList { get; set; } = new();
 
     public ReferralActiveConfigDto ParseReferralActiveTimes()
     {

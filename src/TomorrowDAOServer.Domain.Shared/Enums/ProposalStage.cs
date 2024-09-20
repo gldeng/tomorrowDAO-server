@@ -6,6 +6,5 @@ public enum ProposalStage
     Active = 1,
     Pending = 2,
     Execute = 3,
-    Finished = 4,
-    WaitingActive = 5
+    Finished = 4
 }

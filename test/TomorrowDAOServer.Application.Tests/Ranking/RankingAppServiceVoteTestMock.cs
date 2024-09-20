@@ -20,8 +20,26 @@ using static TomorrowDAOServer.Common.TestConstant;
 
 namespace TomorrowDAOServer.Ranking;
 
-public partial class RankingAppServiceTest
+public partial class RankingAppServiceVoteTest
 {
+    private IOptionsMonitor<RankingOptions> MockRankingOptions()
+    {
+        var mock = new Mock<IOptionsMonitor<RankingOptions>>();
+
+        mock.Setup(o => o.CurrentValue).Returns(new RankingOptions
+        {
+            DaoIds = new List<string>() { DAOId },
+            DescriptionPattern = string.Empty,
+            DescriptionBegin = string.Empty,
+            LockUserTimeout = 60000,
+            VoteTimeout = 60000,
+            RetryTimes = 30,
+            RetryDelay = 2000
+        });
+
+        return mock.Object;
+    }
+
     private IAbpDistributedLock MockAbpDistributedLock()
     {
         var mockLockProvider = new Mock<IAbpDistributedLock>();
@@ -37,25 +55,24 @@ public partial class RankingAppServiceTest
         var mock = new Mock<IDistributedCache<string>>();
 
         mock.Setup(o =>
-                o.GetAsync(It.IsAny<string>(), null, It.IsAny<bool>(), It.IsAny<CancellationToken>()))!
-            .ReturnsAsync((string key, bool? _, bool _, CancellationToken _) =>
+                o.GetAsync(It.IsAny<string>(), null, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, bool? hideErrors, bool considerUow, CancellationToken token) =>
             {
-                if (key.Contains(RankingVoteStatusEnum.Voted.ToString()))
+                if (key.IndexOf(RankingVoteStatusEnum.Voted.ToString()) != -1)
                 {
                     return JsonConvert.SerializeObject(new RankingVoteRecord
                     {
                         TransactionId = TransactionHash.ToHex(),
-                        VoteTime = DateTime.Now.ToUtcString(),
+                        VoteTime = TimeHelper.ToUtcString(DateTime.Now),
                         Status = RankingVoteStatusEnum.Voted,
                     });
                 }
-
-                if (key.IndexOf(RankingVoteStatusEnum.Voting.ToString(), StringComparison.Ordinal) > 20)
+                else if (key.IndexOf(RankingVoteStatusEnum.Voting.ToString()) > 20)
                 {
                     return JsonConvert.SerializeObject(new RankingVoteRecord
                     {
                         TransactionId = TransactionHash.ToHex(),
-                        VoteTime = DateTime.Now.ToUtcString(),
+                        VoteTime = TimeHelper.ToUtcString(DateTime.Now),
                         Status = RankingVoteStatusEnum.Voting,
                     });
                 }

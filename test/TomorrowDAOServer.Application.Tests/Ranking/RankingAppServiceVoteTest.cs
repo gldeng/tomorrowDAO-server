@@ -13,8 +13,23 @@ using Xunit.Abstractions;
 
 namespace TomorrowDAOServer.Ranking;
 
-public partial class RankingAppServiceTest
+public partial class RankingAppServiceVoteTest : TomorrowDaoServerApplicationTestBase
 {
+    private IRankingAppService _rankingAppService;
+
+    public RankingAppServiceVoteTest(ITestOutputHelper output) : base(output)
+    {
+        _rankingAppService = ServiceProvider.GetRequiredService<IRankingAppService>();
+    }
+
+    protected override void AfterAddApplication(IServiceCollection services)
+    {
+        base.AfterAddApplication(services);
+        services.AddSingleton(MockRankingOptions());
+        services.AddSingleton(MockAbpDistributedLock());
+        services.AddSingleton(MockIDistributedCache());
+    }
+
     [Fact]
     public async Task VoteAsyncTest()
     {
