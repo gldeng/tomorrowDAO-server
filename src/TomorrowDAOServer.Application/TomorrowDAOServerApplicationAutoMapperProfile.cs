@@ -28,6 +28,7 @@ using TomorrowDAOServer.Token.Dto;
 using TomorrowDAOServer.Token.Index;
 using TomorrowDAOServer.Treasury.Dto;
 using TomorrowDAOServer.User.Dtos;
+using TomorrowDAOServer.Users.Indexer;
 using TomorrowDAOServer.Vote;
 using TomorrowDAOServer.Vote.Dto;
 using TomorrowDAOServer.Vote.Index;
@@ -64,9 +65,9 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.RealProposalStatus, opt
                 => opt.MapFrom(source => source.ProposalStatus))
             .ForMember(des => des.ProposalStatus, opt
-                => opt.MapFrom(source => MapHelper.MapProposalStatusString(source.ProposalStatus)))
+                => opt.MapFrom(source => MapHelper.MapProposalStatusString(source)))
             .ForMember(des => des.ProposalStage, opt
-                => opt.MapFrom(source => MapHelper.MapProposalStageString(source.ProposalStage)))
+                => opt.MapFrom(source => MapHelper.MapProposalStageString(source)))
             .ForMember(des => des.ProposalType, opt
                 => opt.MapFrom(source => source.ProposalType.ToString()))
             .ForMember(des => des.ProposalStage, opt
@@ -78,9 +79,9 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.RealProposalStatus, opt
                 => opt.MapFrom(source => source.ProposalStatus))
             .ForMember(des => des.ProposalStatus, opt
-                => opt.MapFrom(source => MapHelper.MapProposalStatusString(source.ProposalStatus)))
+                => opt.MapFrom(source => MapHelper.MapProposalStatusString(source)))
             .ForMember(des => des.ProposalStage, opt
-                => opt.MapFrom(source => MapHelper.MapProposalStageString(source.ProposalStage)))
+                => opt.MapFrom(source => MapHelper.MapProposalStageString(source)))
             .ForMember(des => des.ProposalType, opt
                 => opt.MapFrom(source => source.ProposalType.ToString()))
             .ForMember(des => des.ProposalStage, opt
@@ -92,9 +93,9 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.RealProposalStatus, opt
                 => opt.MapFrom(source => source.ProposalStatus))
             .ForMember(des => des.ProposalStatus, opt
-                => opt.MapFrom(source => MapHelper.MapProposalStatusString(source.ProposalStatus)))
+                => opt.MapFrom(source => MapHelper.MapProposalStatusString(source)))
             .ForMember(des => des.ProposalStage, opt
-                => opt.MapFrom(source => MapHelper.MapProposalStageString(source.ProposalStage)))
+                => opt.MapFrom(source => MapHelper.MapProposalStageString(source)))
             ;
         CreateMap<ProposalIndex, MyProposalDto>();
         CreateMap<IndexerVote, ProposalDto>();
@@ -273,5 +274,6 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.ReferralCode, opt
                 => opt.MapFrom(source => source.InviteCode))
             ;
+        CreateMap<UserBalance, UserBalanceIndex>();
     }
 }
