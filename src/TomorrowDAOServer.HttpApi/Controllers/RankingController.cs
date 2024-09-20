@@ -58,9 +58,9 @@ public class RankingController : AbpController
     
     [HttpGet("move-history-data")]
     [Authorize]
-    public async Task HistoryDataAsync(string chainId, string type, string key, string value)
+    public async Task HistoryDataAsync(string chainId, string type)
     {
-        await _rankingAppService.MoveHistoryDataAsync(chainId, type, key, value);
+        await _rankingAppService.MoveHistoryDataAsync(chainId, type);
     }
 
     [HttpPost("like")]

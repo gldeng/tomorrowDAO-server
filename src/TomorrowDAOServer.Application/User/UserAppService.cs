@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Nest;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.User.Dtos;
