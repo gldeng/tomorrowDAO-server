@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Logging;
 using Nest;
+using Orleans;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Grains.Grain.Referral;
 using TomorrowDAOServer.Referral.Dto;
 using Volo.Abp.DependencyInjection;
 
@@ -20,15 +23,20 @@ public interface IReferralInviteProvider
     Task<long> GetInvitedCountByInviterCaHashAsync(string chainId, string inviterCaHash, bool isVoted, bool isActivityVote = false);
     Task<IReadOnlyCollection<KeyedBucket<string>>> InviteLeaderBoardAsync(InviteLeaderBoardInput input);
     Task<List<ReferralInviteRelationIndex>> GetByTimeRangeAsync(long startTime, long endTime);
+    Task<long> GetInviteCountAsync(string chainId, string address);
 }
 
 public class ReferralInviteProvider : IReferralInviteProvider, ISingletonDependency
 {
     private readonly INESTRepository<ReferralInviteRelationIndex, string> _referralInviteRepository;
+    private readonly IClusterClient _clusterClient;
+    private readonly ILogger<ReferralInviteProvider> _logger;
 
-    public ReferralInviteProvider(INESTRepository<ReferralInviteRelationIndex, string> referralInviteRepository)
+    public ReferralInviteProvider(INESTRepository<ReferralInviteRelationIndex, string> referralInviteRepository, IClusterClient clusterClient, ILogger<ReferralInviteProvider> logger)
     {
         _referralInviteRepository = referralInviteRepository;
+        _clusterClient = clusterClient;
+        _logger = logger;
     }
 
     public async Task<ReferralInviteRelationIndex> GetByNotVoteInviteeCaHashAsync(string chainId, string inviteeCaHash)
@@ -163,5 +171,19 @@ public class ReferralInviteProvider : IReferralInviteProvider, ISingletonDepende
         QueryContainer Filter(QueryContainerDescriptor<ReferralInviteRelationIndex> f) => f.Bool(b => b.Must(mustQuery));
 
         return await IndexHelper.GetAllIndex(Filter, _referralInviteRepository);
+    }
+
+    public async Task<long> GetInviteCountAsync(string chainId, string address)
+    {
+        try
+        {
+            var grain = _clusterClient.GetGrain<IReferralInviteCountGrain>(GuidHelper.GenerateGrainId(chainId, address));
+            return await grain.GetInviteCount();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetInviteCountAsyncException chainId {chainId} address {address}", chainId, address);
+            return -1;
+        }
     }
 }

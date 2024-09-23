@@ -15,12 +15,12 @@ public class TaskPointsHelper
         } }
     };
 
-    public List<UserTaskDetail> GetUserTaskDetailFromUserTask(UserTask userTask)
+    public static List<UserTaskDetail> GetUserTaskDetailFromUserTask(UserTask userTask)
     {
         return TaskDetailMapping.GetValueOrDefault(userTask, new List<UserTaskDetail>());
     }
     
-    public PointsType? GetPointsTypeFromUserTaskDetail(UserTaskDetail userTaskDetail)
+    public static PointsType? GetPointsTypeFromUserTaskDetail(UserTaskDetail userTaskDetail)
     {
         return userTaskDetail switch
         {

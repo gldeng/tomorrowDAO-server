@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using Volo.Abp.DependencyInjection;
 
@@ -7,6 +8,7 @@ namespace TomorrowDAOServer.Ranking.Provider
 {
     public interface IRankingAppPointsCalcProvider
     {
+        public long CalculatePointsFromPointsType(PointsType? pointsType, long count = 0);
         public long CalculatePointsFromReferralVotes(long voteCount);
         public long CalculatePointsFromVotes(long voteCount);
         public long CalculatePointsFromLikes(long likeCount);
@@ -71,6 +73,25 @@ namespace TomorrowDAOServer.Ranking.Provider
         public long CalculatePointsFromExploreCumulateTwentyInvite()
         {
             return _rankingOptions.CurrentValue.PointsExploreCumulateTwentyInvite;
+        }
+
+        public long CalculatePointsFromPointsType(PointsType? pointsType, long count = 0)
+        {
+            return pointsType switch
+            {
+                PointsType.Vote => CalculatePointsFromVotes(count),
+                PointsType.Like => CalculatePointsFromLikes(count),
+                PointsType.InviteVote or PointsType.BeInviteVote => CalculatePointsFromVotes(count),
+                PointsType.DailyViewAsset => CalculatePointsFromDailyViewAsset(),
+                PointsType.DailyFirstInvite => CalculatePointsFromDailyFirstInvite(),
+                PointsType.ExploreJoinTgChannel => CalculatePointsFromExploreJoinTgChannel(),
+                PointsType.ExploreFollowX => CalculatePointsFromExploreFollowX(),
+                PointsType.ExploreJoinDiscord => CalculatePointsFromExploreJoinDiscord(),
+                PointsType.ExploreCumulateFiveInvite => CalculatePointsFromExploreCumulateFiveInvite(),
+                PointsType.ExploreCumulateTenInvite => CalculatePointsFromExploreCumulateTenInvite(),
+                PointsType.ExploreCumulateTwentyInvite => CalculatePointsFromExploreCumulateTwentyInvite(),
+                _ => 0
+            };
         }
 
         public long CalculatePointsFromReferralVotes(long voteCount)

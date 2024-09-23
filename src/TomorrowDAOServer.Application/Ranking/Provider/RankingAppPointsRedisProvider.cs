@@ -27,6 +27,7 @@ public interface IRankingAppPointsRedisProvider
     Task IncrementLikePointsAsync(RankingAppLikeInput likeInput, string address);
     Task IncrementVotePointsAsync(string chainId, string proposalId, string address, string alias, long voteAmount);
     Task IncrementReferralVotePointsAsync(string inviter, string invitee, long voteCount);
+    Task IncrementTaskPointsAsync(string address, UserTaskDetail userTaskDetail);
     Task SaveDefaultRankingProposalIdAsync(string chainId, string value, DateTime? expire);
     Task<Tuple<string, List<string>>> GetDefaultRankingProposalInfoAsync(string chainId);
     Task<string> GetDefaultRankingProposalIdAsync(string chainId);
@@ -166,6 +167,14 @@ public class RankingAppPointsRedisProvider : IRankingAppPointsRedisProvider, ISi
         var inviteeUserKey = RedisHelper.GenerateUserPointsAllCacheKey(invitee);
         var referralVotePoints = _rankingAppPointsCalcProvider.CalculatePointsFromReferralVotes(voteCount);
         await Task.WhenAll(IncrementAsync(inviterUserKey, referralVotePoints), IncrementAsync(inviteeUserKey, referralVotePoints));
+    }
+
+    public async Task IncrementTaskPointsAsync(string address, UserTaskDetail userTaskDetail)
+    {
+        var userKey = RedisHelper.GenerateUserPointsAllCacheKey(address);
+        var pointsType = TaskPointsHelper.GetPointsTypeFromUserTaskDetail(userTaskDetail);
+        var taskPoints = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType);
+        await IncrementAsync(userKey, taskPoints);
     }
 
     public async Task SaveDefaultRankingProposalIdAsync(string chainId, string value, DateTime? expire)
