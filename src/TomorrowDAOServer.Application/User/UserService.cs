@@ -100,8 +100,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
 
         var completeTimeDate = TimeHelper.GetDateTimeFromTimeStamp(completeTime);
         await _userTaskProvider.GenerateCompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTimeDate);
-        await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address,
-            new Dictionary<string, string>(), userTaskDetail, completeTimeDate);
+        await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address, userTaskDetail, completeTimeDate);
         return true;
     }
 

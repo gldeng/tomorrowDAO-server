@@ -663,7 +663,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                     var alias = match.Groups[1].Value;
                     var information = GetInformation(proposalIndex, alias);
                     await _rankingAppPointsRedisProvider.IncrementVotePointsAsync(chainId, votingItemId, address, alias, amount);
-                    await _userPointsRecordProvider.GenerateVotePointsRecordAsync(chainId, address, information, voteTime);
+                    await _userPointsRecordProvider.GenerateVotePointsRecordAsync(chainId, address, voteTime, information);
                     await _userTaskProvider.GenerateCompleteTaskAsync(chainId, address, UserTaskDetail.DailyVote, voteTime);
                     _logger.LogInformation("Ranking vote, update app vote success.{0}", address);
                     await _messagePublisherService.SendVoteMessageAsync(chainId, votingItemId, address, alias, amount);

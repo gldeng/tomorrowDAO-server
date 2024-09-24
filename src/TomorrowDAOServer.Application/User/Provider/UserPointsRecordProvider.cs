@@ -15,8 +15,8 @@ public interface IUserPointsRecordProvider
     Task BulkAddOrUpdateAsync(List<UserPointsRecordIndex> list);
     Task AddOrUpdateAsync(UserPointsRecordIndex index);
     Task GenerateReferralActivityVotePointsRecordAsync(string chainId, string inviter, string invitee, DateTime voteTime);
-    Task GenerateVotePointsRecordAsync(string chainId, string address, Dictionary<string, string> information, DateTime voteTime);
-    Task GenerateTaskPointsRecordAsync(string chainId, string address, Dictionary<string, string> information, UserTaskDetail userTaskDetail, DateTime completeTime);
+    Task GenerateVotePointsRecordAsync(string chainId, string address, DateTime voteTime, Dictionary<string, string> information);
+    Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
 }
 
 public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDependency
@@ -67,7 +67,7 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
         });
     }
 
-    public async Task GenerateVotePointsRecordAsync(string chainId, string address, Dictionary<string, string> information, DateTime voteTime)
+    public async Task GenerateVotePointsRecordAsync(string chainId, string address, DateTime voteTime, Dictionary<string, string> information)
     {
         var id = GuidHelper.GenerateGrainId(chainId, address, TimeHelper.GetTimeStampFromDateTime(voteTime));
         var points = _rankingAppPointsCalcProvider.CalculatePointsFromVotes(1);
@@ -78,8 +78,7 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
         });
     }
 
-    public async Task GenerateTaskPointsRecordAsync(string chainId, string address, Dictionary<string, string> information, UserTaskDetail userTaskDetail,
-        DateTime completeTime)
+    public async Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime)
     {
         var userTask = TaskPointsHelper.GetUserTaskFromUserTaskDetail(userTaskDetail);
         var pointsType = TaskPointsHelper.GetPointsTypeFromUserTaskDetail(userTaskDetail);
@@ -90,7 +89,7 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
 
         var pointsRecordIndex = new UserPointsRecordIndex
         {
-            ChainId = chainId, Address = address, Information = information,
+            ChainId = chainId, Address = address, Information = new Dictionary<string, string>(),
             PointsType = pointsType.Value, PointsTime = completeTime,
             Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType)
         };
