@@ -8,8 +8,8 @@ namespace TomorrowDAOServer.User.Provider;
 
 public interface IUserTaskProvider
 {
-    Task BulkAddOrUpdate(List<UserTaskIndex> list);
-    Task AddOrUpdate(UserTaskIndex index);
+    Task BulkAddOrUpdateAsync(List<UserTaskIndex> list);
+    Task AddOrUpdateAsync(UserTaskIndex index);
 }
 
 public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
@@ -21,7 +21,7 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
         _userTaskRepository = userTaskRepository;
     }
 
-    public async Task BulkAddOrUpdate(List<UserTaskIndex> list)
+    public async Task BulkAddOrUpdateAsync(List<UserTaskIndex> list)
     {
         if (list == null || list.IsNullOrEmpty())
         {
@@ -31,7 +31,7 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
         await _userTaskRepository.BulkAddOrUpdateAsync(list);
     }
 
-    public async Task AddOrUpdate(UserTaskIndex index)
+    public async Task AddOrUpdateAsync(UserTaskIndex index)
     {
         if (index == null)
         {

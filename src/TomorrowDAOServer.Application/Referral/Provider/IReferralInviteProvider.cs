@@ -21,7 +21,7 @@ public interface IReferralInviteProvider
     Task BulkAddOrUpdateAsync(List<ReferralInviteRelationIndex> list);
     Task AddOrUpdateAsync(ReferralInviteRelationIndex relationIndex);
     Task<long> GetInvitedCountByInviterCaHashAsync(string chainId, string inviterCaHash, bool isVoted, bool isActivityVote = false);
-    Task<IReadOnlyCollection<KeyedBucket<string>>> InviteLeaderBoardAsync(InviteLeaderBoardInput input);
+    Task<IReadOnlyCollection<KeyedBucket<string>>> InviteLeaderBoardAsync(long startTime, long endTime);
     Task<List<ReferralInviteRelationIndex>> GetByTimeRangeAsync(long startTime, long endTime);
     Task<long> GetInviteCountAsync(string chainId, string address);
 }
@@ -121,11 +121,8 @@ public class ReferralInviteProvider : IReferralInviteProvider, ISingletonDepende
         return (await _referralInviteRepository.CountAsync(Filter)).Count;
     }
 
-    public async Task<IReadOnlyCollection<KeyedBucket<string>>> InviteLeaderBoardAsync(InviteLeaderBoardInput input)
+    public async Task<IReadOnlyCollection<KeyedBucket<string>>> InviteLeaderBoardAsync(long startTime, long endTime)
     {
-        DateTime starTime = DateTimeOffset.FromUnixTimeMilliseconds(input.StartTime).DateTime;
-        DateTime endTime = DateTimeOffset.FromUnixTimeMilliseconds(input.EndTime).DateTime;
-
         var query = new SearchDescriptor<ReferralInviteRelationIndex>()
             .Query(q => q.Bool(b => b
                 .Must(
@@ -137,12 +134,14 @@ public class ReferralInviteProvider : IReferralInviteProvider, ISingletonDepende
                     f => f.Wildcard(w => w.Field(f => f.InviterCaHash).Value("*?*"))
                 )));
 
-        if (input.StartTime != 0 && input.EndTime != 0)
+        if (startTime != 0 && endTime != 0)
         {
+            DateTime starTimeDate = DateTimeOffset.FromUnixTimeMilliseconds(startTime).DateTime;
+            DateTime endTimeDate = DateTimeOffset.FromUnixTimeMilliseconds(endTime).DateTime;
             query = query.Query(q => q.DateRange(r => r
                 .Field(f => f.FirstVoteTime)
-                .GreaterThanOrEquals(starTime)
-                .LessThanOrEquals(endTime)));
+                .GreaterThanOrEquals(starTimeDate)
+                .LessThanOrEquals(endTimeDate)));
         }
 
         query = query.Aggregations(a => a

@@ -10,6 +10,7 @@ namespace TomorrowDAOServer.Ranking.Provider
     {
         public long CalculatePointsFromPointsType(PointsType? pointsType, long count = 0);
         public long CalculatePointsFromReferralVotes(long voteCount);
+        public long CalculatePointsFromReferralTopInviter();
         public long CalculatePointsFromVotes(long voteCount);
         public long CalculatePointsFromLikes(long likeCount);
         public long CalculateVotesFromPoints(long votePoints);
@@ -81,7 +82,8 @@ namespace TomorrowDAOServer.Ranking.Provider
             {
                 PointsType.Vote => CalculatePointsFromVotes(count),
                 PointsType.Like => CalculatePointsFromLikes(count),
-                PointsType.InviteVote or PointsType.BeInviteVote => CalculatePointsFromVotes(count),
+                PointsType.InviteVote or PointsType.BeInviteVote => CalculatePointsFromReferralVotes(count),
+                PointsType.TopInviter => CalculatePointsFromReferralTopInviter(),
                 PointsType.DailyViewAsset => CalculatePointsFromDailyViewAsset(),
                 PointsType.DailyFirstInvite => CalculatePointsFromDailyFirstInvite(),
                 PointsType.ExploreJoinTgChannel => CalculatePointsFromExploreJoinTgChannel(),
@@ -97,6 +99,11 @@ namespace TomorrowDAOServer.Ranking.Provider
         public long CalculatePointsFromReferralVotes(long voteCount)
         {
             return _rankingOptions.CurrentValue.PointsFirstReferralVote * voteCount;
+        }
+        
+        public long CalculatePointsFromReferralTopInviter()
+        {
+            return _rankingOptions.CurrentValue.PointsReferralTopInviter;
         }
 
         public long CalculatePointsFromVotes(long voteCount)

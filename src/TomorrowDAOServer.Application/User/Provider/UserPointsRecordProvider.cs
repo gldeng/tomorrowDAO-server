@@ -8,7 +8,7 @@ namespace TomorrowDAOServer.User.Provider;
 
 public interface IUserPointsRecordProvider
 {
-    Task BulkAddOrUpdate(List<UserPointsRecordIndex> list);
+    Task BulkAddOrUpdateAsync(List<UserPointsRecordIndex> list);
     Task AddOrUpdate(UserPointsRecordIndex index);
 }
 
@@ -21,7 +21,7 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
         _userPointsRecordRepository = userPointsRecordRepository;
     }
 
-    public async Task BulkAddOrUpdate(List<UserPointsRecordIndex> list)
+    public async Task BulkAddOrUpdateAsync(List<UserPointsRecordIndex> list)
     {
         if (list == null || list.IsNullOrEmpty())
         {

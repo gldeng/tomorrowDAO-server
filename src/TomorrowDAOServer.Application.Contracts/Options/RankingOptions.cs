@@ -19,7 +19,8 @@ public class RankingOptions
     public int RetryDelay { get; set; } = 2000;
     public long PointsPerVote { get; set; } = 10000;
     public long PointsPerLike { get; set; } = 1;
-    public long PointsFirstReferralVote { get; set; } = 50000;
+    public long PointsFirstReferralVote { get; set; } = 5_0000;
+    public long PointsReferralTopInviter { get; set; } = 10_0000;
     public long PointsDailyViewAsset { get; set; } = 10000;
     public long PointsDailyFirstInvite { get; set; } = 20000;
     public long PointsExploreJoinTgChannel { get; set; } = 10000;
@@ -71,6 +72,18 @@ public class RankingOptions
         return false;
     }
     
+    public Tuple<bool, ReferralActiveDto> IsLatestReferralActiveEnd()
+    {
+        var currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var latest = ParseReferralActiveTimes().Config.FirstOrDefault();
+        if (latest != null)
+        {
+            return new Tuple<bool, ReferralActiveDto>(currentTime > latest.EndTime, latest) ;
+        }
+
+        return new Tuple<bool,ReferralActiveDto>(false, null);
+    }
+
     public TimeSpan GetLockUserTimeoutTimeSpan()
     {
         return TimeSpan.FromMilliseconds(LockUserTimeout);
