@@ -69,6 +69,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
     private readonly IReferralInviteProvider _referralInviteProvider;
     private readonly IPortkeyProvider _portkeyProvider;
     private readonly IUserBalanceProvider _userBalanceProvider;
+    private readonly IUserTaskProvider _userTaskProvider;
+    private readonly IUserPointsRecordProvider _userPointsRecordProvider;
 
     public RankingAppService(IRankingAppProvider rankingAppProvider, ITelegramAppsProvider telegramAppsProvider,
         IObjectMapper objectMapper, IProposalProvider proposalProvider, IUserProvider userProvider,
@@ -80,7 +82,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         IMessagePublisherService messagePublisherService, 
         IRankingAppPointsCalcProvider rankingAppPointsCalcProvider, 
         IOptionsMonitor<TelegramOptions> telegramOptions, IReferralInviteProvider referralInviteProvider, 
-        IUserAppService userAppService, IPortkeyProvider portkeyProvider, IUserBalanceProvider userBalanceProvider)
+        IUserAppService userAppService, IPortkeyProvider portkeyProvider, IUserBalanceProvider userBalanceProvider,
+        IUserTaskProvider userTaskProvider, IUserPointsRecordProvider userPointsRecordProvider)
     {
         _rankingAppProvider = rankingAppProvider;
         _telegramAppsProvider = telegramAppsProvider;
@@ -101,6 +104,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         _userAppService = userAppService;
         _portkeyProvider = portkeyProvider;
         _userBalanceProvider = userBalanceProvider;
+        _userTaskProvider = userTaskProvider;
+        _userPointsRecordProvider = userPointsRecordProvider;
         _voteProvider = voteProvider;
         _rankingAppPointsRedisProvider = rankingAppPointsRedisProvider;
     }
@@ -636,34 +641,30 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                 var match = Regex.Match(memo ?? string.Empty, CommonConstant.MemoPattern);
                 if (match.Success)
                 {
+                    var voteEventLog = transactionResult.Logs.First(l => l.Name == CommonConstant.VoteEventVoted);
+                    var voteEvent = LogEventDeserializationHelper.DeserializeLogEvent<Voted>(voteEventLog);
+                    var voteTime = voteEvent.VoteTimestamp.ToDateTime();
                     var referral = await _referralInviteProvider.GetByNotVoteInviteeCaHashAsync(chainId, addressCaHash);
                     if (referral != null)
                     {
                         _logger.LogInformation("Ranking vote, referralRelationFirstVote.{0} {1}", address, addressCaHash);
-                        var voteEventLog = transactionResult.Logs.First(l => l.Name == CommonConstant.VoteEventVoted);
-                        var voteEvent = LogEventDeserializationHelper.DeserializeLogEvent<Voted>(voteEventLog);
-                        referral.FirstVoteTime = voteEvent.VoteTimestamp?.ToDateTime();
-                        if (!string.IsNullOrEmpty(referral.ReferralCode) 
-                            && !string.IsNullOrEmpty(referral.InviterCaHash)
-                            && _rankingOptions.CurrentValue.IsReferralActive())
+                        referral.FirstVoteTime = voteTime;
+                        if (IsReferralActivityPoints(referral))
                         {
                             referral.IsReferralActivity = true;
                             var inviter = await GetAddressFromCaHash(chainId, referral.InviterCaHash);
                             _logger.LogInformation("Ranking vote, referralRelationFirstVoteInActive.{0} {1}", address, inviter);
                             await _rankingAppPointsRedisProvider.IncrementReferralVotePointsAsync(inviter, address, 1);
-                            await _messagePublisherService.SendReferralFirstVoteMessageAsync(chainId, inviter, address);
-                        }
-                        else
-                        {
-                            _logger.LogInformation("Ranking vote, referralRelationFirstVoteNotInActive.{0}", address);
+                            await _userPointsRecordProvider.GenerateReferralActivityPointsRecordAsync(chainId, inviter, address, voteTime);
                         }
 
                         await _referralInviteProvider.AddOrUpdateAsync(referral);
                     }
                     
                     var alias = match.Groups[1].Value;
-                    await _rankingAppPointsRedisProvider.IncrementVotePointsAsync(chainId, votingItemId,
-                        address, alias, amount);
+                    await _rankingAppPointsRedisProvider.IncrementVotePointsAsync(chainId, votingItemId, address, alias, amount);
+                    await _userPointsRecordProvider.GenerateVotePointsRecordAsync(chainId, address, voteTime);
+                    await _userTaskProvider.GenerateCompleteTaskAsync(chainId, address, UserTaskDetail.DailyVote);
                     _logger.LogInformation("Ranking vote, update app vote success.{0}", address);
                     await _messagePublisherService.SendVoteMessageAsync(chainId, votingItemId, address, alias, amount);
                     _logger.LogInformation("Ranking vote, send vote message success.{0}", address);
@@ -721,5 +722,12 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
 
         var caHolderInfos = await _portkeyProvider.GetHolderInfosAsync(caHash);
         return caHolderInfos?.CaHolderInfo?.FirstOrDefault(x => x.ChainId == chainId)?.CaHash ?? string.Empty;
+    }
+
+    private bool IsReferralActivityPoints(ReferralInviteRelationIndex referral)
+    {
+        return !string.IsNullOrEmpty(referral.ReferralCode)
+               && !string.IsNullOrEmpty(referral.InviterCaHash)
+               && _rankingOptions.CurrentValue.IsReferralActive();
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using TomorrowDAOServer.Entities;
+using TomorrowDAOServer.Enums;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.User.Provider;
@@ -10,6 +11,7 @@ public interface IUserTaskProvider
 {
     Task BulkAddOrUpdateAsync(List<UserTaskIndex> list);
     Task AddOrUpdateAsync(UserTaskIndex index);
+    Task GenerateCompleteTaskAsync(string chainId, string address, UserTaskDetail userTaskDetail);
 }
 
 public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
@@ -38,5 +40,10 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
             return;
         }
         await _userTaskRepository.AddOrUpdateAsync(index);
+    }
+
+    public Task GenerateCompleteTaskAsync(string chainId, string address, UserTaskDetail userTaskDetail)
+    {
+        throw new System.NotImplementedException();
     }
 }

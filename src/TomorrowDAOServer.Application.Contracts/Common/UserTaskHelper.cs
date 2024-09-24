@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TomorrowDAOServer.Enums;
 
 namespace TomorrowDAOServer.Common;
@@ -18,6 +19,15 @@ public class TaskPointsHelper
     public static List<UserTaskDetail> GetUserTaskDetailFromUserTask(UserTask userTask)
     {
         return TaskDetailMapping.GetValueOrDefault(userTask, new List<UserTaskDetail>());
+    }
+    
+    public static UserTask? GetUserTaskFromUserTaskDetail(UserTaskDetail userTaskDetail)
+    {
+        foreach (var pair in TaskDetailMapping.Where(pair => pair.Value.Contains(userTaskDetail)))
+        {
+            return pair.Key;
+        }
+        return null;
     }
     
     public static PointsType? GetPointsTypeFromUserTaskDetail(UserTaskDetail userTaskDetail)

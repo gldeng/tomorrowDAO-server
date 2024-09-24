@@ -12,6 +12,5 @@ public class UserPointsRecordIndex : AbstractEntity<string>, IIndexBuild
     [Keyword] public string Address { get; set; }
     public PointsType PointsType { get; set; }
     public long Points { get; set; }
-    public string Information { get; set; }
     public DateTime PointsTime { get; set; }
 }
