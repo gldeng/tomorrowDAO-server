@@ -620,9 +620,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             _logger.LogInformation("Ranking vote, update transaction status start.{0}", address);
             var transactionResult = await _contractProvider.QueryTransactionResultAsync(transactionId, chainId);
             var times = 0;
-            while ((transactionResult.Status == CommonConstant.TransactionStatePending ||
-                    transactionResult.Status == CommonConstant.TransactionStateNotExisted) &&
-                   times < _rankingOptions.CurrentValue.RetryTimes)
+            while (transactionResult.Status is CommonConstant.TransactionStatePending or CommonConstant.TransactionStateNotExisted 
+                   && times < _rankingOptions.CurrentValue.RetryTimes)
             {
                 times++;
                 await Task.Delay(_rankingOptions.CurrentValue.RetryDelay);
@@ -664,7 +663,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                     var alias = match.Groups[1].Value;
                     await _rankingAppPointsRedisProvider.IncrementVotePointsAsync(chainId, votingItemId, address, alias, amount);
                     await _userPointsRecordProvider.GenerateVotePointsRecordAsync(chainId, address, voteTime);
-                    await _userTaskProvider.GenerateCompleteTaskAsync(chainId, address, UserTaskDetail.DailyVote);
+                    await _userTaskProvider.GenerateCompleteTaskAsync(chainId, address, UserTaskDetail.DailyVote, voteTime);
                     _logger.LogInformation("Ranking vote, update app vote success.{0}", address);
                     await _messagePublisherService.SendVoteMessageAsync(chainId, votingItemId, address, alias, amount);
                     _logger.LogInformation("Ranking vote, send vote message success.{0}", address);
