@@ -6,4 +6,5 @@ namespace TomorrowDAOServer.User;
 public interface IUserService
 {
     Task<UserSourceReportResultDto> UserSourceReportAsync(string chainId, string source);
+    Task<bool> CompleteTaskAsync(CompleteTaskInput input);
 }

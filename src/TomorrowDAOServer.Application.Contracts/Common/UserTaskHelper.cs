@@ -16,6 +16,12 @@ public class TaskPointsHelper
         } }
     };
 
+    public static readonly List<UserTaskDetail> FrontEndTaskDetails = new()
+    {
+        UserTaskDetail.DailyViewAsset, UserTaskDetail.ExploreJoinTgChannel, UserTaskDetail.ExploreFollowX,
+        UserTaskDetail.ExploreJoinDiscord,
+    };
+
     public static List<UserTaskDetail> GetUserTaskDetailFromUserTask(UserTask userTask)
     {
         return TaskDetailMapping.GetValueOrDefault(userTask, new List<UserTaskDetail>());

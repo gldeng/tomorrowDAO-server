@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,7 @@ using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.User.Dtos;
 using TomorrowDAOServer.User.Provider;
+using Volo.Abp;
 using Volo.Abp.Users;
 
 namespace TomorrowDAOServer.User;
@@ -18,14 +20,19 @@ public class UserService : TomorrowDAOServerAppService, IUserService
     private readonly IOptionsMonitor<UserOptions> _userOptions;
     private readonly IUserVisitProvider _userVisitProvider;
     private readonly IUserVisitSummaryProvider _userVisitSummaryProvider;
+    private readonly IUserPointsRecordProvider _userPointsRecordProvider;
+    private readonly IUserTaskProvider _userTaskProvider;
 
     public UserService(IUserProvider userProvider, IOptionsMonitor<UserOptions> userOptions,
-        IUserVisitProvider userVisitProvider, IUserVisitSummaryProvider userVisitSummaryProvider)
+        IUserVisitProvider userVisitProvider, IUserVisitSummaryProvider userVisitSummaryProvider, 
+        IUserTaskProvider userTaskProvider, IUserPointsRecordProvider userPointsRecordProvider)
     {
         _userProvider = userProvider;
         _userOptions = userOptions;
         _userVisitProvider = userVisitProvider;
         _userVisitSummaryProvider = userVisitSummaryProvider;
+        _userTaskProvider = userTaskProvider;
+        _userPointsRecordProvider = userPointsRecordProvider;
     }
 
     public async Task<UserSourceReportResultDto> UserSourceReportAsync(string chainId, string source)
@@ -78,5 +85,48 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         {
             Success = true
         };
+    }
+
+    public async Task<bool> CompleteTaskAsync(CompleteTaskInput input)
+    {
+        var address = await _userProvider.GetAndValidateUserAddressAsync(
+            CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty, input.ChainId);
+        var (userTask, userTaskDetail) = CheckUserTask(input);
+        var completeTime = await _userTaskProvider.GetUserTaskCompleteTimeAsync(input.ChainId, address, userTask, userTaskDetail);
+        if (completeTime < 0)
+        {
+            throw new UserFriendlyException("Complete Task Fail.");
+        }
+
+        var completeTimeDate = TimeHelper.GetDateTimeFromTimeStamp(completeTime);
+        await _userTaskProvider.GenerateCompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTimeDate);
+        await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address,
+            new Dictionary<string, string>(), userTaskDetail, completeTimeDate);
+        return true;
+    }
+
+    private Tuple<UserTask, UserTaskDetail> CheckUserTask(CompleteTaskInput input)
+    {
+        if (!Enum.TryParse<UserTask>(input.UserTask, out var userTask))
+        {
+            throw new UserFriendlyException("Invalid UserTask.");
+        }
+        
+        if (!Enum.TryParse<UserTaskDetail>(input.UserTask, out var userTaskDetail))
+        {
+            throw new UserFriendlyException("Invalid UserTaskDetail.");
+        }
+
+        if (userTask != TaskPointsHelper.GetUserTaskFromUserTaskDetail(userTaskDetail))
+        {
+            throw new UserFriendlyException("UserTaskDetail and UserTask not match.");
+        }
+
+        if (!TaskPointsHelper.FrontEndTaskDetails.Contains(userTaskDetail))
+        {
+            throw new UserFriendlyException("Can not complete UserTaskDetail.");
+        }
+
+        return new Tuple<UserTask, UserTaskDetail>(userTask, userTaskDetail);
     }
 }

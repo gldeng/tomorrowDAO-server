@@ -26,4 +26,11 @@ public class UserController
     {
         return await _userService.UserSourceReportAsync(chainId, source);
     }
+    
+    [HttpGet("complete-task")]
+    [Authorize]
+    public async Task<bool> CompleteTaskAsync(CompleteTaskInput input)
+    {
+        return await _userService.CompleteTaskAsync(input);
+    }
 }

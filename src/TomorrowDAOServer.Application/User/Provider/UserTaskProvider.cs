@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
+using Microsoft.Extensions.Logging;
+using Orleans;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
+using TomorrowDAOServer.Grains.Grain.Users;
 using TomorrowDAOServer.Ranking.Provider;
 using Volo.Abp.DependencyInjection;
 
@@ -15,18 +18,24 @@ public interface IUserTaskProvider
     Task BulkAddOrUpdateAsync(List<UserTaskIndex> list);
     Task AddOrUpdateAsync(UserTaskIndex index);
     Task GenerateCompleteTaskAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
+    Task<long> GetUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail);
 }
 
 public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
 {
     private readonly INESTRepository<UserTaskIndex, string> _userTaskRepository;
     private readonly IRankingAppPointsCalcProvider _rankingAppPointsCalcProvider;
+    private readonly IClusterClient _clusterClient;
+    private readonly ILogger<UserTaskProvider> _logger;
 
     public UserTaskProvider(INESTRepository<UserTaskIndex, string> userTaskRepository, 
-        IRankingAppPointsCalcProvider rankingAppPointsCalcProvider)
+        IRankingAppPointsCalcProvider rankingAppPointsCalcProvider, IClusterClient clusterClient, 
+        ILogger<UserTaskProvider> logger)
     {
         _userTaskRepository = userTaskRepository;
         _rankingAppPointsCalcProvider = rankingAppPointsCalcProvider;
+        _clusterClient = clusterClient;
+        _logger = logger;
     }
 
     public async Task BulkAddOrUpdateAsync(List<UserTaskIndex> list)
@@ -63,8 +72,8 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
                 var timeFormat = completeTime.ToUtcString(TimeHelper.DatePattern);
                 await _userTaskRepository.AddOrUpdateAsync(new UserTaskIndex
                 {
-                    Id = GuidHelper.GenerateGrainId(userTask, userTaskDetail, address, timeFormat),
-                    ChainId = chainId, Address = address, UserTask = UserTask.Daily,  UserTaskDetail = userTaskDetail,
+                    Id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address, timeFormat),
+                    ChainId = chainId, Address = address, UserTask = UserTask.Daily, UserTaskDetail = userTaskDetail,
                     Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType),
                     CompleteTime = completeTime
                 });
@@ -72,12 +81,27 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
             case UserTask.Explore:
                 await _userTaskRepository.AddOrUpdateAsync(new UserTaskIndex
                 {
-                    Id = GuidHelper.GenerateGrainId(userTask, userTaskDetail, address),
-                    ChainId = chainId, Address = address, UserTask = UserTask.Explore,  UserTaskDetail = userTaskDetail,
+                    Id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address),
+                    ChainId = chainId, Address = address, UserTask = UserTask.Explore, UserTaskDetail = userTaskDetail,
                     Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType),
                     CompleteTime = completeTime
                 });
                 break;
+        }
+    }
+
+    public async Task<long> GetUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail)
+    {
+        var id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address);
+        try
+        {
+            var grain = _clusterClient.GetGrain<IUserTaskGrain>(id);
+            return await grain.GetUserTaskCompleteTimeAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "GetUserTaskCompleteTimeAsyncException id {id}", id);
+            return -1;
         }
     }
 }
