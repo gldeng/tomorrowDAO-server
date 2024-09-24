@@ -7,6 +7,8 @@ using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
+using TomorrowDAOServer.Proposal.Dto;
+using TomorrowDAOServer.Ranking.Provider;
 using TomorrowDAOServer.User.Dtos;
 using TomorrowDAOServer.User.Provider;
 using Volo.Abp;
@@ -22,10 +24,12 @@ public class UserService : TomorrowDAOServerAppService, IUserService
     private readonly IUserVisitSummaryProvider _userVisitSummaryProvider;
     private readonly IUserPointsRecordProvider _userPointsRecordProvider;
     private readonly IUserTaskProvider _userTaskProvider;
+    private readonly IRankingAppPointsRedisProvider _rankingAppPointsRedisProvider;
 
     public UserService(IUserProvider userProvider, IOptionsMonitor<UserOptions> userOptions,
         IUserVisitProvider userVisitProvider, IUserVisitSummaryProvider userVisitSummaryProvider, 
-        IUserTaskProvider userTaskProvider, IUserPointsRecordProvider userPointsRecordProvider)
+        IUserTaskProvider userTaskProvider, IUserPointsRecordProvider userPointsRecordProvider, 
+        IRankingAppPointsRedisProvider rankingAppPointsRedisProvider)
     {
         _userProvider = userProvider;
         _userOptions = userOptions;
@@ -33,6 +37,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         _userVisitSummaryProvider = userVisitSummaryProvider;
         _userTaskProvider = userTaskProvider;
         _userPointsRecordProvider = userPointsRecordProvider;
+        _rankingAppPointsRedisProvider = rankingAppPointsRedisProvider;
     }
 
     public async Task<UserSourceReportResultDto> UserSourceReportAsync(string chainId, string source)
@@ -104,6 +109,27 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         return true;
     }
 
+    public async Task<VoteHistoryPagedResultDto<MyPointsDto>> GetMyPointsAsync(GetMyPointsInput input)
+    {
+        var address = await _userProvider.GetAndValidateUserAddressAsync(
+            CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty, input.ChainId);
+        var totalPoints = await _rankingAppPointsRedisProvider.GetUserAllPointsAsync(address);
+        var (count, list) = await _userPointsRecordProvider.GetPointsListAsync(input, address);
+        var data = new List<MyPointsDto>();
+        foreach (var pointsRecord in list)
+        {
+            var (title, desc) = GetTitleAndDesc(pointsRecord);
+            data.Add(new MyPointsDto
+            {
+                Points = pointsRecord.Points,
+                Title = title,
+                Description = desc
+            });
+        }
+
+        return new VoteHistoryPagedResultDto<MyPointsDto>(count, data, totalPoints);
+    }
+
     private Tuple<UserTask, UserTaskDetail> CheckUserTask(CompleteTaskInput input)
     {
         if (!Enum.TryParse<UserTask>(input.UserTask, out var userTask))
@@ -127,5 +153,46 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         }
 
         return new Tuple<UserTask, UserTaskDetail>(userTask, userTaskDetail);
+    }
+
+    private Tuple<string, string> GetTitleAndDesc(UserPointsRecordIndex index)
+    {
+        var information = index.Information;
+        var pointsType = index.PointsType;
+        var id = index.Id;
+        var chainId = index.ChainId;
+        switch (pointsType)
+        {
+            case PointsType.Like:
+                return new Tuple<string, string>("Like", string.Empty);
+            case PointsType.Vote:
+                var alias = information.GetValueOrDefault(CommonConstant.Alias, string.Empty);
+                var proposalTitle = information.GetValueOrDefault(CommonConstant.ProposalTitle, string.Empty);
+                return new Tuple<string, string>("Voted for: " + alias, proposalTitle);
+            case PointsType.InviteVote:
+                var invitee = GetIndexString(id,2, CommonConstant.Middleline);
+                return new Tuple<string, string>("Invite friends", "Invitee : ELF_" + invitee + "_" + chainId);
+            case PointsType.BeInviteVote:
+                var inviter = GetIndexString(id,1, CommonConstant.Middleline);
+                return new Tuple<string, string>("Accept Invitation", "Inviter : ELF_" + inviter + "_" + chainId);
+            case PointsType.TopInviter:
+                var startTime = TimeHelper.ConvertStartTimeToDate(GetIndexString(id, 3, CommonConstant.Middleline));
+                var endTime = TimeHelper.ConvertStartTimeToDate(GetIndexString(id, 4, CommonConstant.Middleline));
+                return new Tuple<string, string>("Top 10 Inviters", "Cycle: " + startTime + "-" + endTime);
+            default:
+                return new Tuple<string, string>(pointsType.ToString(), string.Empty);
+        }
+    }
+
+    private string GetIndexString(string str, int index, string splitSymbol)
+    {
+        try
+        { 
+            return str.Split(splitSymbol)[index];
+        }
+        catch (Exception)
+        {
+            return string.Empty;
+        }
     }
 }

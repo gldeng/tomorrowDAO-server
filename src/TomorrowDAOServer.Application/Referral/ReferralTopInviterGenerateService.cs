@@ -79,7 +79,7 @@ public class ReferralTopInviterGenerateService : ScheduleSyncDataService
             toAddTopInviters.Add(new ReferralTopInviterIndex
             {
                 Id = GuidHelper.GenerateGrainId(chainId, inviter, 
-                    inviterCaHash, latest.StartTime,  latest.EndTime),
+                    inviterCaHash, latest.StartTime, latest.EndTime),
                 ChainId = chainId, InviterCaHash = inviterCaHash,
                 InviterAddress = inviter, StartTime = latest.StartTime,
                 EndTime = latest.EndTime, Rank = rank,

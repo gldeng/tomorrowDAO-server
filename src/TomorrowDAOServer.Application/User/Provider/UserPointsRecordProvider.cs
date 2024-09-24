@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
+using Nest;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Ranking.Provider;
+using TomorrowDAOServer.User.Dtos;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.User.Provider;
@@ -17,6 +19,7 @@ public interface IUserPointsRecordProvider
     Task GenerateReferralActivityVotePointsRecordAsync(string chainId, string inviter, string invitee, DateTime voteTime);
     Task GenerateVotePointsRecordAsync(string chainId, string address, DateTime voteTime, Dictionary<string, string> information);
     Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
+    Task<Tuple<long, List<UserPointsRecordIndex>>> GetPointsListAsync(GetMyPointsInput input, string address);
 }
 
 public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDependency
@@ -106,5 +109,21 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
                 break;
         }
         
+    }
+
+    public async Task<Tuple<long, List<UserPointsRecordIndex>>> GetPointsListAsync(GetMyPointsInput input, string address)
+    {
+        var chainId = input.ChainId;
+        var mustQuery = new List<Func<QueryContainerDescriptor<UserPointsRecordIndex>, QueryContainer>>
+        {
+            q =>
+                q.Term(i => i.Field(t => t.ChainId).Value(chainId)),
+            q =>
+                q.Term(i => i.Field(t => t.Address).Value(address))
+        };
+
+        QueryContainer Filter(QueryContainerDescriptor<UserPointsRecordIndex> f) => f.Bool(b => b.Must(mustQuery));
+        return await _userPointsRecordRepository.GetSortListAsync(Filter, skip: input.SkipCount, limit: input.MaxResultCount,
+            sortFunc: _ => new SortDescriptor<UserPointsRecordIndex>().Descending(index => index.PointsTime));
     }
 }

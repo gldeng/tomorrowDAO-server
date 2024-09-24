@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.User;
 using TomorrowDAOServer.User.Dtos;
 using Volo.Abp;
@@ -32,5 +33,12 @@ public class UserController
     public async Task<bool> CompleteTaskAsync(CompleteTaskInput input)
     {
         return await _userService.CompleteTaskAsync(input);
+    }
+    
+    [HttpGet("my-points")]
+    [Authorize]
+    public async Task<VoteHistoryPagedResultDto<MyPointsDto>> GetMyPointsAsync(GetMyPointsInput input)
+    {
+        return await _userService.GetMyPointsAsync(input);
     }
 }
