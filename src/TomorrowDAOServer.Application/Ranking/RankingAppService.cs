@@ -179,13 +179,6 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             throw new UserFriendlyException("User Address Not Found.");
         }
 
-        var userBalance = await _userBalanceProvider.GetByIdAsync(GuidHelper.GenerateGrainId(address,
-            input.ChainId, CommonConstant.GetVotigramSymbol(input.ChainId)));
-        if (userBalance == null || userBalance.Amount <= 0)
-        {
-            throw new UserFriendlyException("NFT amount not enough.");
-        }
-
         _logger.LogInformation("Ranking vote, parse rawTransaction. {0}", address);
         var (voteInput, transaction) = ParseRawTransaction(input.ChainId, input.RawTransaction);
         var votingItemId = voteInput.VotingItemId.ToHex();
@@ -298,22 +291,11 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
 
         _logger.LogInformation("MoveHistoryDataAsync address {address} chainId {chainId} type {type}", address, chainId, type);
         var historyAppVotes = await _rankingAppProvider.GetNeedMoveRankingAppListAsync();
-        var historyUserVotes = (await _voteProvider.GetNeedMoveVoteRecordListAsync())
-            .Where(x => x.TotalRecorded == false).ToList();
         string searchValue;
         switch (type)
         {
-            case "1":
-                await MoveAppPointsToRedis(historyAppVotes);
-                break;
             case "3":
                 await UpdateRankingAppInfo(historyAppVotes);
-                break;
-            case "4":
-                await MoveUserPointsToRedis(historyUserVotes);
-                break;
-            case "5":
-                await MoveUserPointsToEs(historyUserVotes);
                 break;
             case "6":
                 await AddDefaultProposal(chainId);
@@ -648,10 +630,21 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                     {
                         _logger.LogInformation("Ranking vote, referralRelationFirstVote.{0} {1}", address, addressCaHash);
                         referral.FirstVoteTime = voteTime;
-                        if (IsReferralActivityPoints(referral))
+                        var inviter = await GetAddressFromCaHash(chainId, referral.InviterCaHash);
+                        if (IsValidReferral(referral))
+                        {
+                            var success = await _userTaskProvider.UpdateUserTaskCompleteTimeAsync(chainId, inviter, UserTask.Daily,
+                                UserTaskDetail.DailyFirstInvite, voteTime);
+                            if (success)
+                            {
+                                await _rankingAppPointsRedisProvider.IncrementTaskPointsAsync(inviter, UserTaskDetail.DailyFirstInvite);
+                                await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.DailyFirstInvite, voteTime);
+                                await _userTaskProvider.CompleteTaskAsync(chainId, inviter, UserTaskDetail.DailyFirstInvite, voteTime);
+                            }
+                        }
+                        if (IsValidReferralActivity(referral))
                         {
                             referral.IsReferralActivity = true;
-                            var inviter = await GetAddressFromCaHash(chainId, referral.InviterCaHash);
                             _logger.LogInformation("Ranking vote, referralRelationFirstVoteInActive.{0} {1}", address, inviter);
                             await _rankingAppPointsRedisProvider.IncrementReferralVotePointsAsync(inviter, address, 1);
                             await _userPointsRecordProvider.GenerateReferralActivityVotePointsRecordAsync(chainId, inviter, address, voteTime);
@@ -664,7 +657,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                     var information = GetInformation(proposalIndex, alias);
                     await _rankingAppPointsRedisProvider.IncrementVotePointsAsync(chainId, votingItemId, address, alias, amount);
                     await _userPointsRecordProvider.GenerateVotePointsRecordAsync(chainId, address, voteTime, information);
-                    await _userTaskProvider.GenerateCompleteTaskAsync(chainId, address, UserTaskDetail.DailyVote, voteTime);
+                    await _userTaskProvider.CompleteTaskAsync(chainId, address, UserTaskDetail.DailyVote, voteTime);
                     _logger.LogInformation("Ranking vote, update app vote success.{0}", address);
                     await _messagePublisherService.SendVoteMessageAsync(chainId, votingItemId, address, alias, amount);
                     _logger.LogInformation("Ranking vote, send vote message success.{0}", address);
@@ -713,7 +706,10 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
 
     private async Task<string> GetAddressFromCaHash(string chainId, string caHash)
     {
-        
+        if (string.IsNullOrEmpty(caHash))
+        {
+            return string.Empty;
+        }
         var address = await _userAppService.GetUserAddressByCaHashAsync(chainId, caHash);
         if (!string.IsNullOrEmpty(address))
         {
@@ -723,12 +719,16 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         var caHolderInfos = await _portkeyProvider.GetHolderInfosAsync(caHash);
         return caHolderInfos?.CaHolderInfo?.FirstOrDefault(x => x.ChainId == chainId)?.CaHash ?? string.Empty;
     }
-
-    private bool IsReferralActivityPoints(ReferralInviteRelationIndex referral)
+    
+    private bool IsValidReferral(ReferralInviteRelationIndex referral)
     {
         return !string.IsNullOrEmpty(referral.ReferralCode)
-               && !string.IsNullOrEmpty(referral.InviterCaHash)
-               && _rankingOptions.CurrentValue.IsReferralActive();
+               && !string.IsNullOrEmpty(referral.InviterCaHash);
+    }
+
+    private bool IsValidReferralActivity(ReferralInviteRelationIndex referral)
+    {
+        return IsValidReferral(referral) && _rankingOptions.CurrentValue.IsReferralActive();
     }
 
     private Dictionary<string, string> GetInformation(ProposalIndex proposalIndex, string alias)

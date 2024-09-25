@@ -104,7 +104,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
             return false;
         }
 
-        await _userTaskProvider.GenerateCompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTime);
+        await _userTaskProvider.CompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTime);
         await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address, userTaskDetail, completeTime);
         return true;
     }
