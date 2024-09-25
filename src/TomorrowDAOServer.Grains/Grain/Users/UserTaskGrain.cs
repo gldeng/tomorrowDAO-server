@@ -5,25 +5,22 @@ namespace TomorrowDAOServer.Grains.Grain.Users;
 
 public interface IUserTaskGrain : IGrainWithStringKey
 {
-    Task<long> GetUserTaskCompleteTimeAsync();
+    Task<bool> UpdateUserTaskCompleteTimeAsync(DateTime completeTime);
 }
 
 public class UserTaskGrain : Grain<UserTaskState>, IUserTaskGrain
 {
-    public async Task<long> GetUserTaskCompleteTimeAsync()
+    public async Task<bool> UpdateUserTaskCompleteTimeAsync(DateTime completeTime)
     {
         var lastCompleteTime = State.CompleteTime;
-        var currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var completeDate = DateTimeOffset.FromUnixTimeMilliseconds(lastCompleteTime).Date;
-        var currentDate = DateTime.UtcNow.Date;
-
-        if (completeDate == currentDate)
+        if (completeTime <= lastCompleteTime || completeTime.Date == lastCompleteTime.Date)
         {
-            return -1L;
+            return false;
         }
 
-        State.CompleteTime = currentTime;
-        await WriteStateAsync();
-        return currentTime;
+        State.CompleteTime = completeTime;
+        await WriteStateAsync(); 
+        return true;
+
     }
 }

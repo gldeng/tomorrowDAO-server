@@ -97,15 +97,15 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         var address = await _userProvider.GetAndValidateUserAddressAsync(
             CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty, input.ChainId);
         var (userTask, userTaskDetail) = CheckUserTask(input);
-        var completeTime = await _userTaskProvider.GetUserTaskCompleteTimeAsync(input.ChainId, address, userTask, userTaskDetail);
-        if (completeTime < 0)
+        var completeTime = DateTime.UtcNow;
+        var success = await _userTaskProvider.UpdateUserTaskCompleteTimeAsync(input.ChainId, address, userTask, userTaskDetail, completeTime);
+        if (!success)
         {
-            throw new UserFriendlyException("Complete Task Fail.");
+            return false;
         }
 
-        var completeTimeDate = TimeHelper.GetDateTimeFromTimeStamp(completeTime);
-        await _userTaskProvider.GenerateCompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTimeDate);
-        await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address, userTaskDetail, completeTimeDate);
+        await _userTaskProvider.GenerateCompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTime);
+        await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address, userTaskDetail, completeTime);
         return true;
     }
 

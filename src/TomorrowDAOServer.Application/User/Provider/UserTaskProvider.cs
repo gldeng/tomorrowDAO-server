@@ -18,7 +18,7 @@ public interface IUserTaskProvider
     Task BulkAddOrUpdateAsync(List<UserTaskIndex> list);
     Task AddOrUpdateAsync(UserTaskIndex index);
     Task GenerateCompleteTaskAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
-    Task<long> GetUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail);
+    Task<bool> UpdateUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail, DateTime completeTime);
 }
 
 public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
@@ -90,18 +90,18 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
         }
     }
 
-    public async Task<long> GetUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail)
+    public async Task<bool> UpdateUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail, DateTime completeTime)
     {
         var id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address);
         try
         {
             var grain = _clusterClient.GetGrain<IUserTaskGrain>(id);
-            return await grain.GetUserTaskCompleteTimeAsync();
+            return await grain.UpdateUserTaskCompleteTimeAsync(completeTime);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "GetUserTaskCompleteTimeAsyncException id {id}", id);
-            return -1;
+            return false;
         }
     }
 }
