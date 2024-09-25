@@ -159,12 +159,12 @@ public class UserService : TomorrowDAOServerAppService, IUserService
 
     private Tuple<UserTask, UserTaskDetail> CheckUserTask(CompleteTaskInput input)
     {
-        if (!Enum.TryParse<UserTask>(input.UserTask, out var userTask))
+        if (!Enum.TryParse<UserTask>(input.UserTask, out var userTask) || UserTask.None == userTask)
         {
             throw new UserFriendlyException("Invalid UserTask.");
         }
         
-        if (!Enum.TryParse<UserTaskDetail>(input.UserTaskDetail, out var userTaskDetail))
+        if (!Enum.TryParse<UserTaskDetail>(input.UserTaskDetail, out var userTaskDetail) || UserTaskDetail.None == userTaskDetail)
         {
             throw new UserFriendlyException("Invalid UserTaskDetail.");
         }
