@@ -104,9 +104,10 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         var success = await _userTaskProvider.UpdateUserTaskCompleteTimeAsync(input.ChainId, address, userTask, userTaskDetail, completeTime);
         if (!success)
         {
-            return false;
+            throw new UserFriendlyException("Task already completed.");
         }
 
+        await _rankingAppPointsRedisProvider.IncrementTaskPointsAsync(address, userTaskDetail);
         await _userTaskProvider.CompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTime);
         await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address, userTaskDetail, completeTime);
         return true;
@@ -166,7 +167,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
             throw new UserFriendlyException("Invalid UserTask.");
         }
         
-        if (!Enum.TryParse<UserTaskDetail>(input.UserTask, out var userTaskDetail))
+        if (!Enum.TryParse<UserTaskDetail>(input.UserTaskDetail, out var userTaskDetail))
         {
             throw new UserFriendlyException("Invalid UserTaskDetail.");
         }
@@ -178,7 +179,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
 
         if (!TaskPointsHelper.FrontEndTaskDetails.Contains(userTaskDetail))
         {
-            throw new UserFriendlyException("Can not complete UserTaskDetail.");
+            throw new UserFriendlyException("Can not complete UserTaskDetail " + userTaskDetail);
         }
 
         return new Tuple<UserTask, UserTaskDetail>(userTask, userTaskDetail);
