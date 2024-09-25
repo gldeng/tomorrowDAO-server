@@ -358,8 +358,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             .Where(vote => vote.ValidRankingVote).MinBy(vote => vote.VoteTime);
         if (voteRecord != null)
         {
-            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.None ,voteRecord.VoteTime);
-            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, invitee, UserTaskDetail.None, voteRecord.VoteTime);
+            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.None, PointsType.InviteVote, voteRecord.VoteTime);
+            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, invitee, UserTaskDetail.None, PointsType.BeInviteVote, voteRecord.VoteTime);
         }
         _logger.LogInformation("ReferralInviteToPointsRecordEnd chainId {chainId} voteRecordIsNull {voteRecordIsNull}", 
             chainId, voteRecord == null);
@@ -672,8 +672,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                             referral.IsReferralActivity = true;
                             _logger.LogInformation("Ranking vote, referralRelationFirstVoteInActive.{0} {1}", address, inviter);
                             await _rankingAppPointsRedisProvider.IncrementReferralVotePointsAsync(inviter, address, 1);
-                            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.None ,voteTime);
-                            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, address, UserTaskDetail.None, voteTime);
+                            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.None, PointsType.InviteVote, voteTime);
+                            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, address, UserTaskDetail.None, PointsType.BeInviteVote, voteTime);
                         }
 
                         await _referralInviteProvider.AddOrUpdateAsync(referral);

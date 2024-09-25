@@ -68,7 +68,6 @@ public class ReferralTopInviterGenerateService : ScheduleSyncDataService
             .Where(referralInvite => referralInvite.Rank is >= 1 and <= 10).ToList();
         _logger.LogInformation("GenerateTopInviterTopList chainId: {chainId} count: {count}", chainId, topList?.Count);
         var toAddTopInviters = new List<ReferralTopInviterIndex>();
-        var toAddTopPointRecords = new List<UserPointsIndex>();
         var now = DateTime.Now;
         foreach (var leaderBoardDto in topList)
         {
@@ -87,19 +86,11 @@ public class ReferralTopInviterGenerateService : ScheduleSyncDataService
                 Points = _rankingAppPointsCalcProvider.CalculatePointsFromReferralTopInviter(),
                 CreateTime = now
             });
-            toAddTopPointRecords.Add(new UserPointsIndex
-            {
-                Id = GuidHelper.GenerateGrainId(chainId, inviter, 
-                    inviterCaHash, latest.StartTime, latest.EndTime, rank, inviteAndVoteCount),
-                ChainId = chainId, Address = inviter, PointsType = PointsType.TopInviter,
-                UserTask = UserTask.None, UserTaskDetail = UserTaskDetail.None,
-                Points = _rankingAppPointsCalcProvider.CalculatePointsFromReferralTopInviter(),
-                PointsTime = now
-            });
             await _rankingAppPointsRedisProvider.IncrementReferralTopInviterPointsAsync(inviter);
+            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.None,
+                PointsType.TopInviter, TimeHelper.GetDateTimeFromTimeStamp(latest.EndTime));
         }
         await _referralTopInviterProvider.BulkAddOrUpdateAsync(toAddTopInviters);
-        await _userPointsRecordProvider.BulkAddOrUpdateAsync(toAddTopPointRecords);
         return -1L;
     }
 

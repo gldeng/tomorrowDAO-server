@@ -19,6 +19,7 @@ public interface IUserPointsRecordProvider
 {
     Task BulkAddOrUpdateAsync(List<UserPointsIndex> list);
     Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime, Dictionary<string, string> information = null);
+    Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, PointsType pointsType, DateTime completeTime, Dictionary<string, string> information = null);
     Task<Tuple<long, List<UserPointsIndex>>> GetPointsListAsync(GetMyPointsInput input, string address);
     Task<bool> UpdateUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail, DateTime completeTime);
     Task<List<UserPointsIndex>> GetByAddressAndUserTaskAsync(string chainId, string address, UserTask userTask);
@@ -52,25 +53,35 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
 
     public async Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime, Dictionary<string, string> information)
     {
-        var userTask = TaskPointsHelper.GetUserTaskFromUserTaskDetail(userTaskDetail);
         var pointsType = TaskPointsHelper.GetPointsTypeFromUserTaskDetail(userTaskDetail);
-        if (userTask == null || pointsType == null)
+        if (pointsType == null)
         {
             return;
         }
 
+        await GenerateTaskPointsRecordAsync(chainId, address, userTaskDetail, pointsType.Value, completeTime, information);
+    }
+
+    public async Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, PointsType pointsType,
+        DateTime completeTime, Dictionary<string, string> information = null)
+    {
+        var userTask = TaskPointsHelper.GetUserTaskFromUserTaskDetail(userTaskDetail);
+        if (userTask == null)
+        {
+            return;
+        }
+        
         var pointsRecordIndex = new UserPointsIndex
         {
             Id = UserTask.Daily == userTask 
-                ? GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address, completeTime.ToUtcString(TimeHelper.DatePattern))
-                : GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address),
+                ? GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, completeTime.ToUtcString(TimeHelper.DatePattern))
+                : GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address),
             ChainId = chainId, Address = address, Information = information ?? new Dictionary<string, string>(),
             UserTask = userTask.Value, UserTaskDetail = userTaskDetail,
-            PointsType = pointsType.Value, PointsTime = completeTime,
+            PointsType = pointsType, PointsTime = completeTime,
             Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType)
         };
         await _userPointsRecordRepository.AddOrUpdateAsync(pointsRecordIndex);
-        
     }
 
     public async Task<Tuple<long, List<UserPointsIndex>>> GetPointsListAsync(GetMyPointsInput input, string address)
