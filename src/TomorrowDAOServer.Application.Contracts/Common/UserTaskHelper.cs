@@ -9,12 +9,14 @@ public class TaskPointsHelper
 {
     private static readonly Dictionary<UserTask, List<UserTaskDetail>> TaskDetailMapping = new()
     {
+        { UserTask.None, new List<UserTaskDetail> { UserTaskDetail.None }},
         { UserTask.Daily, new List<UserTaskDetail> { UserTaskDetail.DailyVote, UserTaskDetail.DailyFirstInvite, UserTaskDetail.DailyViewAsset } },
         { UserTask.Explore, new List<UserTaskDetail>
-        {
-            UserTaskDetail.ExploreJoinTgChannel, UserTaskDetail.ExploreFollowX, UserTaskDetail.ExploreJoinDiscord,
-            UserTaskDetail.ExploreCumulateFiveInvite, UserTaskDetail.ExploreCumulateTenInvite, UserTaskDetail.ExploreCumulateTwentyInvite
-        } }
+            {
+                UserTaskDetail.ExploreJoinTgChannel, UserTaskDetail.ExploreFollowX, UserTaskDetail.ExploreJoinDiscord,
+                UserTaskDetail.ExploreCumulateFiveInvite, UserTaskDetail.ExploreCumulateTenInvite, UserTaskDetail.ExploreCumulateTwentyInvite
+            } 
+        }
     };
 
     public static readonly List<UserTaskDetail> FrontEndTaskDetails = new()

@@ -339,6 +339,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             toAdd.Add(new UserPointsIndex
             {
                 Id = id, ChainId = chainId, Address = voteRecord.Voter, Information = GetInformation(proposalIndex, voteRecord.Alias),
+                UserTask = UserTask.Daily, UserTaskDetail = UserTaskDetail.DailyVote,
                 PointsType = PointsType.Vote, Points = points, PointsTime = voteRecord.VoteTime
             });
         }
@@ -357,8 +358,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             .Where(vote => vote.ValidRankingVote).MinBy(vote => vote.VoteTime);
         if (voteRecord != null)
         {
-            await _userPointsRecordProvider.GenerateReferralActivityVotePointsRecordAsync(chainId, inviter, invitee,
-                voteRecord.VoteTime);
+            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.None ,voteRecord.VoteTime);
+            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, invitee, UserTaskDetail.None, voteRecord.VoteTime);
         }
         _logger.LogInformation("ReferralInviteToPointsRecordEnd chainId {chainId} voteRecordIsNull {voteRecordIsNull}", 
             chainId, voteRecord == null);
@@ -671,7 +672,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                             referral.IsReferralActivity = true;
                             _logger.LogInformation("Ranking vote, referralRelationFirstVoteInActive.{0} {1}", address, inviter);
                             await _rankingAppPointsRedisProvider.IncrementReferralVotePointsAsync(inviter, address, 1);
-                            await _userPointsRecordProvider.GenerateReferralActivityVotePointsRecordAsync(chainId, inviter, address, voteTime);
+                            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.None ,voteTime);
+                            await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, address, UserTaskDetail.None, voteTime);
                         }
 
                         await _referralInviteProvider.AddOrUpdateAsync(referral);
@@ -680,7 +682,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                     var alias = match.Groups[1].Value;
                     var information = GetInformation(proposalIndex, alias);
                     await _rankingAppPointsRedisProvider.IncrementVotePointsAsync(chainId, votingItemId, address, alias, amount);
-                    await _userPointsRecordProvider.GenerateVotePointsRecordAsync(chainId, address, voteTime, information);
+                    await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, address, UserTaskDetail.DailyVote, voteTime, information);
                     _logger.LogInformation("Ranking vote, update app vote success.{0}", address);
                     await _messagePublisherService.SendVoteMessageAsync(chainId, votingItemId, address, alias, amount);
                     _logger.LogInformation("Ranking vote, send vote message success.{0}", address);

@@ -18,9 +18,7 @@ namespace TomorrowDAOServer.User.Provider;
 public interface IUserPointsRecordProvider
 {
     Task BulkAddOrUpdateAsync(List<UserPointsIndex> list);
-    Task GenerateReferralActivityVotePointsRecordAsync(string chainId, string inviter, string invitee, DateTime voteTime);
-    Task GenerateVotePointsRecordAsync(string chainId, string address, DateTime voteTime, Dictionary<string, string> information);
-    Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
+    Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime, Dictionary<string, string> information = null);
     Task<Tuple<long, List<UserPointsIndex>>> GetPointsListAsync(GetMyPointsInput input, string address);
     Task<bool> UpdateUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail, DateTime completeTime);
     Task<List<UserPointsIndex>> GetByAddressAndUserTaskAsync(string chainId, string address, UserTask userTask);
@@ -52,35 +50,7 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
         await _userPointsRecordRepository.BulkAddOrUpdateAsync(list);
     }
 
-    public async Task GenerateReferralActivityVotePointsRecordAsync(string chainId, string inviter, string invitee, DateTime voteTime)
-    {
-        var inviterId = GuidHelper.GenerateGrainId(chainId, inviter, invitee, PointsType.InviteVote);
-        var inviteeId = GuidHelper.GenerateGrainId(chainId, inviter, invitee, PointsType.BeInviteVote);
-        var points = _rankingAppPointsCalcProvider.CalculatePointsFromReferralVotes(1);
-        await _userPointsRecordRepository.AddOrUpdateAsync(new UserPointsIndex
-        {
-            Id = inviterId, ChainId = chainId, Address = inviter, Information = new Dictionary<string, string>(),
-            PointsType = PointsType.InviteVote, Points = points, PointsTime = voteTime
-        });
-        await _userPointsRecordRepository.AddOrUpdateAsync(new UserPointsIndex
-        {
-            Id = inviteeId, ChainId = chainId, Address = invitee, Information = new Dictionary<string, string>(),
-            PointsType = PointsType.BeInviteVote, Points = points, PointsTime = voteTime
-        });
-    }
-
-    public async Task GenerateVotePointsRecordAsync(string chainId, string address, DateTime voteTime, Dictionary<string, string> information)
-    {
-        var id = GuidHelper.GenerateGrainId(chainId, address, voteTime.ToUtcString(TimeHelper.DatePattern));
-        var points = _rankingAppPointsCalcProvider.CalculatePointsFromVotes(1);
-        await _userPointsRecordRepository.AddOrUpdateAsync(new UserPointsIndex
-        {
-            Id = id, ChainId = chainId, Address = address, Information = information,
-            PointsType = PointsType.Vote, Points = points, PointsTime = voteTime
-        });
-    }
-
-    public async Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime)
+    public async Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime, Dictionary<string, string> information)
     {
         var userTask = TaskPointsHelper.GetUserTaskFromUserTaskDetail(userTaskDetail);
         var pointsType = TaskPointsHelper.GetPointsTypeFromUserTaskDetail(userTaskDetail);
@@ -94,7 +64,8 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
             Id = UserTask.Daily == userTask 
                 ? GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address, completeTime.ToUtcString(TimeHelper.DatePattern))
                 : GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address),
-            ChainId = chainId, Address = address, Information = new Dictionary<string, string>(),
+            ChainId = chainId, Address = address, Information = information ?? new Dictionary<string, string>(),
+            UserTask = userTask.Value, UserTaskDetail = userTaskDetail,
             PointsType = pointsType.Value, PointsTime = completeTime,
             Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType)
         };

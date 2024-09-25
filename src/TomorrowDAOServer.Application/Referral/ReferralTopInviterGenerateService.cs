@@ -92,6 +92,7 @@ public class ReferralTopInviterGenerateService : ScheduleSyncDataService
                 Id = GuidHelper.GenerateGrainId(chainId, inviter, 
                     inviterCaHash, latest.StartTime, latest.EndTime, rank, inviteAndVoteCount),
                 ChainId = chainId, Address = inviter, PointsType = PointsType.TopInviter,
+                UserTask = UserTask.None, UserTaskDetail = UserTaskDetail.None,
                 Points = _rankingAppPointsCalcProvider.CalculatePointsFromReferralTopInviter(),
                 PointsTime = now
             });
