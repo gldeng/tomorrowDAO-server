@@ -8,7 +8,6 @@ using Orleans;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Grains.Grain.Referral;
-using TomorrowDAOServer.Referral.Dto;
 using Volo.Abp.DependencyInjection;
 
 namespace TomorrowDAOServer.Referral.Provider;

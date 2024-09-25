@@ -607,7 +607,6 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             {
                 times++;
                 await Task.Delay(_rankingOptions.CurrentValue.RetryDelay);
-
                 transactionResult = await _contractProvider.QueryTransactionResultAsync(transactionId, chainId);
             }
 
@@ -640,6 +639,22 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                                 await _rankingAppPointsRedisProvider.IncrementTaskPointsAsync(inviter, UserTaskDetail.DailyFirstInvite);
                                 await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.DailyFirstInvite, voteTime);
                                 await _userTaskProvider.CompleteTaskAsync(chainId, inviter, UserTaskDetail.DailyFirstInvite, voteTime);
+                            }
+
+                            var inviteCount = await _referralInviteProvider.GetInviteCountAsync(chainId, address);
+                            if (inviteCount is > 0 and (5 or 10 or 20))
+                            {
+                                var userTaskDetail = inviteCount switch
+                                {
+                                    5 => UserTaskDetail.ExploreCumulateFiveInvite,
+                                    10 => UserTaskDetail.ExploreCumulateTenInvite,
+                                    20 => UserTaskDetail.ExploreCumulateTwentyInvite,
+                                };
+                                await _rankingAppPointsRedisProvider.IncrementTaskPointsAsync(inviter, userTaskDetail);
+                                await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, userTaskDetail, voteTime);
+                                await _userTaskProvider.CompleteTaskAsync(chainId, inviter, userTaskDetail, voteTime);
+                                await _userTaskProvider.UpdateUserTaskCompleteTimeAsync(chainId, inviter, UserTask.Explore,
+                                    UserTaskDetail.DailyFirstInvite, voteTime);
                             }
                         }
                         if (IsValidReferralActivity(referral))
