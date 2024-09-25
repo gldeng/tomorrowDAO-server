@@ -616,7 +616,6 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                 _logger.LogInformation("Ranking vote, transaction success.{0}", transactionId);
                 await SaveVotingRecordAsync(chainId, address, votingItemId, RankingVoteStatusEnum.Voted,
                     transactionId);
-
                 _logger.LogInformation("Ranking vote, update app vote.{0}", address);
                 var match = Regex.Match(memo ?? string.Empty, CommonConstant.MemoPattern);
                 if (match.Success)
@@ -641,7 +640,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                                 await _userTaskProvider.CompleteTaskAsync(chainId, inviter, UserTaskDetail.DailyFirstInvite, voteTime);
                             }
 
-                            var inviteCount = await _referralInviteProvider.GetInviteCountAsync(chainId, address);
+                            var inviteCount = await _referralInviteProvider.IncrementInviteCountAsync(chainId, address);
                             if (inviteCount is > 0 and (5 or 10 or 20))
                             {
                                 var userTaskDetail = inviteCount switch

@@ -22,6 +22,7 @@ public interface IReferralInviteProvider
     Task<long> GetInvitedCountByInviterCaHashAsync(string chainId, string inviterCaHash, bool isVoted, bool isActivityVote = false);
     Task<IReadOnlyCollection<KeyedBucket<string>>> InviteLeaderBoardAsync(long startTime, long endTime);
     Task<List<ReferralInviteRelationIndex>> GetByTimeRangeAsync(long startTime, long endTime);
+    Task<long> IncrementInviteCountAsync(string chainId, string address);
     Task<long> GetInviteCountAsync(string chainId, string address);
 }
 
@@ -171,17 +172,31 @@ public class ReferralInviteProvider : IReferralInviteProvider, ISingletonDepende
         return await IndexHelper.GetAllIndex(Filter, _referralInviteRepository);
     }
 
+    public async Task<long> IncrementInviteCountAsync(string chainId, string address)
+    {
+        try
+        {
+            var grain = _clusterClient.GetGrain<IReferralInviteCountGrain>(GuidHelper.GenerateGrainId(chainId, address));
+            return await grain.IncrementInviteCountAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "IncrementInviteCountAsyncException chainId {chainId} address {address}", chainId, address);
+            return -1;
+        }
+    }
+
     public async Task<long> GetInviteCountAsync(string chainId, string address)
     {
         try
         {
             var grain = _clusterClient.GetGrain<IReferralInviteCountGrain>(GuidHelper.GenerateGrainId(chainId, address));
-            return await grain.GetInviteCount();
+            return await grain.GetInviteCountAsync();
         }
         catch (Exception e)
         {
             _logger.LogError(e, "GetInviteCountAsyncException chainId {chainId} address {address}", chainId, address);
-            return -1;
+            return 0;
         }
     }
 }

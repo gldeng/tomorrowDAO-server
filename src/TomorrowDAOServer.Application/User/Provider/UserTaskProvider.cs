@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AElf.Indexing.Elasticsearch;
 using Microsoft.Extensions.Logging;
+using Nest;
 using Orleans;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Entities;
@@ -19,6 +20,7 @@ public interface IUserTaskProvider
     Task AddOrUpdateAsync(UserTaskIndex index);
     Task CompleteTaskAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
     Task<bool> UpdateUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail, DateTime completeTime);
+    Task<List<UserTaskIndex>> GetByAddressAndUserTaskAsync(string chainId, string address, UserTask userTask);
 }
 
 public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
@@ -103,5 +105,26 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
             _logger.LogError(e, "GetUserTaskCompleteTimeAsyncException id {id}", id);
             return false;
         }
+    }
+
+    public async Task<List<UserTaskIndex>> GetByAddressAndUserTaskAsync(string chainId, string address, UserTask userTask)
+    {
+        var timeFormat = DateTime.UtcNow.ToUtcString(TimeHelper.DatePattern);
+        var mustQuery = new List<Func<QueryContainerDescriptor<UserTaskIndex>, QueryContainer>>
+        {
+            q => q.Term(i => i.Field(t => t.ChainId).Value(chainId)),
+            q => q.Term(i => i.Field(t => t.Address).Value(address)),
+            q => q.Term(i => i.Field(t => t.UserTask).Value(userTask))
+        };
+        if (userTask == UserTask.Daily)
+        {
+            var todayStart = DateTime.UtcNow.Date;
+            var todayEnd = todayStart.AddDays(1).AddTicks(-1); 
+            mustQuery.Add(q => q.DateRange(r => r
+                .Field(f => f.CompleteTime).GreaterThanOrEquals(todayStart).LessThanOrEquals(todayEnd)));
+        }
+
+        QueryContainer Filter(QueryContainerDescriptor<UserTaskIndex> f) => f.Bool(b => b.Must(mustQuery));
+        return (await _userTaskRepository.GetListAsync(Filter)).Item2;
     }
 }

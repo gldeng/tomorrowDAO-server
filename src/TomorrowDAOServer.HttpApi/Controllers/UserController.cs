@@ -41,4 +41,11 @@ public class UserController
     {
         return await _userService.GetMyPointsAsync(input);
     }
+    
+    [HttpGet("task-list")]
+    [Authorize]
+    public async Task<TaskListDto> GetTaskListAsync(string chainId)
+    {
+        return await _userService.GetTaskListAsync(chainId);
+    }
 }

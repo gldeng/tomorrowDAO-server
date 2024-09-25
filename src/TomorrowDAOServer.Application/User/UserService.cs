@@ -9,6 +9,7 @@ using TomorrowDAOServer.Enums;
 using TomorrowDAOServer.Options;
 using TomorrowDAOServer.Proposal.Dto;
 using TomorrowDAOServer.Ranking.Provider;
+using TomorrowDAOServer.Referral.Provider;
 using TomorrowDAOServer.User.Dtos;
 using TomorrowDAOServer.User.Provider;
 using Volo.Abp;
@@ -25,11 +26,12 @@ public class UserService : TomorrowDAOServerAppService, IUserService
     private readonly IUserPointsRecordProvider _userPointsRecordProvider;
     private readonly IUserTaskProvider _userTaskProvider;
     private readonly IRankingAppPointsRedisProvider _rankingAppPointsRedisProvider;
+    private readonly IReferralInviteProvider _referralInviteProvider;
 
     public UserService(IUserProvider userProvider, IOptionsMonitor<UserOptions> userOptions,
         IUserVisitProvider userVisitProvider, IUserVisitSummaryProvider userVisitSummaryProvider, 
         IUserTaskProvider userTaskProvider, IUserPointsRecordProvider userPointsRecordProvider, 
-        IRankingAppPointsRedisProvider rankingAppPointsRedisProvider)
+        IRankingAppPointsRedisProvider rankingAppPointsRedisProvider, IReferralInviteProvider referralInviteProvider)
     {
         _userProvider = userProvider;
         _userOptions = userOptions;
@@ -38,6 +40,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         _userTaskProvider = userTaskProvider;
         _userPointsRecordProvider = userPointsRecordProvider;
         _rankingAppPointsRedisProvider = rankingAppPointsRedisProvider;
+        _referralInviteProvider = referralInviteProvider;
     }
 
     public async Task<UserSourceReportResultDto> UserSourceReportAsync(string chainId, string source)
@@ -130,6 +133,32 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         return new VoteHistoryPagedResultDto<MyPointsDto>(count, data, totalPoints);
     }
 
+    public async Task<TaskListDto> GetTaskListAsync(string chainId)
+    {
+        var address = await _userProvider.GetAndValidateUserAddressAsync(
+            CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty, chainId);
+        var dailyTaskList = await _userTaskProvider.GetByAddressAndUserTaskAsync(chainId, address, UserTask.Daily);
+        var exploreTaskList = await _userTaskProvider.GetByAddressAndUserTaskAsync(chainId, address, UserTask.Explore);
+        var dailyTaskInfoList = await GenerateTaskInfoDetails(chainId, address, dailyTaskList, UserTask.Daily);
+        var exploreTaskInfoList = await GenerateTaskInfoDetails(chainId, address, exploreTaskList, UserTask.Explore);
+        return new TaskListDto
+        {
+            TaskList = new List<TaskInfo>
+            {
+                new()
+                {
+                    TotalCount = dailyTaskInfoList.Count, Data = dailyTaskInfoList,
+                    UserTask = UserTask.Daily.ToString()
+                },
+                new()
+                {
+                    TotalCount = exploreTaskInfoList.Count, Data = exploreTaskInfoList,
+                    UserTask = UserTask.Explore.ToString()
+                }
+            }
+        };
+    }
+
     private Tuple<UserTask, UserTaskDetail> CheckUserTask(CompleteTaskInput input)
     {
         if (!Enum.TryParse<UserTask>(input.UserTask, out var userTask))
@@ -194,5 +223,28 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         {
             return string.Empty;
         }
+    }
+    
+    private async Task<List<TaskInfoDetail>> GenerateTaskInfoDetails(string chainId, string address, List<UserTaskIndex> dailyTaskList, UserTask userTask)
+    {
+        var taskDictionary = dailyTaskList.ToDictionary(task => task.UserTaskDetail.ToString(), task => task);
+        var completeCount = await _referralInviteProvider.GetInviteCountAsync(chainId, address);
+        var taskDetails = userTask == UserTask.Daily
+            ? TaskPointsHelper.InitDailyTaskDetailList()
+            : TaskPointsHelper.InitExploreTaskDetailList(completeCount);
+       
+        
+        foreach (var taskDetail in taskDetails)
+        {
+            if (!taskDictionary.TryGetValue(taskDetail.UserTaskDetail, out var task))
+            {
+                continue;
+            }
+
+            taskDetail.Points = task.Points;
+            taskDetail.Complete = true;
+        }
+
+        return taskDetails;
     }
 }
