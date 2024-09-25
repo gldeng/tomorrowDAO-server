@@ -68,7 +68,7 @@ public class ReferralTopInviterGenerateService : ScheduleSyncDataService
             .Where(referralInvite => referralInvite.Rank is >= 1 and <= 10).ToList();
         _logger.LogInformation("GenerateTopInviterTopList chainId: {chainId} count: {count}", chainId, topList?.Count);
         var toAddTopInviters = new List<ReferralTopInviterIndex>();
-        var toAddTopPointRecords = new List<UserPointsRecordIndex>();
+        var toAddTopPointRecords = new List<UserPointsIndex>();
         var now = DateTime.Now;
         foreach (var leaderBoardDto in topList)
         {
@@ -87,7 +87,7 @@ public class ReferralTopInviterGenerateService : ScheduleSyncDataService
                 Points = _rankingAppPointsCalcProvider.CalculatePointsFromReferralTopInviter(),
                 CreateTime = now
             });
-            toAddTopPointRecords.Add(new UserPointsRecordIndex
+            toAddTopPointRecords.Add(new UserPointsIndex
             {
                 Id = GuidHelper.GenerateGrainId(chainId, inviter, 
                     inviterCaHash, latest.StartTime, latest.EndTime, rank, inviteAndVoteCount),

@@ -24,20 +24,18 @@ public class UserService : TomorrowDAOServerAppService, IUserService
     private readonly IUserVisitProvider _userVisitProvider;
     private readonly IUserVisitSummaryProvider _userVisitSummaryProvider;
     private readonly IUserPointsRecordProvider _userPointsRecordProvider;
-    private readonly IUserTaskProvider _userTaskProvider;
     private readonly IRankingAppPointsRedisProvider _rankingAppPointsRedisProvider;
     private readonly IReferralInviteProvider _referralInviteProvider;
 
     public UserService(IUserProvider userProvider, IOptionsMonitor<UserOptions> userOptions,
         IUserVisitProvider userVisitProvider, IUserVisitSummaryProvider userVisitSummaryProvider, 
-        IUserTaskProvider userTaskProvider, IUserPointsRecordProvider userPointsRecordProvider, 
+        IUserPointsRecordProvider userPointsRecordProvider, 
         IRankingAppPointsRedisProvider rankingAppPointsRedisProvider, IReferralInviteProvider referralInviteProvider)
     {
         _userProvider = userProvider;
         _userOptions = userOptions;
         _userVisitProvider = userVisitProvider;
         _userVisitSummaryProvider = userVisitSummaryProvider;
-        _userTaskProvider = userTaskProvider;
         _userPointsRecordProvider = userPointsRecordProvider;
         _rankingAppPointsRedisProvider = rankingAppPointsRedisProvider;
         _referralInviteProvider = referralInviteProvider;
@@ -101,14 +99,13 @@ public class UserService : TomorrowDAOServerAppService, IUserService
             CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty, input.ChainId);
         var (userTask, userTaskDetail) = CheckUserTask(input);
         var completeTime = DateTime.UtcNow;
-        var success = await _userTaskProvider.UpdateUserTaskCompleteTimeAsync(input.ChainId, address, userTask, userTaskDetail, completeTime);
+        var success = await _userPointsRecordProvider.UpdateUserTaskCompleteTimeAsync(input.ChainId, address, userTask, userTaskDetail, completeTime);
         if (!success)
         {
             throw new UserFriendlyException("Task already completed.");
         }
 
         await _rankingAppPointsRedisProvider.IncrementTaskPointsAsync(address, userTaskDetail);
-        await _userTaskProvider.CompleteTaskAsync(input.ChainId, address, userTaskDetail, completeTime);
         await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(input.ChainId, address, userTaskDetail, completeTime);
         return true;
     }
@@ -138,8 +135,8 @@ public class UserService : TomorrowDAOServerAppService, IUserService
     {
         var address = await _userProvider.GetAndValidateUserAddressAsync(
             CurrentUser.IsAuthenticated ? CurrentUser.GetId() : Guid.Empty, chainId);
-        var dailyTaskList = await _userTaskProvider.GetByAddressAndUserTaskAsync(chainId, address, UserTask.Daily);
-        var exploreTaskList = await _userTaskProvider.GetByAddressAndUserTaskAsync(chainId, address, UserTask.Explore);
+        var dailyTaskList = await _userPointsRecordProvider.GetByAddressAndUserTaskAsync(chainId, address, UserTask.Daily);
+        var exploreTaskList = await _userPointsRecordProvider.GetByAddressAndUserTaskAsync(chainId, address, UserTask.Explore);
         var dailyTaskInfoList = await GenerateTaskInfoDetails(chainId, address, dailyTaskList, UserTask.Daily);
         var exploreTaskInfoList = await GenerateTaskInfoDetails(chainId, address, exploreTaskList, UserTask.Explore);
         return new TaskListDto
@@ -185,7 +182,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         return new Tuple<UserTask, UserTaskDetail>(userTask, userTaskDetail);
     }
 
-    private Tuple<string, string> GetTitleAndDesc(UserPointsRecordIndex index)
+    private Tuple<string, string> GetTitleAndDesc(UserPointsIndex index)
     {
         var information = index.Information;
         var pointsType = index.PointsType;
@@ -226,7 +223,7 @@ public class UserService : TomorrowDAOServerAppService, IUserService
         }
     }
     
-    private async Task<List<TaskInfoDetail>> GenerateTaskInfoDetails(string chainId, string address, List<UserTaskIndex> dailyTaskList, UserTask userTask)
+    private async Task<List<TaskInfoDetail>> GenerateTaskInfoDetails(string chainId, string address, List<UserPointsIndex> dailyTaskList, UserTask userTask)
     {
         var taskDictionary = dailyTaskList.ToDictionary(task => task.UserTaskDetail.ToString(), task => task);
         var completeCount = await _referralInviteProvider.GetInviteCountAsync(chainId, address);
