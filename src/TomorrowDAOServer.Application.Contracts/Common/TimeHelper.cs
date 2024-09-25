@@ -129,7 +129,7 @@ public static class TimeHelper
         return new DateTimeOffset(dateTime).ToUnixTimeSeconds();
     }
     
-    public static string ConvertStartTimeToDate(string strTimeStamp)
+    public static string ConvertStrTimeToDate(string strTimeStamp)
     {
         if (string.IsNullOrWhiteSpace(strTimeStamp))
         {

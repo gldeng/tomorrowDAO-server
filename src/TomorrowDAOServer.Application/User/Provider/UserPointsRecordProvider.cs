@@ -72,7 +72,7 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
 
     public async Task GenerateVotePointsRecordAsync(string chainId, string address, DateTime voteTime, Dictionary<string, string> information)
     {
-        var id = GuidHelper.GenerateGrainId(chainId, address, TimeHelper.GetTimeStampFromDateTime(voteTime));
+        var id = GuidHelper.GenerateGrainId(chainId, address, voteTime.ToUtcString(TimeHelper.DatePattern));
         var points = _rankingAppPointsCalcProvider.CalculatePointsFromVotes(1);
         await _userPointsRecordRepository.AddOrUpdateAsync(new UserPointsRecordIndex
         {

@@ -205,8 +205,8 @@ public class UserService : TomorrowDAOServerAppService, IUserService
                 var inviter = GetIndexString(id,1, CommonConstant.Middleline);
                 return new Tuple<string, string>("Accept Invitation", "Inviter : ELF_" + inviter + "_" + chainId);
             case PointsType.TopInviter:
-                var startTime = TimeHelper.ConvertStartTimeToDate(GetIndexString(id, 3, CommonConstant.Middleline));
-                var endTime = TimeHelper.ConvertStartTimeToDate(GetIndexString(id, 4, CommonConstant.Middleline));
+                var startTime = TimeHelper.ConvertStrTimeToDate(GetIndexString(id, 3, CommonConstant.Middleline));
+                var endTime = TimeHelper.ConvertStrTimeToDate(GetIndexString(id, 4, CommonConstant.Middleline));
                 return new Tuple<string, string>("Top 10 Inviters", "Cycle: " + startTime + "-" + endTime);
             default:
                 return new Tuple<string, string>(pointsType.ToString(), string.Empty);
