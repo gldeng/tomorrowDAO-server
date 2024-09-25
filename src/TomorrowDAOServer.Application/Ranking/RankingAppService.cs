@@ -334,7 +334,8 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         {
             var proposalId = voteRecord.VotingItemId;
             var proposalIndex = proposalDic.GetValueOrDefault(proposalId);
-            var id = GuidHelper.GenerateGrainId(chainId, voteRecord.Voter, voteRecord.VoteTime.ToUtcString(TimeHelper.DatePattern));
+            var id = GuidHelper.GenerateGrainId(chainId, UserTask.Daily, UserTaskDetail.DailyVote, PointsType.Vote, voteRecord.Voter,
+                voteRecord.VoteTime.ToUtcString(TimeHelper.DatePattern));
             var points = _rankingAppPointsCalcProvider.CalculatePointsFromVotes(1);
             toAdd.Add(new UserPointsIndex
             {
@@ -646,13 +647,13 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                         {
                             var success = await _userPointsRecordProvider.UpdateUserTaskCompleteTimeAsync(chainId, inviter, UserTask.Daily,
                                 UserTaskDetail.DailyFirstInvite, voteTime);
+                            var inviteCount = await _referralInviteProvider.IncrementInviteCountAsync(chainId, address);
                             if (success)
                             {
                                 await _rankingAppPointsRedisProvider.IncrementTaskPointsAsync(inviter, UserTaskDetail.DailyFirstInvite);
                                 await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, UserTaskDetail.DailyFirstInvite, voteTime);
                             }
 
-                            var inviteCount = await _referralInviteProvider.IncrementInviteCountAsync(chainId, address);
                             if (inviteCount is > 0 and (5 or 10 or 20))
                             {
                                 var userTaskDetail = inviteCount switch
