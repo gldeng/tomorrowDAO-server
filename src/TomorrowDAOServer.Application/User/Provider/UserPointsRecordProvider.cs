@@ -15,7 +15,6 @@ namespace TomorrowDAOServer.User.Provider;
 public interface IUserPointsRecordProvider
 {
     Task BulkAddOrUpdateAsync(List<UserPointsRecordIndex> list);
-    Task AddOrUpdateAsync(UserPointsRecordIndex index);
     Task GenerateReferralActivityVotePointsRecordAsync(string chainId, string inviter, string invitee, DateTime voteTime);
     Task GenerateVotePointsRecordAsync(string chainId, string address, DateTime voteTime, Dictionary<string, string> information);
     Task GenerateTaskPointsRecordAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
@@ -42,15 +41,6 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
         }
 
         await _userPointsRecordRepository.BulkAddOrUpdateAsync(list);
-    }
-
-    public async Task AddOrUpdateAsync(UserPointsRecordIndex index)
-    {
-        if (index == null)
-        {
-            return;
-        }
-        await _userPointsRecordRepository.AddOrUpdateAsync(index);
     }
 
     public async Task GenerateReferralActivityVotePointsRecordAsync(string chainId, string inviter, string invitee, DateTime voteTime)
@@ -92,22 +82,14 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
 
         var pointsRecordIndex = new UserPointsRecordIndex
         {
+            Id = UserTask.Daily == userTask 
+                ? GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address, completeTime.ToUtcString(TimeHelper.DatePattern))
+                : GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address),
             ChainId = chainId, Address = address, Information = new Dictionary<string, string>(),
             PointsType = pointsType.Value, PointsTime = completeTime,
             Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType)
         };
-        switch (userTask)
-        {
-            case UserTask.Daily:
-                var timeFormat = completeTime.ToUtcString(TimeHelper.DatePattern);
-                pointsRecordIndex.Id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address, timeFormat);
-                await _userPointsRecordRepository.AddOrUpdateAsync(pointsRecordIndex);
-                break;
-            case UserTask.Explore:
-                pointsRecordIndex.Id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address);
-                await _userPointsRecordRepository.AddOrUpdateAsync(pointsRecordIndex);
-                break;
-        }
+        await _userPointsRecordRepository.AddOrUpdateAsync(pointsRecordIndex);
         
     }
 

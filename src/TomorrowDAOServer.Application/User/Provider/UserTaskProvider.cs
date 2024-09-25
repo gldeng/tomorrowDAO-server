@@ -16,8 +16,6 @@ namespace TomorrowDAOServer.User.Provider;
 
 public interface IUserTaskProvider
 {
-    Task BulkAddOrUpdateAsync(List<UserTaskIndex> list);
-    Task AddOrUpdateAsync(UserTaskIndex index);
     Task CompleteTaskAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime);
     Task<bool> UpdateUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail, DateTime completeTime);
     Task<List<UserTaskIndex>> GetByAddressAndUserTaskAsync(string chainId, string address, UserTask userTask);
@@ -40,25 +38,6 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
         _logger = logger;
     }
 
-    public async Task BulkAddOrUpdateAsync(List<UserTaskIndex> list)
-    {
-        if (list == null || list.IsNullOrEmpty())
-        {
-            return;
-        }
-
-        await _userTaskRepository.BulkAddOrUpdateAsync(list);
-    }
-
-    public async Task AddOrUpdateAsync(UserTaskIndex index)
-    {
-        if (index == null)
-        {
-            return;
-        }
-        await _userTaskRepository.AddOrUpdateAsync(index);
-    }
-
     public async Task CompleteTaskAsync(string chainId, string address, UserTaskDetail userTaskDetail, DateTime completeTime)
     {
         var userTask = TaskPointsHelper.GetUserTaskFromUserTaskDetail(userTaskDetail);
@@ -68,28 +47,16 @@ public class UserTaskProvider : IUserTaskProvider, ISingletonDependency
             return;
         }
 
-        switch (userTask)
+        var userTaskIndex = new UserTaskIndex
         {
-            case UserTask.Daily:
-                var timeFormat = completeTime.ToUtcString(TimeHelper.DatePattern);
-                await _userTaskRepository.AddOrUpdateAsync(new UserTaskIndex
-                {
-                    Id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address, timeFormat),
-                    ChainId = chainId, Address = address, UserTask = UserTask.Daily, UserTaskDetail = userTaskDetail,
-                    Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType),
-                    CompleteTime = completeTime
-                });
-                break;
-            case UserTask.Explore:
-                await _userTaskRepository.AddOrUpdateAsync(new UserTaskIndex
-                {
-                    Id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address),
-                    ChainId = chainId, Address = address, UserTask = UserTask.Explore, UserTaskDetail = userTaskDetail,
-                    Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType),
-                    CompleteTime = completeTime
-                });
-                break;
-        }
+            Id = UserTask.Daily == userTask 
+                ? GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address, completeTime.ToUtcString(TimeHelper.DatePattern))
+                : GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, address),
+            ChainId = chainId, Address = address, UserTask = userTask.Value, UserTaskDetail = userTaskDetail,
+            Points = _rankingAppPointsCalcProvider.CalculatePointsFromPointsType(pointsType),
+            CompleteTime = completeTime
+        };
+        await _userTaskRepository.AddOrUpdateAsync(userTaskIndex);
     }
 
     public async Task<bool> UpdateUserTaskCompleteTimeAsync(string chainId, string address, UserTask userTask, UserTaskDetail userTaskDetail, DateTime completeTime)
