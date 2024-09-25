@@ -14,5 +14,6 @@ public enum WorkerBusinessType
     ProposalNumUpdate,
     ReferralSync,
     UserBalanceSync,
-    TopInviterGenerate
+    TopInviterGenerate,
+    ProposalRedisUpdate
 }

@@ -134,13 +134,12 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         if (!toUpdate.IsNullOrEmpty())
         {
             await _rankingAppProvider.BulkAddOrUpdateAsync(toUpdate);
-
-            //var defaultRankingProposal = await GetDefaultRankingProposalAsync(chainId);
-            // var defaultRankingProposal = await _proposalProvider.GetDefaultProposalAsync(chainId);
-            var defaultRankingProposal = proposalList.MaxBy(p => p.DeployTime);
+            var defaultRankingProposal = proposalList
+                .Where(p => p.ActiveStartTime <= DateTime.UtcNow) 
+                .MaxBy(p => p.DeployTime);
             if (defaultRankingProposal != null && !defaultRankingProposal.Id.IsNullOrWhiteSpace())
             {
-                await GenerateRedisDefaultProposal(defaultRankingProposal.ProposalId,
+                await _rankingAppPointsRedisProvider.GenerateRedisDefaultProposal(defaultRankingProposal.ProposalId,
                     defaultRankingProposal.ProposalDescription, chainId);
             }
         }
@@ -311,9 +310,6 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             case "5":
                 await ReferralInviteCountToGrain(chainId);
                 break;
-            case "6":
-                await AddDefaultProposal(chainId);
-                break;
             case "9":
                 searchValue = await _rankingAppPointsRedisProvider.GetAsync(key);
                 _logger.LogInformation("RedisValue key {key} value {value}", key, searchValue);
@@ -384,14 +380,6 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         var inviter = _rankingOptions.CurrentValue.ReferralPointsAddressList[0];
         await _referralInviteProvider.IncrementInviteCountAsync(chainId, inviter);
         _logger.LogInformation("ReferralInviteCountToGrainEnd chainId {chainId}", chainId);
-    }
-
-    private async Task AddDefaultProposal(string chainId)
-    {
-        _logger.LogInformation("AddDefaultProposalBegin chainId {count}", chainId);
-        var defaultProposal = await _proposalProvider.GetDefaultProposalAsync(chainId);
-        await GenerateRedisDefaultProposal(defaultProposal.ProposalId, defaultProposal.ProposalDescription, chainId);
-        _logger.LogInformation("AddDefaultProposalEnd chainId {count}", chainId);
     }
     
     private async Task UpdateRankingAppInfo()
@@ -721,11 +709,6 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
         return description.Replace(CommonConstant.DescriptionBegin, CommonConstant.EmptyString)
             .Trim().Split(CommonConstant.Comma).Select(alias => alias.Trim()).Distinct().ToList();
     }
-    
-    private string GetAliasString(string description)
-    {
-        return description.Replace(CommonConstant.DescriptionBegin, CommonConstant.EmptyString).Trim();
-    }
 
     private bool IsVoteDuring(ProposalIndex index)
     {
@@ -734,14 +717,6 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             return false;
         }
         return DateTime.UtcNow > index.ActiveStartTime && DateTime.UtcNow < index.ActiveEndTime;
-    }
-
-    private async Task GenerateRedisDefaultProposal(string proposalId, string proposalDesc, string chainId)
-    {
-        var aliasString = GetAliasString(proposalDesc);
-        var value = proposalId + CommonConstant.Comma + aliasString;
-        // var endTime = proposal.ActiveEndTime;
-        await _rankingAppPointsRedisProvider.SaveDefaultRankingProposalIdAsync(chainId, value, null);
     }
 
     private async Task<string> GetAddressFromCaHash(string chainId, string caHash)

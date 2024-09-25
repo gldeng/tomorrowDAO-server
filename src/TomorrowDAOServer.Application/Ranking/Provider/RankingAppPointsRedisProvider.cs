@@ -29,9 +29,9 @@ public interface IRankingAppPointsRedisProvider
     Task IncrementReferralVotePointsAsync(string inviter, string invitee, long voteCount);
     Task IncrementReferralTopInviterPointsAsync(string address);
     Task IncrementTaskPointsAsync(string address, UserTaskDetail userTaskDetail);
-    Task SaveDefaultRankingProposalIdAsync(string chainId, string value, DateTime? expire);
     Task<Tuple<string, List<string>>> GetDefaultRankingProposalInfoAsync(string chainId);
     Task<string> GetDefaultRankingProposalIdAsync(string chainId);
+    Task GenerateRedisDefaultProposal(string proposalId, string proposalDesc, string chainId);
 }
 
 public class RankingAppPointsRedisProvider : IRankingAppPointsRedisProvider, ISingletonDependency
@@ -185,15 +185,6 @@ public class RankingAppPointsRedisProvider : IRankingAppPointsRedisProvider, ISi
         await IncrementAsync(userKey, taskPoints);
     }
 
-    public async Task SaveDefaultRankingProposalIdAsync(string chainId, string value, DateTime? expire)
-    {
-        var distributeCacheKey = RedisHelper.GenerateDefaultProposalCacheKey(chainId);
-        await _distributedCache.SetAsync(distributeCacheKey, value, new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(87600),
-        });
-    }
-
     public async Task<Tuple<string, List<string>>> GetDefaultRankingProposalInfoAsync(string chainId)
     {
         var distributeCacheKey = RedisHelper.GenerateDefaultProposalCacheKey(chainId);
@@ -219,5 +210,16 @@ public class RankingAppPointsRedisProvider : IRankingAppPointsRedisProvider, ISi
     {
         var (proposalId, _) = await GetDefaultRankingProposalInfoAsync(chainId);
         return proposalId;
+    }
+    
+    public async Task GenerateRedisDefaultProposal(string proposalId, string proposalDesc, string chainId)
+    {
+        var aliasString = RankHelper.GetAliasString(proposalDesc);
+        var value = proposalId + CommonConstant.Comma + aliasString;
+        var distributeCacheKey = RedisHelper.GenerateDefaultProposalCacheKey(chainId);
+        await _distributedCache.SetAsync(distributeCacheKey, value, new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(87600),
+        });
     }
 }
