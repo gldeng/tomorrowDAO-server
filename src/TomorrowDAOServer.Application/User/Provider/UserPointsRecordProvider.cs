@@ -88,41 +88,39 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
         DateTime completeTime, Dictionary<string, string> information = null)
     {
         var id = string.Empty;
-        switch (userTask)
+        switch (pointsType)
         {
-            case UserTask.Daily:
-                switch (userTaskDetail)
-                {
-                    case UserTaskDetail.DailyVote:
-                        var proposalId = information?.GetValueOrDefault(CommonConstant.ProposalId) ?? string.Empty;
-                        id =  GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address,
-                            proposalId, completeTime.ToUtcString(TimeHelper.DatePattern));
-                        break;
-                    case UserTaskDetail.DailyFirstInvite:
-                    case UserTaskDetail.DailyViewAsset:
-                        id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address,
-                            completeTime.ToUtcString(TimeHelper.DatePattern));
-                        break;
-                }
+            case PointsType.Vote:
+                var proposalId = information?.GetValueOrDefault(CommonConstant.ProposalId) ?? string.Empty;
+                id =  GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address,
+                    proposalId, completeTime.ToUtcString(TimeHelper.DatePattern));
                 break;
-            case UserTask.None:
-                switch (pointsType)
-                {
-                    case PointsType.InviteVote:
-                        var invitee = information?.GetValueOrDefault(CommonConstant.Invitee) ?? string.Empty;
-                        id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, invitee);
-                        break;
-                    case PointsType.BeInviteVote:
-                        var inviter = information?.GetValueOrDefault(CommonConstant.Inviter) ?? string.Empty;
-                        id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, inviter);
-                        break;
-                    case PointsType.TopInviter:
-                        var endTime = information?.GetValueOrDefault(CommonConstant.CycleEndTime) ?? string.Empty;
-                        id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, endTime);
-                        break;
-                }
+            case PointsType.DailyFirstInvite:
+            case PointsType.DailyViewAsset:
+                id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address,
+                    completeTime.ToUtcString(TimeHelper.DatePattern));
                 break;
-            case UserTask.Explore:
+            case PointsType.InviteVote:
+                var invitee = information?.GetValueOrDefault(CommonConstant.Invitee) ?? string.Empty;
+                id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, invitee);
+                break;
+            case PointsType.BeInviteVote:
+                var inviter = information?.GetValueOrDefault(CommonConstant.Inviter) ?? string.Empty;
+                id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, inviter);
+                break;
+            case PointsType.TopInviter:
+                var endTime = information?.GetValueOrDefault(CommonConstant.CycleEndTime) ?? string.Empty;
+                id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, endTime);
+                break;
+            case PointsType.All:
+            case PointsType.Like:
+            case PointsType.ExploreJoinTgChannel:
+            case PointsType.ExploreFollowX:
+            case PointsType.ExploreJoinDiscord:
+            case PointsType.ExploreCumulateFiveInvite:
+            case PointsType.ExploreCumulateTenInvite:
+            case PointsType.ExploreCumulateTwentyInvite:
+            default:
                 id = GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address);
                 break;
         }
