@@ -23,7 +23,7 @@ public class TaskPointsHelper
     {
         UserTaskDetail.DailyViewAsset, 
         UserTaskDetail.ExploreJoinTgChannel, UserTaskDetail.ExploreFollowX,
-        UserTaskDetail.ExploreFollowX, UserTaskDetail.ExploreJoinDiscord,
+        UserTaskDetail.ExploreForwardX, UserTaskDetail.ExploreJoinDiscord,
     };
 
     public static List<UserTaskDetail> GetUserTaskDetailFromUserTask(UserTask userTask)
