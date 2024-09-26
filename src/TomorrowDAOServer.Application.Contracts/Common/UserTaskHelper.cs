@@ -50,6 +50,7 @@ public class TaskPointsHelper
             UserTaskDetail.ExploreJoinTgChannel => PointsType.ExploreJoinTgChannel,
             UserTaskDetail.ExploreFollowX => PointsType.ExploreFollowX,
             UserTaskDetail.ExploreJoinDiscord => PointsType.ExploreJoinDiscord,
+            UserTaskDetail.ExploreForwardX => PointsType.ExploreForwardX,
             UserTaskDetail.ExploreCumulateFiveInvite => PointsType.ExploreCumulateFiveInvite,
             UserTaskDetail.ExploreCumulateTenInvite => PointsType.ExploreCumulateTenInvite,
             UserTaskDetail.ExploreCumulateTwentyInvite => PointsType.ExploreCumulateTwentyInvite,
