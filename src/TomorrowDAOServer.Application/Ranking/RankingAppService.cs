@@ -335,7 +335,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
             var proposalId = voteRecord.VotingItemId;
             var proposalIndex = proposalDic.GetValueOrDefault(proposalId);
             var id = GuidHelper.GenerateGrainId(chainId, UserTask.Daily, UserTaskDetail.DailyVote, PointsType.Vote, voteRecord.Voter,
-                voteRecord.VoteTime.ToUtcString(TimeHelper.DatePattern));
+                proposalId, voteRecord.VoteTime.ToUtcString(TimeHelper.DatePattern));
             var points = _rankingAppPointsCalcProvider.CalculatePointsFromVotes(1);
             toAdd.Add(new UserPointsIndex
             {
@@ -665,7 +665,7 @@ public class RankingAppService : TomorrowDAOServerAppService, IRankingAppService
                                 await _rankingAppPointsRedisProvider.IncrementTaskPointsAsync(inviter, userTaskDetail);
                                 await _userPointsRecordProvider.GenerateTaskPointsRecordAsync(chainId, inviter, userTaskDetail, voteTime);
                                 await _userPointsRecordProvider.UpdateUserTaskCompleteTimeAsync(chainId, inviter, UserTask.Explore,
-                                    UserTaskDetail.DailyFirstInvite, voteTime);
+                                    userTaskDetail, voteTime);
                             }
                         }
                         if (IsValidReferralActivity(referral))

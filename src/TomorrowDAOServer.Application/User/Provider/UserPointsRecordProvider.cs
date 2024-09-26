@@ -70,11 +70,14 @@ public class UserPointsRecordProvider : IUserPointsRecordProvider, ISingletonDep
         {
             return;
         }
-        
+
+        var proposalId = information?.GetValueOrDefault(CommonConstant.ProposalId) ?? string.Empty;
         var pointsRecordIndex = new UserPointsIndex
         {
             Id = UserTask.Daily == userTask 
-                ? GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, completeTime.ToUtcString(TimeHelper.DatePattern))
+                ? UserTaskDetail.DailyVote == userTaskDetail 
+                    ? GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, completeTime.ToUtcString(TimeHelper.DatePattern))
+                    : GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address, proposalId, completeTime.ToUtcString(TimeHelper.DatePattern))
                 : GuidHelper.GenerateGrainId(chainId, userTask, userTaskDetail, pointsType, address),
             ChainId = chainId, Address = address, Information = information ?? new Dictionary<string, string>(),
             UserTask = userTask.Value, UserTaskDetail = userTaskDetail,
