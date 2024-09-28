@@ -64,9 +64,17 @@ public class ReferralService : ApplicationService, IReferralService
     public async Task<InviteDetailDto> InviteDetailAsync(string chainId)
     {
         var (_, addressCaHash) = await _userProvider.GetAndValidateUserAddressAndCaHashAsync(CurrentUser.GetId(), chainId);
-        var accountCreation = await _referralInviteProvider.GetInvitedCountByInviterCaHashAsync(chainId, addressCaHash, false);
-        var votigramVote = await _referralInviteProvider.GetInvitedCountByInviterCaHashAsync(chainId, addressCaHash, true);
-        var votigramActivityVote = await _referralInviteProvider.GetInvitedCountByInviterCaHashAsync(chainId, addressCaHash, true);
+        var (latestReferralActiveEnd, latest) = _rankingOptions.CurrentValue.IsLatestReferralActiveEnd();
+        if (latestReferralActiveEnd)
+        {
+            return new InviteDetailDto();
+        }
+
+        var startTime = latest.StartTime;
+        var endTime = latest.EndTime;
+        var accountCreation = await _referralInviteProvider.GetAccountCreationAsync(startTime, endTime, chainId, addressCaHash);
+        var votigramVote = await _referralInviteProvider.GetInvitedCountByInviterCaHashAsync(startTime, endTime, chainId, addressCaHash, true);
+        var votigramActivityVote = await _referralInviteProvider.GetInvitedCountByInviterCaHashAsync(startTime, endTime, chainId, addressCaHash, true, true);
         var estimatedReward = _rankingAppPointsCalcProvider.CalculatePointsFromReferralVotes(votigramActivityVote);
         return new InviteDetailDto
         {
@@ -80,39 +88,16 @@ public class ReferralService : ApplicationService, IReferralService
     public async Task<InviteBoardPageResultDto<InviteLeaderBoardDto>> InviteLeaderBoardAsync(InviteLeaderBoardInput input)
     {
         var (_, addressCaHash) = await _userProvider.GetAndValidateUserAddressAndCaHashAsync(CurrentUser.GetId(), input.ChainId);
-        var inviterBuckets = await _referralInviteProvider.InviteLeaderBoardAsync(input);
-        long rank = 1;           
-        long lastInviteCount = -1;  
-        long currentRank = 1;
-
-        var caHashList = inviterBuckets.Select(bucket => bucket.Key).Distinct().ToList();
-        var userList = await _userAppService.GetUserByCaHashListAsync(caHashList);
-        var userDic = userList
-            .Where(x => x.AddressInfos.Any(ai => ai.ChainId == input.ChainId))
-            .GroupBy(ui => ui.CaHash)
-            .ToDictionary(
-                group => group.Key,
-                group => group.First().AddressInfos.First(ai => ai.ChainId == input.ChainId)?.Address ?? string.Empty
-            );
-
-        var inviterList = inviterBuckets.Select((bucket, _) =>
+        if (input.StartTime == 0 || input.EndTime == 0)
         {
-            var inviteCount = (long)(bucket.ValueCount("invite_count").Value ?? 0);
-            if (inviteCount != lastInviteCount)
-            {
-                currentRank = rank;
-                lastInviteCount = inviteCount;
-            }
-            var referralInvite = new InviteLeaderBoardDto
-            {
-                InviterCaHash = bucket.Key,
-                Inviter = userDic.GetValueOrDefault(bucket.Key, string.Empty),
-                InviteAndVoteCount = inviteCount,
-                Rank = currentRank  
-            };
-            rank++;  
-            return referralInvite;
-        }).ToList();
+            var latest = _rankingOptions.CurrentValue.ParseReferralActiveTimes().Config.First();
+            input.StartTime = latest.StartTime;
+            input.EndTime = latest.EndTime;
+        }
+        var inviterBuckets = await _referralInviteProvider.InviteLeaderBoardAsync(input.StartTime, input.EndTime);
+        var caHashList = inviterBuckets.Select(bucket => bucket.Key).Where(x => !string.IsNullOrEmpty(x)).Distinct().ToList();
+        var userList = await _userAppService.GetUserByCaHashListAsync(caHashList);
+        var inviterList = RankHelper.GetRankedList(input.ChainId, userList, inviterBuckets);
         var me = inviterList.Find(x => x.InviterCaHash == addressCaHash);
         return new InviteBoardPageResultDto<InviteLeaderBoardDto>
         {
