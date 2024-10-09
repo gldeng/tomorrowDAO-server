@@ -1,7 +1,7 @@
 name: build and package
 on:
   push:
-    branches: ['dev','test']
+    branches: ['gldeng']
 env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 jobs:
