@@ -6,7 +6,7 @@ env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 jobs:
   publish:
-    runs-on: tmrwdao-runner
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         servicename:
@@ -30,7 +30,7 @@ jobs:
           retention-days: 1
   build-and-push-image:
     needs: publish
-    runs-on: tmrwdao-runner
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         servicename:
