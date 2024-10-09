@@ -1,5 +1,6 @@
 using System;
 using AElf.Indexing.Elasticsearch.Options;
+using AElf.Indexing.Elasticsearch.Services;
 using Confluent.Kafka;
 using TomorrowDAOServer.EntityEventHandler.Core;
 using TomorrowDAOServer.EntityEventHandler.Core.Background.Options;
@@ -57,7 +58,7 @@ namespace TomorrowDAOServer.EntityEventHandler;
 )]
 public class TomorrowDAOServerEntityEventHandlerModule : AbpModule
 {
-  public override void ConfigureServices(ServiceConfigurationContext context)
+    public override void ConfigureServices(ServiceConfigurationContext context)
     {
         ConfigureTokenCleanupService();
         var configuration = context.Services.GetConfiguration();
@@ -84,7 +85,8 @@ public class TomorrowDAOServerEntityEventHandlerModule : AbpModule
                 .UseMongoDBClient(configuration["Orleans:MongoDBClient"])
                 .UseMongoDBClustering(options =>
                 {
-                    options.DatabaseName = configuration["Orleans:DataBase"];;
+                    options.DatabaseName = configuration["Orleans:DataBase"];
+                    ;
                     options.Strategy = MongoDBMembershipStrategy.SingleDocument;
                 })
                 .Configure<ClusterOptions>(options =>
@@ -108,7 +110,10 @@ public class TomorrowDAOServerEntityEventHandlerModule : AbpModule
             options.Configuration = configuration["Redis:Configuration"];
         });
         ConfigureKafka(context, configuration);
+        // avoid creating index upon startup (no es interaction is needed atm)
+        context.Services.AddTransient<IEnsureIndexBuildService, NullEnsureIndexBuildService>();
     }
+
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         var client = context.ServiceProvider.GetRequiredService<IClusterClient>();
@@ -255,5 +260,11 @@ public class TomorrowDAOServerEntityEventHandlerModule : AbpModule
                 topic.NumPartitions = 1;
             };
         });
+    }
+}
+internal class NullEnsureIndexBuildService : IEnsureIndexBuildService
+{
+    public void EnsureIndexesCreateAsync()
+    {
     }
 }

@@ -29,18 +29,18 @@ public class TomorrowDAOServerOrleansSiloModule : AbpModule
         // Configure<AwsS3Option>(configuration.GetSection("AwsS3"));
         Configure<SecurityServerOptions>(configuration.GetSection("SecurityServer"));
         
-        // avoid creating index upon startup (no es interaction is needed atm)
-        context.Services.AddTransient<IEnsureIndexBuildService, NullEnsureIndexBuildService>();
-
         context.Services.AddHostedService<TomorrowDAOServerHostedService>();
         context.Services.AddTransient<IUserAppService, UserAppService>();
         context.Services.AddTransient<IExchangeProvider, OkxProvider>();
         context.Services.AddTransient<IExchangeProvider, BinanceProvider>();
         context.Services.AddTransient<IExchangeProvider, CoinGeckoProvider>();
+
+        // avoid creating index upon startup (no es interaction is needed atm)
+        context.Services.AddTransient<IEnsureIndexBuildService, NullEnsureIndexBuildService>();
     }
 }
 
-public class NullEnsureIndexBuildService : IEnsureIndexBuildService
+internal class NullEnsureIndexBuildService : IEnsureIndexBuildService
 {
     public void EnsureIndexesCreateAsync()
     {

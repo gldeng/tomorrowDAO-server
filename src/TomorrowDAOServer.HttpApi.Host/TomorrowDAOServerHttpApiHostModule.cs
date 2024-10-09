@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using AElf.Indexing.Elasticsearch.Services;
 using AutoResponseWrapper;
 using Confluent.Kafka;
 using GraphQL.Client.Abstractions;
@@ -105,6 +106,8 @@ namespace TomorrowDAOServer
             
             // ConfigFilter(context);
             context.Services.AddAutoResponseWrapper();
+            // avoid creating index upon startup (no es interaction is needed atm)
+            context.Services.AddTransient<IEnsureIndexBuildService, NullEnsureIndexBuildService>();
         }
 
         private void ConfigureKafka(ServiceConfigurationContext context, IConfiguration configuration)
@@ -399,6 +402,13 @@ namespace TomorrowDAOServer
                     .Connect(configuration["Redis:Configuration"]);
                 return new RedisDistributedSynchronizationProvider(connection.GetDatabase());
             });
+        }
+    }
+    
+    internal class NullEnsureIndexBuildService : IEnsureIndexBuildService
+    {
+        public void EnsureIndexesCreateAsync()
+        {
         }
     }
 }
