@@ -38,6 +38,7 @@ using TomorrowDAOServer.Common.Enum;
 using MongoDB.Driver;
 using StackExchange.Redis;
 using TomorrowDAOServer.Options;
+using TomorrowDAOServer.Providers;
 using Volo.Abp.Caching;
 using Volo.Abp.EventBus;
 using Volo.Abp.EventBus.Kafka;
@@ -75,6 +76,8 @@ public class TomorrowDAOServerEntityEventHandlerModule : AbpModule
         Configure<ExplorerOptions>(configuration.GetSection("Explorer"));
         Configure<RankingOptions>(configuration.GetSection("Ranking"));
         Configure<GraphQLOptions>(configuration.GetSection("GraphQL"));
+        // Disable ProtkeyProvider for now for testing. TODO: Make it configurable
+        context.Services.AddSingleton<IPortkeyProvider, NullPortkeyProvider > ();
         ConfigureHangfire(context, configuration);
         // Configure<AbpRabbitMqBackgroundJobOptions>(configuration.GetSection("AbpRabbitMqBackgroundJob"));
         context.Services.AddHostedService<TomorrowDAOServerHostedService>();
