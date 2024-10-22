@@ -35,7 +35,7 @@ public class ReferralInviteProvider : IReferralInviteProvider, ISingletonDepende
 
     public ReferralInviteProvider(INESTRepository<ReferralInviteRelationIndex, string> referralInviteRepository, IClusterClient clusterClient, ILogger<ReferralInviteProvider> logger)
     {
-        _referralInviteRepository = referralInviteRepository;
+        _referralInviteRepository = new Wrapped<ReferralInviteRelationIndex, string>(referralInviteRepository);
         _clusterClient = clusterClient;
         _logger = logger;
     }

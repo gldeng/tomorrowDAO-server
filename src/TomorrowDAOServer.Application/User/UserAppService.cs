@@ -24,7 +24,7 @@ public class UserAppService : TomorrowDAOServerAppService, IUserAppService
     public UserAppService(INESTRepository<UserIndex, Guid> userIndexRepository, ILogger<UserAppService> logger,
         IObjectMapper objectMapper)
     {
-        _userIndexRepository = userIndexRepository;
+        _userIndexRepository = new Wrapped<UserIndex, Guid>(userIndexRepository);
         _logger = logger;
         _objectMapper = objectMapper;
     }
@@ -64,6 +64,7 @@ public class UserAppService : TomorrowDAOServerAppService, IUserAppService
         {
             return new List<UserIndex>();
         }
+
         var mustQuery = new List<Func<QueryContainerDescriptor<UserIndex>, QueryContainer>>
         {
             q => q.Terms(i => i.Field(t => t.CaHash).Terms(caHashes))

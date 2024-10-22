@@ -43,7 +43,7 @@ public class DAOProvider : IDAOProvider, ISingletonDependency
         INESTRepository<DAOIndex, string> daoIndexRepository)
     {
         _graphQlHelper = graphQlHelper;
-        _daoIndexRepository = daoIndexRepository;
+        _daoIndexRepository = new Wrapped<DAOIndex, string>(daoIndexRepository);
         _logger = logger;
     }
 

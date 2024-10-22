@@ -54,7 +54,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
         INESTRepository<ProposalIndex, string> proposalIndexRepository, ILogger<ProposalProvider> logger)
     {
         _graphQlHelper = graphQlHelper;
-        _proposalIndexRepository = proposalIndexRepository;
+        _proposalIndexRepository = new Wrapped<ProposalIndex, string>(proposalIndexRepository);
         _logger = logger;
     }
 

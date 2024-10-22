@@ -29,7 +29,7 @@ public class RankingAppProvider : IRankingAppProvider, ISingletonDependency
     public RankingAppProvider(INESTRepository<RankingAppIndex, string> rankingAppIndexRepository,
         ILogger<RankingAppProvider> logger)
     {
-        _rankingAppIndexRepository = rankingAppIndexRepository;
+        _rankingAppIndexRepository = new Wrapped<RankingAppIndex, string>(rankingAppIndexRepository);
         _logger = logger;
     }
 

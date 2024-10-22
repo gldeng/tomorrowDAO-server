@@ -26,7 +26,7 @@ public class TelegramAppsProvider : ITelegramAppsProvider, ISingletonDependency
         INESTRepository<TelegramAppIndex, string> telegramAppIndexRepository)
     {
         _logger = logger;
-        _telegramAppIndexRepository = telegramAppIndexRepository;
+        _telegramAppIndexRepository = new Wrapped<TelegramAppIndex, string>(telegramAppIndexRepository);
     }
 
     public async Task SaveTelegramAppAsync(TelegramAppIndex telegramAppIndex)

@@ -52,7 +52,7 @@ public class VoteProvider : IVoteProvider, ISingletonDependency
     {
         _graphQlHelper = graphQlHelper;
         _logger = logger;
-        _voteRecordIndexRepository = voteRecordIndexRepository;
+        _voteRecordIndexRepository = new Wrapped<VoteRecordIndex, string>(voteRecordIndexRepository);
     }
 
     public async Task<Dictionary<string, IndexerVote>> GetVoteItemsAsync(string chainId, List<string> votingItemIds)

@@ -34,7 +34,7 @@ public class DiscussionProvider : IDiscussionProvider, ISingletonDependency
         INESTRepository<CommentIndex, string> commentIndexRepository, 
         IClusterClient clusterClient)
     {
-        _commentIndexRepository = commentIndexRepository;
+        _commentIndexRepository = new Wrapped<CommentIndex, string>(commentIndexRepository);
         _clusterClient = clusterClient;
         _logger = logger;
     }

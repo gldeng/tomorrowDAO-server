@@ -48,7 +48,7 @@ public class ElectionProvider : IElectionProvider, ISingletonDependency
         _graphQlHelper = graphQlHelper;
         _logger = logger;
         _graphQlProvider = graphQlProvider;
-        _highCouncilManagedDaoRepository = highCouncilManagedDaoRepository;
+        _highCouncilManagedDaoRepository = new Wrapped<HighCouncilManagedDaoIndex, string>(highCouncilManagedDaoRepository);
     }
 
     public async Task<ElectionPageResultDto<ElectionCandidateElectedDto>> GetCandidateElectedRecordsAsync(
