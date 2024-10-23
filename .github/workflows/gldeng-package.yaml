@@ -14,7 +14,8 @@ jobs:
             TomorrowDAOServer.Silo,
             TomorrowDAOServer.AuthServer,
             TomorrowDAOServer.EntityEventHandler,
-            TomorrowDAOServer.HttpApi.Host
+            TomorrowDAOServer.HttpApi.Host,
+            TomorrowDAOServer.DbMigrator
           ]
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +39,8 @@ jobs:
             TomorrowDAOServer.Silo,
             TomorrowDAOServer.AuthServer,
             TomorrowDAOServer.EntityEventHandler,
-            TomorrowDAOServer.HttpApi.Host
+            TomorrowDAOServer.HttpApi.Host,
+            TomorrowDAOServer.DbMigrator
           ]
     permissions:
       contents: read
