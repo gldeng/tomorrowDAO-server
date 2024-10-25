@@ -78,7 +78,7 @@ public class ProposalProvider : IProposalProvider, ISingletonDependency
                 governanceMechanism,
                 minimalRequiredThreshold,minimalVoteThreshold,minimalApproveThreshold,
                 maximalRejectionThreshold,maximalAbstentionThreshold,proposalThreshold,
-                activeTimePeriod,vetoActiveTimePeriod,pendingTimePeriod,executeTimePeriod,vetoExecuteTimePeriod,isNetworkDAO
+                activeTimePeriod,vetoActiveTimePeriod,pendingTimePeriod,executeTimePeriod,vetoExecuteTimePeriod,isNetworkDAO,isAnonymous
             }}",
             Variables = new
             {
