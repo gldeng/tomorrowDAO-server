@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TomorrowDAOServer.Commitment;
 using TomorrowDAOServer.Common.Cache;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Election;
@@ -56,6 +57,7 @@ public class TomorrowDAOServerApplicationModule : AbpModule
         context.Services.AddTransient<IScheduleSyncDataService, ReferralSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, ProposalSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, ProposalNewUpdateService>();
+        context.Services.AddTransient<IScheduleSyncDataService, CommitmentSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, DAOSyncDataService>();
         context.Services.AddTransient<IScheduleSyncDataService, BPInfoUpdateService>();
         context.Services.AddTransient<IScheduleSyncDataService, HighCouncilMemberSyncService>();

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TomorrowDAOServer.Commitment.Dto;
 using TomorrowDAOServer.DAO;
 using TomorrowDAOServer.Common;
 using TomorrowDAOServer.Contract.Dto;
@@ -75,6 +76,7 @@ public class TomorrowDAOServerApplicationAutoMapperProfile : MapperBase
             .ForMember(des => des.GovernanceMechanism, opt
                 => opt.MapFrom(source => source.GovernanceMechanism.ToString()))
             ;
+        CreateMap<CommitmentIndex, CommitmentDto>();
         CreateMap<ProposalIndex, ProposalBasicDto>()
             .ForMember(des => des.RealProposalStatus, opt
                 => opt.MapFrom(source => source.ProposalStatus))
