@@ -52,7 +52,7 @@ public class CommitmentProvider : ICommitmentProvider, ISingletonDependency
                   $endBlockHeight: Long!,
                   $maxResultCount: Int!
                 ) {
-                  getCommitments(input: {
+                  dataList:getCommitments(input: {
                     skipCount: $skipCount,
                     maxResultCount: $maxResultCount,
                     chainId: $chainId,
