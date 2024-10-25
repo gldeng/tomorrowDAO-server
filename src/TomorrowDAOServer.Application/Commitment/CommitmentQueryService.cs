@@ -5,12 +5,16 @@ using AElf.Indexing.Elasticsearch;
 using Nest;
 using TomorrowDAOServer.Commitment.Dto;
 using TomorrowDAOServer.Entities;
+using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Auditing;
 using Volo.Abp.ObjectMapping;
 
 namespace TomorrowDAOServer.Commitment;
 
-public class CommitmentQueryService : ICommitmentQueryService
+[RemoteService(IsEnabled = false)]
+[DisableAuditing]
+public class CommitmentQueryService : TomorrowDAOServerAppService, ICommitmentQueryService
 {
     private readonly IObjectMapper _objectMapper;
     private readonly INESTRepository<CommitmentIndex, string> _commitmentIndexRepository;
