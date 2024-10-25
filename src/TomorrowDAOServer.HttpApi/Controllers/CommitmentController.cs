@@ -11,7 +11,7 @@ namespace TomorrowDAOServer.Controllers;
 
 [RemoteService]
 [Area("app")]
-[ControllerName("Controller")]
+[ControllerName("Commitment")]
 [Route("api/app/commitment")]
 public class CommitmentController : AbpController
 {

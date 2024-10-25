@@ -15,7 +15,7 @@ public class CommitmentSyncDataService : ScheduleSyncDataService
 {
     private readonly ICommitmentProvider _commitmentProvider;
     private readonly ILogger<ScheduleSyncDataService> _logger;
-    private IChainAppService _chainAppService;
+    private readonly IChainAppService _chainAppService;
     private const int MaxResultCount = 1000;
 
     public CommitmentSyncDataService(ICommitmentProvider commitmentProvider, ILogger<ScheduleSyncDataService> logger,
@@ -35,7 +35,7 @@ public class CommitmentSyncDataService : ScheduleSyncDataService
         List<CommitmentIndex> queryList;
         do
         {
-            queryList = await _commitmentProvider.GetSyncCommitmentDataAsync(skipCount, chainId, lastEndHeight, 0,
+            queryList = await _commitmentProvider.GetSyncCommitmentDataAsync(skipCount, chainId, lastEndHeight, newIndexHeight,
                 MaxResultCount);
             _logger.LogInformation(
                 "CommitmentData queryList skipCount {skipCount} startBlockHeight: {lastEndHeight} endBlockHeight: {newIndexHeight} count: {count}",
