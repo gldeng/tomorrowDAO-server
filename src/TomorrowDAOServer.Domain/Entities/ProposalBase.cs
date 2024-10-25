@@ -86,6 +86,7 @@ public class ProposalBase : BlockInfoBase
     public bool VoteFinished { get; set; }
     
     public bool IsNetworkDAO { get; set; }
+    public bool IsAnonymous { get; set; }
     [JsonConverter(typeof(StringEnumConverter))]
     public ProposalCategory ProposalCategory { get; set; }
 }
