@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TomorrowDAOServer.Chains;
 using TomorrowDAOServer.Commitment.Provider;
-using TomorrowDAOServer.Common;
-using TomorrowDAOServer.Common.GraphQL;
 using TomorrowDAOServer.Common.Provider;
 using TomorrowDAOServer.Entities;
 using TomorrowDAOServer.Enums;
-using TomorrowDAOServer.Proposal.Index;
 
 namespace TomorrowDAOServer.Commitment;
 
@@ -17,14 +15,16 @@ public class CommitmentSyncDataService : ScheduleSyncDataService
 {
     private readonly ICommitmentProvider _commitmentProvider;
     private readonly ILogger<ScheduleSyncDataService> _logger;
+    private IChainAppService _chainAppService;
     private const int MaxResultCount = 1000;
 
     public CommitmentSyncDataService(ICommitmentProvider commitmentProvider, ILogger<ScheduleSyncDataService> logger,
-        IGraphQLProvider graphQlProvider) : base(
+        IGraphQLProvider graphQlProvider, IChainAppService chainAppService) : base(
         logger, graphQlProvider)
     {
         _commitmentProvider = commitmentProvider;
         _logger = logger;
+        _chainAppService = chainAppService;
     }
 
     public override async Task<long> SyncIndexerRecordsAsync(string chainId, long lastEndHeight, long newIndexHeight)
@@ -53,13 +53,14 @@ public class CommitmentSyncDataService : ScheduleSyncDataService
         return blockHeight;
     }
 
-    public override Task<List<string>> GetChainIdsAsync()
+    public override async Task<List<string>> GetChainIdsAsync()
     {
-        throw new System.NotImplementedException();
+        var chainIds = await _chainAppService.GetListAsync();
+        return chainIds.ToList();
     }
 
     public override WorkerBusinessType GetBusinessType()
     {
-        throw new System.NotImplementedException();
+        return WorkerBusinessType.CommitmentSync;
     }
 }
