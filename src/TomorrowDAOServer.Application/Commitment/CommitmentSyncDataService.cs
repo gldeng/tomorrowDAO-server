@@ -50,7 +50,7 @@ public class CommitmentSyncDataService : ScheduleSyncDataService
             skipCount += queryList.Count;
         } while (!queryList.IsNullOrEmpty());
 
-        return blockHeight;
+        return blockHeight+1;
     }
 
     public override async Task<List<string>> GetChainIdsAsync()
