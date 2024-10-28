@@ -15,7 +15,7 @@ public class ProposalBasicDto
     
     public string Alias { get; set; }
 
-    public string IsAnonymous { get; set; }
+    public bool IsAnonymous { get; set; }
     public string ProposalId { get; set; }
 
     public string ProposalTitle { get; set; }
