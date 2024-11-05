@@ -6,7 +6,6 @@ env:
   DOTNET_INSTALL_DIR: "./.dotnet"
 jobs:
   build-and-push-image:
-    needs: publish
     runs-on: ubuntu-latest
     strategy:
       matrix:
